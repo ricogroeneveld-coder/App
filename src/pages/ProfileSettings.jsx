@@ -1,0 +1,356 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { MysteryPlayer, MysteryRoom } from '@/api/db';
+import { supabase } from '@/lib/supabaseClient';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
+import { ArrowLeft, Trash2, AlertTriangle, User, Globe, DoorOpen, Volume2, LogOut, LogIn } from 'lucide-react';
+import { getGuestIdentity, clearGuestIdentity } from '@/lib/guestIdentity';
+import { useAuth } from '@/lib/AuthContext';
+import { useLang } from '@/lib/LanguageContext';
+import { Switch } from '@/components/ui/switch';
+import { isSoundEnabled, setSoundEnabled, playCorrect } from '@/lib/sounds';
+
+export default function ProfileSettings() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { user: currentUser, logout } = useAuth();
+  const { lang, switchLang, t } = useLang();
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [activeGame, setActiveGame] = useState(null);
+  const [leavingGame, setLeavingGame] = useState(false);
+  const [soundOn, setSoundOn] = useState(isSoundEnabled());
+  const isRegistered = !!currentUser;
+
+  const toggleSound = (next) => {
+    setSoundOn(next);
+    setSoundEnabled(next);
+    // Play a sample so the user hears what enabling sounds like.
+    if (next) playCorrect();
+  };
+
+  const guest = getGuestIdentity();
+
+  // Gameplay always runs on the guest identity, signed in or not (see
+  // src/lib/AuthContext.jsx), so this always checks the guest id.
+  useEffect(() => {
+    const checkActiveGame = async () => {
+      try {
+        const uid = guest?.id;
+        if (!uid) return;
+        const myPlayers = await MysteryPlayer.filter({ user_id: uid });
+        for (const p of myPlayers || []) {
+          const rooms = await MysteryRoom.filter({ room_code: p.room_code });
+          const room = rooms?.[0];
+          if (room && (room.status === 'playing' || room.status === 'word_entry')) {
+            setActiveGame({ room, player: p });
+            return;
+          }
+        }
+      } catch (e) {}
+    };
+    checkActiveGame();
+  }, []);
+
+  // Guest profile deletion — clears local game records + the guest identity itself.
+  const handleDeleteGuestProfile = async () => {
+    setDeleting(true);
+    try {
+      const players = await MysteryPlayer.filter({ user_id: guest.id });
+      for (const p of players || []) {
+        await MysteryPlayer.delete(p.id);
+      }
+      clearGuestIdentity();
+      toast({ title: 'Profile deleted', description: 'Your local profile and game data have been removed.' });
+      navigate('/');
+    } catch (e) {
+      toast({ title: 'Failed to delete profile', description: e.message, variant: 'destructive' });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  // Registered account deletion — calls the delete-account edge function
+  // (needs the service_role key, which never touches the browser) to
+  // actually remove the Supabase Auth account, then clears local game data too.
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      const { error } = await supabase.functions.invoke('delete-account');
+      if (error) throw error;
+      const players = await MysteryPlayer.filter({ user_id: guest.id });
+      for (const p of players || []) {
+        await MysteryPlayer.delete(p.id);
+      }
+      clearGuestIdentity();
+      await logout();
+      toast({ title: 'Account deleted', description: 'Your account and game records have been removed.' });
+      navigate('/');
+    } catch (e) {
+      toast({ title: 'Failed to delete account', description: e.message, variant: 'destructive' });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleLeaveGame = async () => {
+    if (!activeGame) return;
+    setLeavingGame(true);
+    try {
+      await MysteryPlayer.update(activeGame.player.id, { is_eliminated: true });
+      setActiveGame(null);
+      toast({ title: t.leaveGame, description: activeGame.room.room_code });
+    } catch (e) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    } finally {
+      setLeavingGame(false);
+    }
+  };
+
+  const handleDelete = isRegistered ? handleDeleteAccount : handleDeleteGuestProfile;
+
+  const displayName = isRegistered
+    ? (currentUser.user_metadata?.full_name || currentUser.email)
+    : (guest.name || 'Guest Player');
+  const displaySub = isRegistered ? currentUser.email : `${guest.id?.slice(0, 12)}…`;
+
+  return (
+    <div
+      className="min-h-screen bg-gradient-to-br from-slate-950 via-violet-950 to-slate-950 text-white flex flex-col"
+      style={{
+        paddingTop: 'max(env(safe-area-inset-top), 1rem)',
+        paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)',
+      }}
+    >
+      {/* Header */}
+      <div className="flex items-center gap-3 px-4 pt-2 pb-4">
+        <button
+          onClick={() => navigate('/')}
+          className="flex items-center justify-center w-11 h-11 rounded-full bg-white/5 ring-1 ring-white/10 hover:bg-white/10 transition select-none-interactive"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <h1 className="text-lg font-semibold">{t.profileSettings}</h1>
+      </div>
+
+      <div className="flex-1 px-4 max-w-md mx-auto w-full space-y-4">
+        {/* Profile card */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl bg-white/5 ring-1 ring-white/10 p-5 flex items-center gap-4"
+        >
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-pink-600 flex items-center justify-center flex-shrink-0">
+            <User className="w-7 h-7 text-white" />
+          </div>
+          <div className="min-w-0">
+            <p className="font-semibold text-white text-lg truncate">{displayName}</p>
+            <p className="text-slate-400 text-sm font-mono truncate">{displaySub}</p>
+            {isRegistered && (
+              <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full bg-violet-500/30 text-violet-300 font-medium">
+                {t.registeredAccount}
+              </span>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Sign in prompt — guests only. Purely optional: gameplay already
+            works fully without an account, this is just for anyone who wants
+            one (e.g. to sign in on another device). */}
+        {!isRegistered && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.03 }}
+            className="rounded-2xl bg-violet-500/10 ring-1 ring-violet-400/20 p-5"
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <LogIn className="w-5 h-5 text-violet-400 flex-shrink-0" />
+              <p className="font-semibold text-white">{t.signInTitle}</p>
+            </div>
+            <p className="text-slate-400 text-sm mb-3">{t.signInDesc}</p>
+            <Link to="/login">
+              <Button className="w-full h-11 bg-violet-500 hover:bg-violet-600 border-0 font-semibold select-none-interactive">
+                {t.signInCta}
+              </Button>
+            </Link>
+          </motion.div>
+        )}
+
+        {/* Language toggle */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.04 }}
+          className="rounded-2xl bg-white/5 ring-1 ring-white/10 p-5"
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <Globe className="w-5 h-5 text-violet-400 flex-shrink-0" />
+            <p className="font-semibold text-white">{t.language}</p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => switchLang('en')}
+              className={`flex-1 h-11 rounded-xl text-sm font-semibold transition ring-1 select-none-interactive ${lang === 'en' ? 'bg-violet-500 ring-violet-400 text-white' : 'bg-white/5 ring-white/10 text-slate-300 hover:bg-white/10'}`}
+            >
+              🇬🇧 English
+            </button>
+            <button
+              onClick={() => switchLang('nl')}
+              className={`flex-1 h-11 rounded-xl text-sm font-semibold transition ring-1 select-none-interactive ${lang === 'nl' ? 'bg-violet-500 ring-violet-400 text-white' : 'bg-white/5 ring-white/10 text-slate-300 hover:bg-white/10'}`}
+            >
+              🇳🇱 Nederlands
+            </button>
+          </div>
+        </motion.div>
+
+        {/* Sound effects toggle */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="rounded-2xl bg-white/5 ring-1 ring-white/10 p-5 flex items-center gap-3"
+        >
+          <Volume2 className="w-5 h-5 text-violet-400 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-white">{t.soundEffects}</p>
+            <p className="text-slate-400 text-sm">{t.soundEffectsDesc}</p>
+          </div>
+          <Switch
+            checked={soundOn}
+            onCheckedChange={toggleSound}
+            className="select-none-interactive"
+          />
+        </motion.div>
+
+        {/* Leave active game */}
+        {activeGame && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.045 }}
+            className="rounded-2xl bg-white/5 ring-1 ring-white/10 p-5"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <DoorOpen className="w-5 h-5 text-rose-400 flex-shrink-0" />
+              <div>
+                <p className="font-semibold text-white">{t.leaveGame}</p>
+                <p className="text-slate-400 text-sm font-mono">{activeGame.room.room_code}</p>
+              </div>
+            </div>
+            <Button
+              onClick={handleLeaveGame}
+              disabled={leavingGame}
+              className="w-full h-11 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/30 hover:border-rose-400/50 font-semibold select-none-interactive"
+              variant="ghost"
+            >
+              <DoorOpen className="w-4 h-4 mr-2" />
+              {leavingGame ? '…' : t.leaveGame}
+            </Button>
+          </motion.div>
+        )}
+
+        {/* Sign out (registered users only) */}
+        {isRegistered && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="rounded-2xl bg-white/5 ring-1 ring-white/10 p-5"
+          >
+            <Button
+              onClick={() => logout()}
+              variant="ghost"
+              className="w-full h-11 bg-white/5 hover:bg-white/10 text-slate-300 border-white/10 font-semibold select-none-interactive"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              {t.signOut}
+            </Button>
+          </motion.div>
+        )}
+
+        {/* Delete section */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+          className="rounded-2xl bg-white/5 ring-1 ring-white/10 p-5 space-y-3"
+        >
+          <div className="flex items-start gap-3">
+            <Trash2 className="w-5 h-5 text-rose-400 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-semibold text-white">
+                {isRegistered ? t.deleteAccount : t.deleteProfile}
+              </p>
+              <p className="text-slate-400 text-sm mt-0.5">
+                {isRegistered ? t.deleteAccountDesc : t.deleteProfileDesc}
+              </p>
+            </div>
+          </div>
+          <Button
+            onClick={() => setShowConfirm(true)}
+            className="w-full h-11 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/30 hover:border-rose-400/50 font-semibold select-none-interactive"
+            variant="ghost"
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            {isRegistered ? t.deleteMyAccount : t.deleteMyProfile}
+          </Button>
+        </motion.div>
+      </div>
+
+      {/* Confirmation modal */}
+      <AnimatePresence>
+        {showConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onClick={() => !deleting && setShowConfirm(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 40, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 40, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm rounded-2xl bg-slate-900 ring-1 ring-white/10 p-6 space-y-5"
+              style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1.5rem)' }}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl bg-rose-500/20 flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-rose-400" />
+                </div>
+                <div>
+                  <p className="font-semibold text-white">{t.areYouSure}</p>
+                  <p className="text-slate-400 text-sm">{t.cannotBeUndone}</p>
+                </div>
+              </div>
+              <p className="text-slate-300 text-sm leading-relaxed">
+                {isRegistered ? t.deleteAccountConfirm : t.deleteProfileConfirm}
+              </p>
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => setShowConfirm(false)}
+                  disabled={deleting}
+                  variant="ghost"
+                  className="flex-1 h-11 bg-white/5 hover:bg-white/10 text-white border-white/10 select-none-interactive"
+                >
+                  {t.cancel}
+                </Button>
+                <Button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="flex-1 h-11 bg-rose-500 hover:bg-rose-600 border-0 text-white font-semibold select-none-interactive"
+                >
+                  {deleting ? t.deleting : t.yesDelete}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
