@@ -5,10 +5,17 @@ import { MysteryRoom, MysteryPlayer } from '@/api/db';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus, LogIn, Users, Eye, Brain, Globe, Lock, Settings, RefreshCw, X, ChevronDown } from 'lucide-react';
+import { Plus, LogIn, Users, Globe, Lock, Settings, RefreshCw, X, ChevronDown } from 'lucide-react';
 import { getGuestIdentity, setGuestName, hasGuestName } from '@/lib/guestIdentity';
 import { Link } from 'react-router-dom';
 import { useLang } from '@/lib/LanguageContext';
+import bgImage from '../../background.jpg';
+import logoImage from '../../logo.png';
+import mascotBlue from '../../mascot-blue.png';
+import mascotRed from '../../mascot-red.png';
+import badgePlayers from '../../badge-players.png';
+import badgeGuessing from '../../badge-guessing.png';
+import badgeRealtime from '../../badge-realtime.png';
 
 const PULL_THRESHOLD = 70;
 
@@ -165,7 +172,7 @@ export default function Home() {
   return (
     <div
       ref={scrollRef}
-      className="min-h-screen bg-gradient-to-br from-slate-950 via-violet-950 to-slate-950 text-white flex items-start justify-center p-4 overflow-y-auto relative"
+      className="min-h-screen text-white flex items-start justify-center p-4 overflow-y-auto relative"
       style={{
         paddingTop: 'max(env(safe-area-inset-top), 0.5rem)',
         paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)',
@@ -175,6 +182,9 @@ export default function Home() {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
+      <div className="fixed inset-0 -z-10 bg-cover bg-center" style={{ backgroundImage: `url(${bgImage})` }} />
+      <div className="fixed inset-0 -z-10 bg-gradient-to-b from-slate-950/70 via-slate-950/30 to-slate-950/85" />
+
       {/* Pull-to-refresh indicator */}
       {isPulling && (
         <div
@@ -234,29 +244,25 @@ export default function Home() {
       <div className="relative z-10 w-full max-w-md">
         <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} className="text-center mb-4">
           <motion.div initial={{ scale:0 }} animate={{ scale:1 }} transition={{ type:'spring', duration:0.8 }}
-            className="flex flex-col items-center pt-6 pb-2">
-            <span className="text-5xl mb-2 drop-shadow-2xl">🕵️</span>
-            <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-violet-300 via-fuchsia-300 to-pink-300 bg-clip-text text-transparent drop-shadow-sm">
-              What's my pick?
-            </h1>
+            className="flex items-end justify-center gap-1 pt-4 pb-2">
+            <img src={mascotRed} alt="" className="w-16 sm:w-20 drop-shadow-2xl -mb-1 shrink-0" />
+            <img src={logoImage} alt="What's my Pick!" className="w-56 sm:w-64 drop-shadow-2xl shrink-0" />
+            <img src={mascotBlue} alt="" className="w-16 sm:w-20 drop-shadow-2xl -mb-1 shrink-0" />
           </motion.div>
-          <p className="text-slate-300 text-base font-medium mb-1">{t.tagline}</p>
-          <p className="text-slate-400 text-sm">{t.subtitle}</p>
+          <p className="text-slate-200 text-base font-medium mb-1 drop-shadow">{t.tagline}</p>
+          <p className="text-slate-300 text-sm drop-shadow">{t.subtitle}</p>
         </motion.div>
 
         <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.1 }}
-          className="grid grid-cols-3 gap-3 mb-8 text-center text-xs text-slate-400">
-          <div className="rounded-xl bg-white/5 p-3">
-            <Users className="w-5 h-5 mx-auto mb-1 text-violet-400" />
-            <p>{t.players}</p>
+          className="grid grid-cols-3 gap-3 mb-8 text-center">
+          <div className="flex flex-col items-center">
+            <img src={badgePlayers} alt="" className="w-full max-w-[110px] drop-shadow-lg" />
           </div>
-          <div className="rounded-xl bg-white/5 p-3">
-            <Brain className="w-5 h-5 mx-auto mb-1 text-pink-400" />
-            <p>{t.guessing}</p>
+          <div className="flex flex-col items-center">
+            <img src={badgeGuessing} alt="" className="w-full max-w-[110px] drop-shadow-lg" />
           </div>
-          <div className="rounded-xl bg-white/5 p-3">
-            <Eye className="w-5 h-5 mx-auto mb-1 text-amber-400" />
-            <p>{t.realtime}</p>
+          <div className="flex flex-col items-center">
+            <img src={badgeRealtime} alt="" className="w-full max-w-[110px] drop-shadow-lg" />
           </div>
         </motion.div>
 
