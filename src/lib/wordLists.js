@@ -1,5 +1,14 @@
 export const CATEGORIES = ['Pets', 'Actors', 'Movies', 'Football Players', 'European Countries', 'Household Objects'];
 
+export const CATEGORY_EMOJIS = {
+  'Pets': '🐶',
+  'Actors': '🎭',
+  'Movies': '🎬',
+  'Football Players': '⚽',
+  'European Countries': '🌍',
+  'Household Objects': '🏠',
+};
+
 // Dutch translations for categories that contain common words (not proper nouns)
 export const WORD_LISTS_NL = {
   Pets: [

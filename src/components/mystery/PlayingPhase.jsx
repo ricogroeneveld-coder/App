@@ -253,7 +253,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
 
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-slate-950 via-violet-950 to-slate-950 text-white flex flex-col"
+      className="h-dvh overflow-hidden bg-gradient-to-br from-slate-950 via-violet-950 to-slate-950 text-white flex flex-col"
       style={{ paddingTop: 'env(safe-area-inset-top)' }}
     >
       <EmojiRain emote={emojiRainEmote} trigger={emojiRainTrigger} />
@@ -329,7 +329,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
         )}
       </AnimatePresence>
 
-      <div className="flex-1 overflow-y-auto p-4" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 4rem)' }}>
+      <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar p-4" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 4rem)' }}>
         {tab === 'questions' && (
           <div className="max-w-lg mx-auto space-y-4">
 

@@ -118,7 +118,7 @@ export default function ProfileSettings() {
 
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-slate-950 via-violet-950 to-slate-950 text-white flex flex-col"
+      className="h-dvh overflow-hidden bg-gradient-to-br from-slate-950 via-violet-950 to-slate-950 text-white flex flex-col"
       style={{
         paddingTop: 'max(env(safe-area-inset-top), 1rem)',
         paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)',
@@ -135,7 +135,7 @@ export default function ProfileSettings() {
         <h1 className="text-lg font-semibold">{t.profileSettings}</h1>
       </div>
 
-      <div className="flex-1 px-4 max-w-md mx-auto w-full space-y-4">
+      <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar px-4 pb-6 max-w-md mx-auto w-full space-y-4">
         {/* Profile card */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}

@@ -70,13 +70,15 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
 
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-slate-950 via-violet-950 to-slate-950 text-white flex flex-col items-center p-4"
+      className="h-dvh overflow-hidden bg-gradient-to-br from-slate-950 via-violet-950 to-slate-950 text-white flex flex-col items-center"
       style={{
         paddingTop: 'max(env(safe-area-inset-top), 2rem)',
-        paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)',
       }}
     >
-      <div className="w-full max-w-md relative">
+      <div
+        className="w-full max-w-md relative flex-1 min-h-0 overflow-y-auto hide-scrollbar p-4"
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)' }}
+      >
         <button onClick={goBack}
           className="absolute -top-1 left-0 w-9 h-9 rounded-xl bg-white/5 ring-1 ring-white/10 hover:bg-white/10 text-slate-300 hover:text-white transition flex items-center justify-center"
           title={t.leave}>

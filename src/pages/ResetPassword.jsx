@@ -60,7 +60,7 @@ export default function ResetPassword() {
 
   if (status === "checking") {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="h-dvh overflow-hidden flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );

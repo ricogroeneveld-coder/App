@@ -5,7 +5,7 @@ export default function PageNotFound() {
   const pageName = location.pathname.substring(1);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50">
+    <div className="h-dvh overflow-hidden flex items-center justify-center p-6 bg-slate-50">
       <div className="max-w-md w-full">
         <div className="text-center space-y-6">
           {/* 404 Error Code */}

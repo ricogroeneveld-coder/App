@@ -102,7 +102,7 @@ export default function MysteryGame() {
 
   if (loading) return (
     <div
-      className="min-h-screen bg-slate-950 flex items-center justify-center"
+      className="h-dvh overflow-hidden bg-slate-950 flex items-center justify-center"
       style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
@@ -111,7 +111,7 @@ export default function MysteryGame() {
 
   if (!room) return (
     <div
-      className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center"
+      className="h-dvh overflow-hidden bg-slate-950 text-white flex flex-col items-center justify-center"
       style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <p className="text-xl mb-4">Room not found</p>
@@ -126,7 +126,7 @@ export default function MysteryGame() {
 
   if (isNotInRoom) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-violet-950 to-slate-950 text-white flex flex-col items-center justify-center p-4">
+      <div className="h-dvh overflow-hidden bg-gradient-to-br from-slate-950 via-violet-950 to-slate-950 text-white flex flex-col items-center justify-center p-4">
         <p className="text-5xl mb-4">🔒</p>
         <p className="text-2xl font-bold mb-2">Game already started</p>
         <p className="text-slate-400 mb-6 text-center">This game is in progress. You can join the next round!</p>
@@ -142,7 +142,7 @@ export default function MysteryGame() {
       await loadAll();
     };
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-violet-950 to-slate-950 text-white flex flex-col items-center justify-center p-4">
+      <div className="h-dvh overflow-hidden bg-gradient-to-br from-slate-950 via-violet-950 to-slate-950 text-white flex flex-col items-center justify-center p-4">
         <p className="text-2xl font-bold mb-2">You left the game</p>
         <p className="text-slate-400 mb-6">The game is still going. Want to rejoin?</p>
         <Button onClick={handleRejoin} className="bg-violet-500 hover:bg-violet-600 border-0 font-semibold h-12 px-8 mb-3">

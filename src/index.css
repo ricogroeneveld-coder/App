@@ -115,6 +115,47 @@
   .hide-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
   .hide-scrollbar::-webkit-scrollbar { display: none; }
 
+  /* Home screen starfield twinkle */
+  @keyframes twinkle {
+    0% { opacity: 0.5; }
+    100% { opacity: 1; }
+  }
+
+  /* Home screen particle field — very slow ambient drift */
+  @keyframes driftSlow {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(5px, -7px); }
+  }
+
+  /* Home hero upward shift — height-tiered so short viewports (iPhone SE) never clip the logo,
+     while taller viewports get the fuller reduction in top spacing. */
+  .hero-shift { transform: translateY(6px); }
+  @media (min-height: 700px) {
+    .hero-shift { transform: translateY(0px); }
+  }
+  @media (min-height: 750px) {
+    .hero-shift { transform: translateY(-30px); }
+  }
+
+  /* Cards block counter-shift — a transform (no layout height added) that cancels the varying
+     gap .hero-shift creates above it, so subtitle-to-profile-card spacing stays ~24px on every
+     viewport without growing total page height (which would clip content on short screens). */
+  .cards-shift { transform: translateY(11px); }
+  @media (min-height: 700px) {
+    .cards-shift { transform: translateY(4px); }
+  }
+  @media (min-height: 750px) {
+    .cards-shift { transform: translateY(-14px); }
+  }
+
+  /* Create Game — very subtle shimmer sweep, once every ~13s */
+  @keyframes shimmerSweep {
+    0%, 90% { transform: translateX(-130%) skewX(-15deg); opacity: 0; }
+    93% { opacity: 0.4; }
+    97% { opacity: 0.4; }
+    100% { transform: translateX(130%) skewX(-15deg); opacity: 0; }
+  }
+
   /* Select-none for interactive UI — text in message/chat areas keeps selection */
   button, [role="button"], [role="tab"], nav, .select-none-interactive {
     -webkit-user-select: none;
