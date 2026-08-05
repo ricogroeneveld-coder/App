@@ -10,21 +10,21 @@ import { getGuestIdentity, setGuestName, hasGuestName } from '@/lib/guestIdentit
 import { Link } from 'react-router-dom';
 import { useLang } from '@/lib/LanguageContext';
 import bgImage from '../../background.jpg';
-import logoImage from '../../logo.png';
-import taglineBanner from '../../tagline-banner.png';
-import badgePlayers from '../../badge-players.png';
-import badgeGuessing from '../../badge-guessing.png';
-import badgeRealtime from '../../badge-realtime.png';
-import hostFrame from '../../host-frame.png';
-import joinFrame from '../../join-frame.png';
-import browseFrame from '../../browse-frame.png';
-import createGameBtn from '../../create-game-btn.png';
-import joinBtn from '../../join-btn.png';
-import togglePublic from '../../toggle-public.png';
-import togglePrivate from '../../toggle-private.png';
-import iconGlobe from '../../icon-globe.png';
-import iconHash from '../../icon-hash.png';
-import gameVisibilityText from '../../game-visibility-text.png';
+import logoImage from '../../logo.webp';
+import taglineBanner from '../../tagline-banner.webp';
+import badgePlayers from '../../badge-players.webp';
+import badgeGuessing from '../../badge-guessing.webp';
+import badgeRealtime from '../../badge-realtime.webp';
+import hostFrame from '../../host-frame.webp';
+import joinFrame from '../../join-frame.webp';
+import browseFrame from '../../browse-frame.webp';
+import createGameBtn from '../../create-game-btn.webp';
+import joinBtn from '../../join-btn.webp';
+import togglePublic from '../../toggle-public.webp';
+import togglePrivate from '../../toggle-private.webp';
+import iconGlobe from '../../icon-globe.webp';
+import iconHash from '../../icon-hash.webp';
+import gameVisibilityText from '../../game-visibility-text.webp';
 
 const PULL_THRESHOLD = 70;
 
@@ -260,6 +260,7 @@ export default function Home() {
             className="w-full max-w-sm mx-auto drop-shadow-xl" />
         </motion.div>
 
+        {/* Stat badges temporarily hidden for preview
         <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.1 }}
           className="grid grid-cols-3 gap-3 mb-8 text-center">
           <div className="flex flex-col items-center">
@@ -272,6 +273,7 @@ export default function Home() {
             <img src={badgeRealtime} alt="" className="w-full max-w-[110px] drop-shadow-lg" />
           </div>
         </motion.div>
+        */}
 
         {!nameSet ? (
           <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.2 }} className="space-y-3">
@@ -292,8 +294,8 @@ export default function Home() {
               <button onClick={() => { localStorage.removeItem('mystery_guest_name'); setNameSet(false); setNameInput(''); }}
                 className="text-xs text-slate-500 hover:text-slate-300 underline min-h-[44px] px-2 select-none">{t.change}</button>
             </div>
-            <div className="relative mb-3 rounded-2xl px-[5%] pt-[11%] pb-[4%] flex flex-col items-center gap-[3%]"
-              style={{ backgroundImage: `url(${hostFrame})`, backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat' }}>
+            <div className="relative mb-3 rounded-2xl px-[5%] flex flex-col items-center justify-center gap-[3%]"
+              style={{ backgroundImage: `url(${hostFrame})`, backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', aspectRatio: '1600/562' }}>
               <button onClick={handleCreate} disabled={loading !== null} className="w-full disabled:opacity-60 transition" aria-label={t.createGame}>
                 <img src={createGameBtn} alt="" className="w-full h-auto block pointer-events-none" />
               </button>
@@ -303,28 +305,32 @@ export default function Home() {
               </button>
             </div>
 
-            <div className="relative mb-3 rounded-2xl px-[4%] py-[10%] flex items-center gap-3"
-              style={{ backgroundImage: `url(${joinFrame})`, backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat' }}>
-              <img src={iconHash} alt="" className="w-8 h-8 shrink-0" />
+            <div className="relative mb-3 rounded-2xl px-[4%] flex items-center"
+              style={{ backgroundImage: `url(${joinFrame})`, backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', aspectRatio: '1600/246' }}>
+              <div className="w-[72px] shrink-0 flex items-center">
+                <img src={iconHash} alt="" className="w-6 h-6" />
+              </div>
               <input value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase())}
                 onKeyDown={e => e.key === 'Enter' && handleJoin()}
                 placeholder={t.roomCodePlaceholder} maxLength={6}
-                className="flex-1 min-w-0 bg-transparent border-0 outline-none text-white text-lg font-mono tracking-widest text-center uppercase placeholder:text-slate-500" />
-              <button onClick={handleJoin} disabled={loading !== null} className="shrink-0 disabled:opacity-60 transition" aria-label={t.roomCodePlaceholder}>
-                <img src={joinBtn} alt="Join" className="h-9 w-auto block pointer-events-none" />
+                className="flex-1 min-w-0 bg-transparent border-0 outline-none text-white text-base font-mono tracking-widest text-center uppercase placeholder:text-slate-500" />
+              <button onClick={handleJoin} disabled={loading !== null}
+                className="w-[72px] shrink-0 flex items-center justify-end disabled:opacity-60 transition" aria-label={t.roomCodePlaceholder}>
+                <img src={joinBtn} alt="Join" className="h-7 w-auto block pointer-events-none" />
               </button>
             </div>
 
             {/* Public lobbies */}
             <div className="pt-2">
-              <div className="relative rounded-2xl px-[4%] py-[9%] flex items-center gap-3"
-                style={{ backgroundImage: `url(${browseFrame})`, backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat' }}>
+              <div className="relative rounded-2xl px-[4%] flex items-center"
+                style={{ backgroundImage: `url(${browseFrame})`, backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', aspectRatio: '1600/270' }}>
+                <div className="w-9 shrink-0" />
                 <button
                   onClick={() => setShowLobbies(v => !v)}
-                  className="flex items-center gap-3 flex-1 min-h-[44px] min-w-0 text-left select-none"
+                  className="flex-1 flex items-center justify-center gap-2 min-h-[44px] min-w-0 select-none"
                 >
-                  <img src={iconGlobe} alt="" className="w-8 h-8 shrink-0" />
-                  <p className="text-sm font-medium text-slate-200 flex-1 truncate">{t.openLobbies}</p>
+                  <img src={iconGlobe} alt="" className="w-6 h-6 shrink-0" />
+                  <p className="text-sm font-medium text-slate-200 truncate">{t.openLobbies}</p>
                   {publicLobbies.length > 0 && (
                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-lime-500/20 text-lime-300 ring-1 ring-lime-400/30 shrink-0">
                       {publicLobbies.length}
@@ -335,7 +341,7 @@ export default function Home() {
                 <button
                   onClick={fetchLobbies}
                   disabled={lobbiesLoading}
-                  className="p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-slate-200 transition disabled:opacity-40 min-h-[44px] min-w-[44px] flex items-center justify-center select-none shrink-0"
+                  className="w-9 shrink-0 p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-slate-200 transition disabled:opacity-40 min-h-[44px] flex items-center justify-center select-none"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${lobbiesLoading ? 'animate-spin' : ''}`} />
                 </button>
