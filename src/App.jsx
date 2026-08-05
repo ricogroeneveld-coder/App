@@ -8,6 +8,7 @@ import ScrollToTop from './components/ScrollToTop';
 import { useEffect } from 'react';
 // Add page imports here
 import Home from '@/pages/Home';
+import BrowseLobbies from '@/pages/BrowseLobbies';
 import MysteryGame from '@/pages/MysteryGame';
 import ProfileSettings from '@/pages/ProfileSettings';
 import Login from '@/pages/Login';
@@ -32,6 +33,7 @@ const AnimatedRoutes = () => {
             Gameplay routes work the same whether or not you're signed in. */}
         <Routes location={location}>
           <Route path="/" element={<Home />} />
+          <Route path="/browse-lobbies" element={<BrowseLobbies />} />
           <Route path="/mystery/:code" element={<MysteryGame />} />
           <Route path="/profile-settings" element={<ProfileSettings />} />
           <Route path="/login" element={<Login />} />
