@@ -1,32 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MysteryRoom, MysteryPlayer } from '@/api/db';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
-import { Settings, RefreshCw, X, ChevronDown, Users, LogIn } from 'lucide-react';
+import { Settings, X, ChevronRight, Crown, Users, HelpCircle, Globe } from 'lucide-react';
 import { getGuestIdentity, setGuestName, hasGuestName } from '@/lib/guestIdentity';
 import { Link } from 'react-router-dom';
 import { useLang } from '@/lib/LanguageContext';
-import bgImage from '../../background.jpg';
 import logoImage from '../../logo.webp';
-import taglineBanner from '../../tagline-banner.webp';
-import badgePlayers from '../../badge-players.webp';
-import badgeGuessing from '../../badge-guessing.webp';
-import badgeRealtime from '../../badge-realtime.webp';
-import hostFrame from '../../host-frame.webp';
-import joinFrame from '../../join-frame.webp';
-import browseFrame from '../../browse-frame.webp';
-import createGameBtn from '../../create-game-btn.webp';
-import joinBtn from '../../join-btn.webp';
-import togglePublic from '../../toggle-public.webp';
-import togglePrivate from '../../toggle-private.webp';
-import iconGlobe from '../../icon-globe.webp';
-import iconHash from '../../icon-hash.webp';
-import gameVisibilityText from '../../game-visibility-text.webp';
-
-const PULL_THRESHOLD = 70;
+import mascotRed from '../../mascot-red.webp';
+import mascotBlue from '../../mascot-blue.webp';
 
 const PLAYER_COLORS = ['#6366f1','#ec4899','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ef4444','#14b8a6','#f97316','#06b6d4','#84cc16','#a855f7'];
 
@@ -38,66 +23,12 @@ export default function Home() {
   const [loading, setLoading] = useState(null);
   const [nameInput, setNameInput] = useState('');
   const [nameSet, setNameSet] = useState(hasGuestName());
-  const [isPublic, setIsPublic] = useState(false);
-  const [publicLobbies, setPublicLobbies] = useState([]);
-  const [lobbiesLoading, setLobbiesLoading] = useState(false);
-  const [pullY, setPullY] = useState(0);
-  const [isPulling, setIsPulling] = useState(false);
+  const [isPublic] = useState(true);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
-  const [showLobbies, setShowLobbies] = useState(false);
-  const touchStartY = useRef(null);
-  const scrollRef = useRef(null);
 
   useEffect(() => {
     setNameSet(hasGuestName());
   }, []);
-
-  const fetchLobbies = async () => {
-    setLobbiesLoading(true);
-    try {
-      const rooms = await MysteryRoom.filter({ status: 'lobby', is_public: true }, '-created_date', 20);
-      setPublicLobbies(rooms || []);
-    } catch (e) {
-      setPublicLobbies([]);
-    } finally {
-      setLobbiesLoading(false);
-    }
-  };
-
-  const handleTouchStart = (e) => {
-    if (scrollRef.current?.scrollTop === 0) {
-      touchStartY.current = e.touches[0].clientY;
-    }
-  };
-
-  const handleTouchMove = (e) => {
-    if (touchStartY.current === null) return;
-    const dy = e.touches[0].clientY - touchStartY.current;
-    if (dy > 0 && scrollRef.current?.scrollTop === 0) {
-      setIsPulling(true);
-      setPullY(Math.min(dy * 0.4, PULL_THRESHOLD));
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (pullY >= PULL_THRESHOLD && !lobbiesLoading) {
-      fetchLobbies();
-    }
-    setPullY(0);
-    setIsPulling(false);
-    touchStartY.current = null;
-  };
-
-  useEffect(() => {
-    if (!nameSet) return;
-    fetchLobbies();
-    const unsub = MysteryRoom.subscribe((event) => {
-      if (event.data?.is_public) {
-        fetchLobbies();
-      }
-    });
-    return unsub;
-  }, [nameSet]);
 
   const confirmName = () => {
     if (!nameInput.trim()) { toast({ title: 'Enter your name', variant: 'destructive' }); return; }
@@ -180,45 +111,49 @@ export default function Home() {
 
   return (
     <div
-      ref={scrollRef}
-      className="min-h-screen text-white flex items-start justify-center p-4 overflow-y-auto relative hide-scrollbar"
+      className="h-screen text-white flex items-center justify-center p-4 overflow-hidden relative"
       style={{
         paddingTop: 'max(env(safe-area-inset-top), 0.5rem)',
-        paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)',
-        overscrollBehaviorY: 'none',
+        paddingBottom: 'max(env(safe-area-inset-bottom), 0.5rem)',
       }}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
     >
-      <div className="fixed inset-0 -z-10 bg-cover bg-center" style={{ backgroundImage: `url(${bgImage})` }} />
-      <div className="fixed inset-0 -z-10 bg-gradient-to-b from-slate-950/70 via-slate-950/30 to-slate-950/85" />
+      <div className="fixed inset-0 -z-10 bg-[#07040f]" />
+      {/* Soft light entering from above — sells a single overhead light source */}
+      <div className="fixed inset-0 -z-10" style={{ background: 'radial-gradient(ellipse 120% 38% at 50% -8%, rgba(255,255,255,0.05), transparent 60%)' }} />
+      {/* Focused spotlight directly behind the logo — tighter falloff, less wash */}
+      <div className="fixed inset-0 -z-10" style={{ background: 'radial-gradient(ellipse 46% 26% at 50% 21%, rgba(160,100,255,0.42), transparent 68%)' }} />
+      {/* Broad ambient wash, kept subtle */}
+      <div className="fixed inset-0 -z-10" style={{ background: 'radial-gradient(ellipse 90% 55% at 50% 15%, rgba(140,90,220,0.22), transparent 70%)' }} />
+      <div className="fixed inset-0 -z-10" style={{ background: 'radial-gradient(ellipse 100% 60% at 50% 100%, rgba(70,32,140,0.18), transparent 62%)' }} />
+      {/* Whisper of warm undertone low in frame — slight color variation so it never reads flat */}
+      <div className="fixed inset-0 -z-10" style={{ background: 'radial-gradient(ellipse 55% 26% at 50% 96%, rgba(140,70,20,0.07), transparent 65%)' }} />
+      <div className="fixed inset-0 -z-10 opacity-70" style={{
+        backgroundImage: 'radial-gradient(1.5px 1.5px at 12% 12%, rgba(255,255,255,0.8), transparent), radial-gradient(1px 1px at 28% 6%, rgba(255,255,255,0.5), transparent), radial-gradient(1.5px 1.5px at 65% 5%, rgba(255,255,255,0.6), transparent), radial-gradient(1px 1px at 80% 14%, rgba(255,255,255,0.5), transparent), radial-gradient(1.5px 1.5px at 92% 8%, rgba(255,255,255,0.7), transparent), radial-gradient(1px 1px at 6% 30%, rgba(255,255,255,0.4), transparent), radial-gradient(1.5px 1.5px at 95% 28%, rgba(255,255,255,0.6), transparent), radial-gradient(1px 1px at 4% 55%, rgba(255,255,255,0.4), transparent), radial-gradient(1.5px 1.5px at 93% 50%, rgba(255,255,255,0.5), transparent), radial-gradient(1px 1px at 15% 68%, rgba(255,255,255,0.35), transparent), radial-gradient(1.5px 1.5px at 88% 70%, rgba(255,255,255,0.45), transparent), radial-gradient(1px 1px at 40% 78%, rgba(255,255,255,0.3), transparent), radial-gradient(1.5px 1.5px at 70% 88%, rgba(255,255,255,0.4), transparent), radial-gradient(1px 1px at 25% 92%, rgba(255,255,255,0.3), transparent), radial-gradient(1.5px 1.5px at 55% 95%, rgba(255,255,255,0.35), transparent)',
+        backgroundSize: '100% 100%',
+        animation: 'twinkle 6s ease-in-out infinite alternate, driftSlow 50s ease-in-out infinite alternate',
+        willChange: 'transform, opacity',
+      }} />
+      <div className="fixed inset-0 -z-10" style={{ boxShadow: 'inset 0 0 min(42vw,290px) rgba(0,0,0,0.92)' }} />
 
-      {/* Pull-to-refresh indicator */}
-      {isPulling && (
-        <div
-          className="absolute top-0 left-0 right-0 flex justify-center items-center z-10 pointer-events-none transition-all"
-          style={{ height: `${pullY}px` }}
-        >
-          <RefreshCw className={`w-5 h-5 text-violet-400 transition-transform ${pullY >= PULL_THRESHOLD ? 'animate-spin' : ''}`}
-            style={{ transform: `rotate(${(pullY / PULL_THRESHOLD) * 360}deg)` }} />
-        </div>
-      )}
       {/* How to play button */}
-      <button
-        onClick={() => setShowHowToPlay(true)}
-        className="absolute left-4 z-20 w-11 h-11 flex items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10 hover:bg-white/10 transition select-none-interactive text-slate-400 font-bold text-lg"
-        style={{ top: 'max(env(safe-area-inset-top), 1rem)' }}
-      >?</button>
+      <div className="absolute left-4 z-20" style={{ top: 'max(env(safe-area-inset-top), 0.75rem)' }}>
+        <button
+          onClick={() => setShowHowToPlay(true)}
+          className="w-11 h-11 flex items-center justify-center rounded-full bg-gradient-to-b from-white/[0.07] to-black/20 backdrop-blur-sm ring-1 ring-white/10 shadow-[0_1px_2px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-white/10 hover:ring-violet-400/40 transition-all duration-150 active:scale-[0.98] select-none-interactive text-slate-200"
+        >
+          <HelpCircle className="w-5 h-5" />
+        </button>
+      </div>
 
       {/* Profile settings link */}
-      <Link
-        to="/profile-settings"
-        className="absolute right-4 z-20 w-11 h-11 flex items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10 hover:bg-white/10 transition select-none-interactive"
-        style={{ top: 'max(env(safe-area-inset-top), 1rem)' }}
-      >
-        <Settings className="w-5 h-5 text-slate-400" />
-      </Link>
+      <div className="absolute right-4 z-20" style={{ top: 'max(env(safe-area-inset-top), 0.75rem)' }}>
+        <Link
+          to="/profile-settings"
+          className="w-11 h-11 flex items-center justify-center rounded-full bg-gradient-to-b from-white/[0.07] to-black/20 backdrop-blur-sm ring-1 ring-white/10 shadow-[0_1px_2px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-white/10 hover:ring-violet-400/40 transition-all duration-150 active:scale-[0.98] select-none-interactive"
+        >
+          <Settings className="w-5 h-5 text-slate-200" />
+        </Link>
+      </div>
 
       {/* How to play modal */}
       {showHowToPlay && (
@@ -250,30 +185,24 @@ export default function Home() {
         </div>
       )}
 
-      <div className="relative z-10 w-full max-w-md">
-        <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} className="text-center mb-4">
-          <motion.div initial={{ scale:0 }} animate={{ scale:1 }} transition={{ type:'spring', duration:0.8 }}
-            className="flex justify-center pt-4 pb-2">
-            <img src={logoImage} alt="What's my Pick!" className="w-56 sm:w-64 drop-shadow-2xl" />
-          </motion.div>
-          <img src={taglineBanner} alt="The interactive guessing game"
-            className="w-full max-w-sm mx-auto drop-shadow-xl" />
-        </motion.div>
-
-        {/* Stat badges temporarily hidden for preview
-        <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.1 }}
-          className="grid grid-cols-3 gap-3 mb-8 text-center">
-          <div className="flex flex-col items-center">
-            <img src={badgePlayers} alt="" className="w-full max-w-[110px] drop-shadow-lg" />
-          </div>
-          <div className="flex flex-col items-center">
-            <img src={badgeGuessing} alt="" className="w-full max-w-[110px] drop-shadow-lg" />
-          </div>
-          <div className="flex flex-col items-center">
-            <img src={badgeRealtime} alt="" className="w-full max-w-[110px] drop-shadow-lg" />
+      <div className="relative z-10 w-full max-w-md -mt-4">
+        <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} className="text-center mb-5">
+          <div className="hero-shift">
+            <motion.div initial={{ scale:0 }} animate={{ scale:1 }} transition={{ type:'spring', duration:0.8 }}
+              className="relative flex items-center justify-center pt-2 pb-1">
+              <img src={mascotRed} alt="" className="absolute z-0 left-[9px] sm:left-[-15px] top-[28%] w-16 sm:w-24" style={{ filter: 'drop-shadow(0 14px 18px rgba(0,0,0,0.7)) drop-shadow(0 2px 3px rgba(0,0,0,0.5))' }} />
+              <img src={mascotBlue} alt="" className="absolute z-0 right-[9px] sm:right-[-15px] top-[28%] w-16 sm:w-24" style={{ filter: 'drop-shadow(0 14px 18px rgba(0,0,0,0.7)) drop-shadow(0 2px 3px rgba(0,0,0,0.5))' }} />
+              <motion.img src={logoImage} alt="What's my Pick!"
+                animate={{ y: [0, -2, 0] }}
+                transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+                className="relative z-10 w-[267px] sm:w-[305px]"
+                style={{ filter: 'drop-shadow(0 0 18px rgba(168,109,255,0.35)) drop-shadow(0 10px 14px rgba(0,0,0,0.45))' }} />
+            </motion.div>
+            <p className="text-center text-[18px] font-semibold text-white/[0.78] tracking-wide mt-2 translate-y-3">
+              {t.tagline}
+            </p>
           </div>
         </motion.div>
-        */}
 
         {!nameSet ? (
           <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.2 }} className="space-y-3">
@@ -288,113 +217,79 @@ export default function Home() {
             </Button>
           </motion.div>
         ) : (
-          <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.2 }} className="space-y-3">
-            <div className="flex items-center justify-between px-1 mb-1">
-              <span className="text-slate-400 text-sm">{t.playingAs} <span className="text-white font-semibold">{getGuestIdentity().name}</span></span>
+          <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.2 }}>
+          <div className="space-y-5 cards-shift">
+            {/* Profile card */}
+            <div className="relative h-20 rounded-[28px] bg-gradient-to-b from-white/[0.08] to-black/[0.18] backdrop-blur-md ring-1 ring-[#6d28d9]/60 shadow-[0_1px_2px_rgba(0,0,0,0.35),0_8px_16px_-8px_rgba(0,0,0,0.55),0_20px_30px_-18px_rgba(0,0,0,0.5),0_0_12px_-6px_rgba(109,40,217,0.45),inset_0_1px_0_rgba(255,255,255,0.1),inset_0_-1px_0_rgba(0,0,0,0.25)] px-4 flex items-center gap-3 overflow-hidden">
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+              <div className="relative w-[52px] h-[52px] rounded-full bg-gradient-to-br from-[#9d5cff] to-[#3b0f8f] ring-2 ring-[#9d5cff]/50 shadow-[0_3px_6px_-1px_rgba(0,0,0,0.55),0_1px_2px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.3)] flex items-center justify-center text-white font-bold shrink-0 overflow-hidden">
+                <span className="pointer-events-none absolute -top-2 -left-2 w-7 h-7 rounded-full bg-white/35 blur-[5px]" />
+                <span className="relative">{getGuestIdentity().name.charAt(0).toUpperCase()}</span>
+              </div>
+              <span className="text-sm text-slate-300 min-w-0 truncate">
+                {t.playingAs} <span className="text-amber-400 font-bold">{getGuestIdentity().name}</span>{' '}
+                <Crown className="inline w-3.5 h-3.5 text-amber-400 -mt-0.5" fill="currentColor" />
+              </span>
               <button onClick={() => { localStorage.removeItem('mystery_guest_name'); setNameSet(false); setNameInput(''); }}
-                className="text-xs text-slate-500 hover:text-slate-300 underline min-h-[44px] px-2 select-none">{t.change}</button>
-            </div>
-            <div className="relative mb-3 rounded-2xl px-[5%] flex flex-col items-center justify-center gap-[3%]"
-              style={{ backgroundImage: `url(${hostFrame})`, backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', aspectRatio: '1600/562' }}>
-              <button onClick={handleCreate} disabled={loading !== null} className="w-full disabled:opacity-60 transition" aria-label={t.createGame}>
-                <img src={createGameBtn} alt="" className="w-full h-auto block pointer-events-none" />
-              </button>
-              <img src={gameVisibilityText} alt="Game visibility" className="h-3 w-auto opacity-90 mt-1" />
-              <button onClick={() => setIsPublic(v => !v)} className="w-full" aria-label={isPublic ? t.publicLobby : t.privateLobby}>
-                <img src={isPublic ? togglePublic : togglePrivate} alt="" className="w-full h-auto block pointer-events-none" />
+                className="ml-auto shrink-0 px-3 py-1.5 rounded-lg bg-gradient-to-b from-white/[0.06] to-black/10 ring-1 ring-violet-500/50 shadow-[0_1px_2px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.12)] text-xs font-bold text-white hover:bg-violet-500/15 hover:ring-violet-400/70 transition-all duration-150 active:scale-[0.98] select-none">
+                {t.change}
               </button>
             </div>
 
-            <div className="relative mb-3 rounded-2xl px-[4%] flex items-center"
-              style={{ backgroundImage: `url(${joinFrame})`, backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', aspectRatio: '1600/246' }}>
-              <div className="w-[72px] shrink-0 flex items-center">
-                <img src={iconHash} alt="" className="w-6 h-6" />
-              </div>
+            {/* Create Game */}
+            <button onClick={handleCreate} disabled={loading !== null}
+              className="relative w-full h-20 rounded-[28px] bg-[linear-gradient(180deg,#fdeeb8_0%,#ffcb45_16%,#e08e05_40%,#a85800_66%,#5e2c00_100%)] shadow-[0_2px_3px_rgba(0,0,0,0.4),0_10px_18px_-8px_rgba(0,0,0,0.55),0_20px_30px_-16px_rgba(0,0,0,0.4),0_0_8px_-8px_rgba(255,180,60,0.22),0_0_0_1px_rgba(255,214,120,0.45),inset_0_1px_1px_rgba(255,255,255,0.2),inset_0_-8px_14px_-6px_rgba(110,45,0,0.42)] px-4 flex items-center gap-2.5 disabled:opacity-60 transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5 hover:brightness-[1.04] overflow-hidden">
+              <span className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(ellipse 55% 60% at 50% -8%, rgba(255,255,255,0.55), transparent 70%)' }} />
+              <span className="pointer-events-none absolute inset-y-0 w-1/3" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)', animation: 'shimmerSweep 13s ease-in-out infinite' }} />
+              <span className="relative w-12 h-12 rounded-2xl bg-gradient-to-b from-[#190c00] to-[#060300] ring-1 ring-[#ffcf7a]/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.45),0_2px_6px_rgba(0,0,0,0.55)] flex items-center justify-center shrink-0">
+                <Crown className="w-6 h-6 text-amber-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" fill="currentColor" />
+              </span>
+              <span className="relative text-left flex-1 min-w-0">
+                <span className="block text-base font-extrabold tracking-tight text-[#2c1500] leading-tight drop-shadow-[0_1px_0_rgba(255,255,255,0.25)]">{loading === 'create' ? t.creating : t.createGame}</span>
+                <span className="block text-xs font-medium text-[#4a2c0c] leading-tight">{t.createGameDesc}</span>
+              </span>
+              <span className="relative w-10 h-10 rounded-full bg-gradient-to-b from-[#190c00] to-[#060300] ring-1 ring-[#ffcf7a]/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.45),0_2px_6px_rgba(0,0,0,0.55)] flex items-center justify-center shrink-0">
+                <ChevronRight className="w-6 h-6 text-amber-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />
+              </span>
+            </button>
+
+            {/* Join Game */}
+            <div className="relative h-20 rounded-[28px] bg-gradient-to-b from-[#2a1150] via-[#1c0b3a] to-[#0d0620] shadow-[0_2px_3px_rgba(0,0,0,0.4),0_10px_18px_-8px_rgba(0,0,0,0.55),0_20px_30px_-16px_rgba(0,0,0,0.4),0_0_14px_-8px_rgba(56,189,248,0.4),0_0_0_1px_rgba(56,189,248,0.45),inset_0_1px_1px_rgba(255,255,255,0.2),inset_0_-8px_14px_-6px_rgba(0,0,0,0.42)] px-4 flex items-center gap-2.5 transition-transform duration-150 hover:-translate-y-0.5 overflow-hidden">
+              <span className="pointer-events-none absolute inset-x-2 top-1 h-1/2 rounded-t-[24px] bg-gradient-to-b from-white/[0.06] to-transparent" />
+              <span className="w-12 h-12 rounded-2xl bg-gradient-to-b from-[#0a2233] to-[#040d16] ring-1 ring-sky-400/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0">
+                <Users className="w-6 h-6 text-sky-300 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />
+              </span>
+              <span className="text-left min-w-0 shrink-0">
+                <span className="block text-base font-extrabold tracking-tight text-white leading-tight">{t.joinGame}</span>
+                <span className="hidden md:block text-xs font-medium text-slate-400 leading-tight">{t.joinGameDesc}</span>
+              </span>
               <input value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase())}
                 onKeyDown={e => e.key === 'Enter' && handleJoin()}
                 placeholder={t.roomCodePlaceholder} maxLength={6}
-                className="flex-1 min-w-0 bg-transparent border-0 outline-none text-white text-base font-mono tracking-widest text-center uppercase placeholder:text-slate-500" />
+                className="relative flex-1 min-w-0 h-10 rounded-xl bg-gradient-to-b from-[#1e0d42]/80 to-[#0a0518]/90 shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1px_rgba(183,148,255,0.3)] px-2 outline-none text-white text-sm tracking-wide uppercase placeholder:text-white/40 placeholder:tracking-normal placeholder:text-xs focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1.5px_rgba(56,189,248,0.7),0_0_10px_-2px_rgba(56,189,248,0.5)] transition-shadow" />
               <button onClick={handleJoin} disabled={loading !== null}
-                className="w-[72px] shrink-0 flex items-center justify-end disabled:opacity-60 transition" aria-label={t.roomCodePlaceholder}>
-                <img src={joinBtn} alt="Join" className="h-7 w-auto block pointer-events-none" />
+                className="relative h-10 px-2 shrink-0 rounded-xl bg-gradient-to-b from-sky-300 via-sky-400 to-sky-700 shadow-[0_1px_2px_rgba(0,0,0,0.4),0_4px_10px_-2px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.35)] hover:brightness-110 text-white font-bold text-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-60 overflow-hidden">
+                <span className="pointer-events-none absolute inset-x-0.5 top-0.5 h-1/2 rounded-t-[10px] bg-gradient-to-b from-white/40 to-transparent" />
+                <span className="relative">{t.join}</span>
               </button>
             </div>
 
-            {/* Public lobbies */}
-            <div className="pt-2">
-              <div className="relative rounded-2xl px-[4%] flex items-center"
-                style={{ backgroundImage: `url(${browseFrame})`, backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', aspectRatio: '1600/270' }}>
-                <div className="w-9 shrink-0" />
-                <button
-                  onClick={() => setShowLobbies(v => !v)}
-                  className="flex-1 flex items-center justify-center gap-2 min-h-[44px] min-w-0 select-none"
-                >
-                  <img src={iconGlobe} alt="" className="w-6 h-6 shrink-0" />
-                  <p className="text-sm font-medium text-slate-200 truncate">{t.openLobbies}</p>
-                  {publicLobbies.length > 0 && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-lime-500/20 text-lime-300 ring-1 ring-lime-400/30 shrink-0">
-                      {publicLobbies.length}
-                    </span>
-                  )}
-                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform shrink-0 ${showLobbies ? 'rotate-180' : ''}`} />
-                </button>
-                <button
-                  onClick={fetchLobbies}
-                  disabled={lobbiesLoading}
-                  className="w-9 shrink-0 p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-slate-200 transition disabled:opacity-40 min-h-[44px] flex items-center justify-center select-none"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${lobbiesLoading ? 'animate-spin' : ''}`} />
-                </button>
-              </div>
-              {showLobbies && (
-                lobbiesLoading ? (
-                  <p className="text-center text-slate-500 text-sm py-4">{t.loading}</p>
-                ) : publicLobbies.length === 0 ? (
-                  <p className="text-center text-slate-500 text-sm py-4">{t.noOpenLobbies}</p>
-                ) : (
-                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
-                    className="mt-2 space-y-2 overflow-hidden">
-                    {publicLobbies.map(room => (
-                      <motion.button key={room.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-                        onClick={async () => {
-                          setJoinCode(room.room_code);
-                          const guest = getGuestIdentity();
-                          setLoading('join');
-                          try {
-                            const existing = await MysteryPlayer.filter({ room_code: room.room_code, user_id: guest.id });
-                            if (!existing?.length) {
-                              const players = await MysteryPlayer.filter({ room_code: room.room_code });
-                              if (players.length >= 12) { toast({ title: 'Room is full', variant: 'destructive' }); return; }
-                              await MysteryPlayer.create({
-                                room_code: room.room_code, user_id: guest.id, display_name: guest.name,
-                                score: 0, word_submitted: false, word_revealed: false, is_eliminated: false,
-                                color: PLAYER_COLORS[players.length % PLAYER_COLORS.length]
-                              });
-                            }
-                            navigate(`/mystery/${room.room_code}`);
-                          } catch(e) {
-                            toast({ title: 'Failed to join', description: e.message, variant: 'destructive' });
-                          } finally {
-                            setLoading(null);
-                          }
-                        }}
-                        disabled={loading !== null}
-                        className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white/5 ring-1 ring-white/10 hover:bg-white/10 hover:ring-violet-400/40 transition text-left disabled:opacity-50">
-                        <div>
-                          <p className="font-semibold text-white text-sm">{room.host_name}'s lobby</p>
-                          <p className="text-xs text-slate-400 font-mono">{room.room_code}</p>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-slate-400">
-                          <Users className="w-3.5 h-3.5" />
-                          <span className="mr-2">{t.waiting}</span>
-                          <LogIn className="w-4 h-4 text-violet-400" />
-                        </div>
-                      </motion.button>
-                    ))}
-                  </motion.div>
-                )
-              )}
-            </div>
+            {/* Browse Games */}
+            <Link to="/browse-lobbies"
+              className="relative block h-20 rounded-[28px] bg-gradient-to-b from-[#1f7a4f] via-[#0d3624] to-[#03130b] shadow-[0_2px_3px_rgba(0,0,0,0.4),0_10px_18px_-8px_rgba(0,0,0,0.55),0_20px_30px_-16px_rgba(0,0,0,0.4),0_0_14px_-8px_rgba(74,222,128,0.35),0_0_0_1px_rgba(74,222,128,0.45),inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-8px_14px_-6px_rgba(0,0,0,0.42)] px-4 flex items-center gap-2.5 transition-all duration-150 hover:-translate-y-0.5 hover:brightness-[1.05] active:scale-[0.98] overflow-hidden">
+              <span className="pointer-events-none absolute inset-x-2 top-1 h-1/2 rounded-t-[24px] bg-gradient-to-b from-white/[0.12] to-transparent" />
+              <span className="w-12 h-12 rounded-2xl bg-gradient-to-b from-[#062217] to-[#020c08] ring-1 ring-green-400/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0">
+                <Globe className="w-6 h-6 text-green-300 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />
+              </span>
+              <span className="text-left flex-1 min-w-0">
+                <span className="block text-base font-extrabold tracking-tight text-white leading-tight truncate">{t.openLobbies}</span>
+                <span className="block text-xs font-medium text-slate-400 truncate">{t.openLobbiesDesc}</span>
+              </span>
+              <span className="w-10 h-10 rounded-full bg-gradient-to-b from-[#062217] to-[#020c08] ring-1 ring-green-400/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0">
+                <ChevronRight className="w-6 h-6 text-green-300 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />
+              </span>
+            </Link>
+          </div>
           </motion.div>
         )}
       </div>
