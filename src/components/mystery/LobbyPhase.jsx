@@ -78,8 +78,8 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
 
   return (
     <div
-      className="h-dvh overflow-hidden text-white flex items-center justify-center p-4 relative"
-      style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)', paddingBottom: 'max(env(safe-area-inset-bottom), 0.5rem)' }}
+      className="h-dvh overflow-hidden text-white flex items-start justify-center p-4 relative"
+      style={{ paddingTop: 'max(calc(env(safe-area-inset-top) + 4.25rem), 4.75rem)', paddingBottom: 'max(env(safe-area-inset-bottom), 0.5rem)' }}
     >
       {/* Background — identical to Home */}
       <div className="fixed inset-0 -z-10 bg-[#07040f]" />
