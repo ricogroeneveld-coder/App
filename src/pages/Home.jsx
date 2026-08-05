@@ -5,17 +5,26 @@ import { MysteryRoom, MysteryPlayer } from '@/api/db';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus, LogIn, Users, Globe, Lock, Settings, RefreshCw, X, ChevronDown } from 'lucide-react';
+import { Settings, RefreshCw, X, ChevronDown, Users, LogIn } from 'lucide-react';
 import { getGuestIdentity, setGuestName, hasGuestName } from '@/lib/guestIdentity';
 import { Link } from 'react-router-dom';
 import { useLang } from '@/lib/LanguageContext';
 import bgImage from '../../background.jpg';
 import logoImage from '../../logo.png';
-import mascotBlue from '../../mascot-blue.png';
-import mascotRed from '../../mascot-red.png';
+import taglineBanner from '../../tagline-banner.png';
 import badgePlayers from '../../badge-players.png';
 import badgeGuessing from '../../badge-guessing.png';
 import badgeRealtime from '../../badge-realtime.png';
+import hostFrame from '../../host-frame.png';
+import joinFrame from '../../join-frame.png';
+import browseFrame from '../../browse-frame.png';
+import createGameBtn from '../../create-game-btn.png';
+import joinBtn from '../../join-btn.png';
+import togglePublic from '../../toggle-public.png';
+import togglePrivate from '../../toggle-private.png';
+import iconGlobe from '../../icon-globe.png';
+import iconHash from '../../icon-hash.png';
+import gameVisibilityText from '../../game-visibility-text.png';
 
 const PULL_THRESHOLD = 70;
 
@@ -172,7 +181,7 @@ export default function Home() {
   return (
     <div
       ref={scrollRef}
-      className="min-h-screen text-white flex items-start justify-center p-4 overflow-y-auto relative"
+      className="min-h-screen text-white flex items-start justify-center p-4 overflow-y-auto relative hide-scrollbar"
       style={{
         paddingTop: 'max(env(safe-area-inset-top), 0.5rem)',
         paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)',
@@ -244,13 +253,11 @@ export default function Home() {
       <div className="relative z-10 w-full max-w-md">
         <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} className="text-center mb-4">
           <motion.div initial={{ scale:0 }} animate={{ scale:1 }} transition={{ type:'spring', duration:0.8 }}
-            className="flex items-end justify-center gap-1 pt-4 pb-2">
-            <img src={mascotRed} alt="" className="w-16 sm:w-20 drop-shadow-2xl -mb-1 shrink-0" />
-            <img src={logoImage} alt="What's my Pick!" className="w-56 sm:w-64 drop-shadow-2xl shrink-0" />
-            <img src={mascotBlue} alt="" className="w-16 sm:w-20 drop-shadow-2xl -mb-1 shrink-0" />
+            className="flex justify-center pt-4 pb-2">
+            <img src={logoImage} alt="What's my Pick!" className="w-56 sm:w-64 drop-shadow-2xl" />
           </motion.div>
-          <p className="text-slate-200 text-base font-medium mb-1 drop-shadow">{t.tagline}</p>
-          <p className="text-slate-300 text-sm drop-shadow">{t.subtitle}</p>
+          <img src={taglineBanner} alt="The interactive guessing game"
+            className="w-full max-w-sm mx-auto drop-shadow-xl" />
         </motion.div>
 
         <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.1 }}
@@ -285,42 +292,45 @@ export default function Home() {
               <button onClick={() => { localStorage.removeItem('mystery_guest_name'); setNameSet(false); setNameInput(''); }}
                 className="text-xs text-slate-500 hover:text-slate-300 underline min-h-[44px] px-2 select-none">{t.change}</button>
             </div>
-            <Button onClick={handleCreate} disabled={loading !== null}
-              className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-violet-500 to-pink-600 hover:from-violet-600 hover:to-pink-700 border-0 shadow-lg shadow-violet-500/25">
-              <Plus className="w-5 h-5 mr-2" />
-              {loading === 'create' ? t.creating : t.createGame}
-            </Button>
-            <button onClick={() => setIsPublic(v => !v)}
-              className={`w-full flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-medium transition ring-1 min-h-[44px] select-none ${isPublic ? 'bg-violet-500/20 ring-violet-400/40 text-violet-300' : 'bg-white/5 ring-white/10 text-slate-400 hover:text-slate-300'}`}>
-              {isPublic ? <Globe className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
-              {isPublic ? t.publicLobby : t.privateLobby}
-            </button>
-            <div className="flex gap-2">
-              <Input value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase())}
+            <div className="relative mb-3 rounded-2xl px-[5%] pt-[11%] pb-[4%] flex flex-col items-center gap-[3%]"
+              style={{ backgroundImage: `url(${hostFrame})`, backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat' }}>
+              <button onClick={handleCreate} disabled={loading !== null} className="w-full disabled:opacity-60 transition" aria-label={t.createGame}>
+                <img src={createGameBtn} alt="" className="w-full h-auto block pointer-events-none" />
+              </button>
+              <img src={gameVisibilityText} alt="Game visibility" className="h-3 w-auto opacity-90 mt-1" />
+              <button onClick={() => setIsPublic(v => !v)} className="w-full" aria-label={isPublic ? t.publicLobby : t.privateLobby}>
+                <img src={isPublic ? togglePublic : togglePrivate} alt="" className="w-full h-auto block pointer-events-none" />
+              </button>
+            </div>
+
+            <div className="relative mb-3 rounded-2xl px-[4%] py-[10%] flex items-center gap-3"
+              style={{ backgroundImage: `url(${joinFrame})`, backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat' }}>
+              <img src={iconHash} alt="" className="w-8 h-8 shrink-0" />
+              <input value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase())}
                 onKeyDown={e => e.key === 'Enter' && handleJoin()}
                 placeholder={t.roomCodePlaceholder} maxLength={6}
-                className="h-14 text-lg font-mono tracking-widest text-center uppercase bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-violet-400" />
-              <Button onClick={handleJoin} disabled={loading !== null} variant="secondary"
-                className="h-14 px-6 bg-white/10 hover:bg-white/15 border-white/10 text-white">
-                <LogIn className="w-5 h-5" />
-              </Button>
+                className="flex-1 min-w-0 bg-transparent border-0 outline-none text-white text-lg font-mono tracking-widest text-center uppercase placeholder:text-slate-500" />
+              <button onClick={handleJoin} disabled={loading !== null} className="shrink-0 disabled:opacity-60 transition" aria-label={t.roomCodePlaceholder}>
+                <img src={joinBtn} alt="Join" className="h-9 w-auto block pointer-events-none" />
+              </button>
             </div>
 
             {/* Public lobbies */}
             <div className="pt-2">
-              <div className="flex items-center gap-2 rounded-xl bg-white/5 ring-1 ring-white/10 px-3 py-2">
+              <div className="relative rounded-2xl px-[4%] py-[9%] flex items-center gap-3"
+                style={{ backgroundImage: `url(${browseFrame})`, backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat' }}>
                 <button
                   onClick={() => setShowLobbies(v => !v)}
-                  className="flex items-center gap-2 flex-1 min-h-[44px] text-left select-none"
+                  className="flex items-center gap-3 flex-1 min-h-[44px] min-w-0 text-left select-none"
                 >
-                  <Globe className="w-4 h-4 text-violet-400 shrink-0" />
-                  <p className="text-sm font-medium text-slate-300 flex-1">{t.openLobbies}</p>
+                  <img src={iconGlobe} alt="" className="w-8 h-8 shrink-0" />
+                  <p className="text-sm font-medium text-slate-200 flex-1 truncate">{t.openLobbies}</p>
                   {publicLobbies.length > 0 && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-300 ring-1 ring-violet-400/30">
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-lime-500/20 text-lime-300 ring-1 ring-lime-400/30 shrink-0">
                       {publicLobbies.length}
                     </span>
                   )}
-                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${showLobbies ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform shrink-0 ${showLobbies ? 'rotate-180' : ''}`} />
                 </button>
                 <button
                   onClick={fetchLobbies}

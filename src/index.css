@@ -111,6 +111,10 @@
   }
   .word-grid-scroll { scrollbar-width: thin; scrollbar-color: hsl(var(--primary) / 0.35) transparent; }
 
+  /* Hidden scrollbar — scrolling still works, just no visible track/thumb */
+  .hide-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+  .hide-scrollbar::-webkit-scrollbar { display: none; }
+
   /* Select-none for interactive UI — text in message/chat areas keeps selection */
   button, [role="button"], [role="tab"], nav, .select-none-interactive {
     -webkit-user-select: none;
