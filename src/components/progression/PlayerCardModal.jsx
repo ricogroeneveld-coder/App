@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import PlayerAvatar from './PlayerAvatar';
+import BannerArt from './BannerArt';
 import { cosmeticById, RARITIES } from '@/lib/cosmetics';
 
 /**
@@ -25,9 +26,8 @@ export default function PlayerCardModal({ player, profile, onClose }) {
         className="glass-card w-full max-w-sm bg-slate-900/95 p-0"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)' }}>
         {/* Banner */}
-        <div className="relative h-20"
-          style={{ background: banner?.css || 'linear-gradient(120deg, #1c0b3a 0%, #0d0620 100%)' }}>
-          <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+        <div className="relative h-20 overflow-hidden rounded-t-[24px]">
+          <BannerArt banner={banner} className="absolute inset-0" />
           <button onClick={onClose} aria-label="Close"
             className="absolute right-2 top-2 p-2.5 rounded-xl hover:bg-black/30 text-white/70">
             <X className="w-5 h-5" />

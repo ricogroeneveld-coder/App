@@ -3,7 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Settings, Lock, Check, Sparkles } from 'lucide-react';
 import GameBackground from '@/components/GameBackground';
-import PlayerAvatar from '@/components/progression/PlayerAvatar';
+import PlayerAvatar, { AvatarFrame, EmblemTile } from '@/components/progression/PlayerAvatar';
+import BannerArt from '@/components/progression/BannerArt';
 import { useToast } from '@/components/ui/use-toast';
 import { useLang } from '@/lib/LanguageContext';
 import {
@@ -27,20 +28,34 @@ function sourceLabel(c, t) {
  * The one cosmetic card. Fixed vertical slots — status (lock/equipped),
  * artwork, name, rarity badge, footer (price or unlock source) — so every
  * card in every grid is pixel-identical in size, padding, and rhythm.
+ * Higher rarities feel alive: soft glow, a slow shine sweep, and twinkles.
  */
 function CosmeticCard({ c, owned, equipped, onTap, justUnlocked, footer, footerClass }) {
   const rar = RARITIES[c.rarity];
+  const fancy = c.rarity === 'legendary' || c.rarity === 'mythic';
   return (
     <motion.button onClick={() => onTap(c)}
       animate={justUnlocked ? { scale: [0.7, 1.12, 1] } : {}}
       transition={{ duration: 0.45 }}
-      className={`glass-panel w-full rounded-2xl p-2 flex flex-col items-center text-center transition-all duration-150 active:scale-[0.97] hover:-translate-y-0.5 ring-1 ${equipped ? 'ring-[#ffcf7a]/70' : rar.ring} ${!owned && !footer ? 'opacity-80' : ''}`}>
+      className={`glass-panel relative overflow-hidden w-full rounded-2xl p-2 flex flex-col items-center text-center transition-all duration-150 active:scale-[0.97] hover:-translate-y-0.5 ring-1 ${equipped ? 'ring-[#ffcf7a]/70' : rar.ring} ${rar.cardGlow} ${!owned && !footer ? 'opacity-80' : ''}`}>
+      {fancy && <span aria-hidden className="fx-shine" />}
+      {c.rarity === 'mythic' && (
+        <span aria-hidden className="fx-twinkle absolute top-1.5 right-2 text-[9px] leading-none">✦</span>
+      )}
+      {justUnlocked && [...Array(6)].map((_, i) => (
+        <motion.span key={i} aria-hidden
+          className="absolute left-1/2 top-1/2 text-amber-300 text-sm leading-none pointer-events-none z-10"
+          initial={{ x: -4, y: -8, opacity: 1, scale: 0.5 }}
+          animate={{ x: Math.cos(i * Math.PI / 3) * 44 - 4, y: Math.sin(i * Math.PI / 3) * 44 - 8, opacity: 0, scale: 1.3 }}
+          transition={{ duration: 0.75, ease: 'easeOut' }}>✦</motion.span>
+      ))}
       {/* Status slot — equipped check, lock, or empty; always 16px tall */}
       <span className="h-4 flex items-center justify-center">
         {equipped ? (
-          <span className="w-4 h-4 rounded-full bg-gradient-to-b from-[#ffcb45] to-[#e08e05] flex items-center justify-center shadow-[0_1px_3px_rgba(0,0,0,0.5)]">
+          <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', duration: 0.4 }}
+            className="w-4 h-4 rounded-full bg-gradient-to-b from-[#ffcb45] to-[#e08e05] flex items-center justify-center shadow-[0_1px_3px_rgba(0,0,0,0.5)]">
             <Check className="w-2.5 h-2.5 text-[#2c1500]" strokeWidth={3.5} />
-          </span>
+          </motion.span>
         ) : !owned ? (
           <Lock className="w-3 h-3 text-slate-400" />
         ) : null}
@@ -48,17 +63,17 @@ function CosmeticCard({ c, owned, equipped, onTap, justUnlocked, footer, footerC
       {/* Artwork slot — always 44px tall */}
       <span className="h-11 w-full flex items-center justify-center mt-1">
         {c.type === 'emblem' && (
-          <span className="w-11 h-11 rounded-full flex items-center justify-center text-xl"
-            style={{ background: c.tile, boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.2)' }}>{c.emoji}</span>
+          <span className="relative w-11 h-11 rounded-full overflow-hidden flex shadow-[0_2px_6px_-1px_rgba(0,0,0,0.5)]">
+            <EmblemTile emblem={c} fontSize={22} />
+          </span>
         )}
         {c.type === 'banner' && (
-          <span className="w-full h-11 rounded-lg" style={{ background: c.css, boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.15)' }} />
+          <BannerArt banner={c} className="relative w-full h-11 rounded-lg" />
         )}
         {c.type === 'border' && (
-          <span className="w-11 h-11 rounded-full bg-black/40 flex items-center justify-center"
-            style={{ boxShadow: `inset 0 0 0 2px ${c.ringColor}${c.shadow !== 'none' ? `, ${c.shadow}` : ''}` }}>
-            <span className="text-lg">🙂</span>
-          </span>
+          <AvatarFrame frame={c.frame} size={44}>
+            <span className="w-full h-full bg-black/50 flex items-center justify-center text-lg">🙂</span>
+          </AvatarFrame>
         )}
         {c.type === 'title' && (
           <span className={`w-full text-[11px] font-extrabold leading-tight ${rar.text}`}>“{c.name}”</span>
@@ -146,7 +161,7 @@ export default function Profile() {
       if (res.ok) {
         setJustUnlocked(c.id);
         toast({ title: `${t.unlocked} ${c.name}!`, description: `-${c.source.price} Picks` });
-        setTimeout(() => setJustUnlocked(null), 600);
+        setTimeout(() => setJustUnlocked(null), 900);
       } else if (res.reason === 'picks') {
         toast({ title: t.notEnoughPicks, variant: 'destructive' });
       }
@@ -183,8 +198,8 @@ export default function Profile() {
       <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar w-full max-w-md mx-auto px-4 pb-2" style={{ overscrollBehaviorY: 'contain' }}>
         {/* Identity card */}
         <div className="glass-card mb-3">
-          <div className="relative h-20" style={{ background: banner?.css }}>
-            <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+          <div className="relative h-20">
+            <BannerArt banner={banner} className="absolute inset-0" />
             <div className="absolute -bottom-7 left-4">
               <PlayerAvatar profile={profile} name={profile.display_name} size={56} />
             </div>

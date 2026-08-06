@@ -74,7 +74,17 @@ export function getProfile() {
   return cache;
 }
 
-export async function loadProfile() {
+// Single-flight: concurrent callers (page load + daily login + dev unlock)
+// share one load instead of racing and clobbering each other's writes.
+let loadPromise = null;
+export function loadProfile() {
+  if (!loadPromise) {
+    loadPromise = doLoadProfile().finally(() => { loadPromise = null; });
+  }
+  return loadPromise;
+}
+
+async function doLoadProfile() {
   const local = readLocal() || blankProfile();
   cache = local;
   if (remoteOk) {

@@ -4,83 +4,157 @@
 //         { type: 'shop', price } purchasable with Picks
 //         { type: 'level', level } auto-granted at that level
 //         { type: 'challenge' } granted by season challenges
-// Emblems are emoji on a gradient tile; banners are CSS gradients; borders
-// are ring/glow treatments around the avatar; titles and name colors are
-// text styling. All styling reuses the game's existing material language.
+//
+// Art direction: kawaii mobile-game collectibles. Emblems are expressive
+// characters on vivid, glossy radial tiles — every tile has its own color
+// story, never flat. Banners are layered scenes (gradient + pattern +
+// motifs + lighting). Borders are rarity frames around the avatar: silver →
+// glow → crystal → animated gold → animated rainbow aura. Name colors go up
+// to animated rainbow text. Rendering lives in PlayerAvatar/BannerArt and
+// the .name-* / .frame-* / .fx-* classes in index.css.
 
 export const RARITIES = {
   common:    { label: 'Common',    ring: 'ring-slate-400/40',  text: 'text-slate-300',
-               chip: 'bg-slate-500/20 text-slate-300 ring-1 ring-slate-400/30' },
+               chip: 'bg-slate-500/20 text-slate-300 ring-1 ring-slate-400/30', cardGlow: '' },
   rare:      { label: 'Rare',      ring: 'ring-sky-400/50',    text: 'text-sky-300',
-               chip: 'bg-sky-500/20 text-sky-300 ring-1 ring-sky-400/40' },
+               chip: 'bg-sky-500/20 text-sky-300 ring-1 ring-sky-400/40', cardGlow: '' },
   epic:      { label: 'Epic',      ring: 'ring-violet-400/60', text: 'text-violet-300',
-               chip: 'bg-violet-500/20 text-violet-300 ring-1 ring-violet-400/40' },
+               chip: 'bg-violet-500/20 text-violet-300 ring-1 ring-violet-400/40',
+               cardGlow: 'shadow-[0_0_18px_-9px_rgba(157,92,255,0.6)]' },
   legendary: { label: 'Legendary', ring: 'ring-amber-400/70',  text: 'text-amber-300',
-               chip: 'bg-gradient-to-b from-[#ffcb45] to-[#e08e05] text-[#2c1500]' },
+               chip: 'bg-gradient-to-b from-[#ffcb45] to-[#e08e05] text-[#2c1500]',
+               cardGlow: 'shadow-[0_0_20px_-9px_rgba(255,180,60,0.65)]' },
   mythic:    { label: 'Mythic',    ring: 'ring-fuchsia-400/70', text: 'text-fuchsia-300',
-               chip: 'bg-gradient-to-b from-fuchsia-400 to-purple-700 text-white' },
+               chip: 'bg-gradient-to-b from-fuchsia-400 to-purple-700 text-white',
+               cardGlow: 'shadow-[0_0_22px_-9px_rgba(232,121,249,0.7)]' },
 };
 
-const TILE = {
-  slate:  'linear-gradient(180deg, #2b3245 0%, #141824 100%)',
-  violet: 'linear-gradient(180deg, #2a1150 0%, #0d0620 100%)',
-  sky:    'linear-gradient(180deg, #0a2233 0%, #040d16 100%)',
-  green:  'linear-gradient(180deg, #062217 0%, #020c08 100%)',
-  gold:   'linear-gradient(180deg, #3a2400 0%, #1a0f00 100%)',
-  rose:   'linear-gradient(180deg, #3b0a1e 0%, #16030b 100%)',
-};
+// Glossy character tiles — light hits top-left, deep color at the base.
+const tile = (light, mid, deep) =>
+  `radial-gradient(130% 130% at 30% 20%, ${light} 0%, ${mid} 52%, ${deep} 100%)`;
+// A tile with tiny stars baked in (for space-y characters)
+const starTile = (light, mid, deep) =>
+  `radial-gradient(1.5px 1.5px at 72% 24%, rgba(255,255,255,0.9), transparent 100%),` +
+  `radial-gradient(1px 1px at 28% 68%, rgba(255,255,255,0.7), transparent 100%),` +
+  `radial-gradient(1px 1px at 82% 74%, rgba(255,255,255,0.6), transparent 100%),` +
+  tile(light, mid, deep);
 
 export const EMBLEMS = [
-  { id: 'em_detective', type: 'emblem', name: 'Detective',    emoji: '🕵️', tile: TILE.violet, rarity: 'common',    source: { type: 'starter' } },
-  { id: 'em_card',      type: 'emblem', name: 'Wild Card',    emoji: '🃏', tile: TILE.violet, rarity: 'common',    source: { type: 'starter' } },
-  { id: 'em_dice',      type: 'emblem', name: 'High Roller',  emoji: '🎲', tile: TILE.slate,  rarity: 'common',    source: { type: 'shop', price: 100 } },
-  { id: 'em_ghost',     type: 'emblem', name: 'Ghost',        emoji: '👻', tile: TILE.slate,  rarity: 'common',    source: { type: 'shop', price: 100 } },
-  { id: 'em_fox',       type: 'emblem', name: 'Sly Fox',      emoji: '🦊', tile: TILE.rose,   rarity: 'common',    source: { type: 'shop', price: 100 } },
-  { id: 'em_alien',     type: 'emblem', name: 'Visitor',      emoji: '👽', tile: TILE.green,  rarity: 'rare',      source: { type: 'shop', price: 300 } },
-  { id: 'em_ninja',     type: 'emblem', name: 'Shadow',       emoji: '🥷', tile: TILE.slate,  rarity: 'rare',      source: { type: 'shop', price: 300 } },
-  { id: 'em_owl',       type: 'emblem', name: 'Night Owl',    emoji: '🦉', tile: TILE.violet, rarity: 'rare',      source: { type: 'shop', price: 300 } },
-  { id: 'em_brain',     type: 'emblem', name: 'Mastermind',   emoji: '🧠', tile: TILE.rose,   rarity: 'rare',      source: { type: 'level', level: 5 } },
-  { id: 'em_wizard',    type: 'emblem', name: 'Word Wizard',  emoji: '🧙', tile: TILE.violet, rarity: 'epic',      source: { type: 'shop', price: 800 } },
-  { id: 'em_dragon',    type: 'emblem', name: 'Dragon',       emoji: '🐉', tile: TILE.green,  rarity: 'epic',      source: { type: 'shop', price: 800 } },
-  { id: 'em_crystal',   type: 'emblem', name: 'Oracle',       emoji: '🔮', tile: TILE.violet, rarity: 'epic',      source: { type: 'level', level: 10 } },
-  { id: 'em_crown',     type: 'emblem', name: 'Royalty',      emoji: '👑', tile: TILE.gold,   rarity: 'legendary', source: { type: 'shop', price: 2000 } },
-  { id: 'em_trophy',    type: 'emblem', name: 'Champion',     emoji: '🏆', tile: TILE.gold,   rarity: 'legendary', source: { type: 'level', level: 20 } },
-  { id: 'em_phoenix',   type: 'emblem', name: 'Phoenix',      emoji: '🔥', tile: TILE.rose,   rarity: 'mythic',    source: { type: 'shop', price: 5000 } },
-  { id: 'em_galaxy',    type: 'emblem', name: 'Cosmic Mind',  emoji: '🌌', tile: TILE.violet, rarity: 'mythic',    source: { type: 'challenge' } },
+  // Starters
+  { id: 'em_detective', type: 'emblem', name: 'Detective',   emoji: '🕵️', rarity: 'common',    source: { type: 'starter' },            tile: tile('#8f6bff', '#41209b', '#160837') },
+  { id: 'em_card',      type: 'emblem', name: 'Wild Card',   emoji: '🃏', rarity: 'common',    source: { type: 'starter' },            tile: tile('#ff8bd8', '#8f1d6b', '#2b0521') },
+  // Commons — cute, instantly likeable
+  { id: 'em_kitten',    type: 'emblem', name: 'Mochi',       emoji: '😺', rarity: 'common',    source: { type: 'shop', price: 100 },   tile: tile('#ffce93', '#f2740d', '#5e2405') },
+  { id: 'em_penguin',   type: 'emblem', name: 'Waddles',     emoji: '🐧', rarity: 'common',    source: { type: 'shop', price: 100 },   tile: tile('#bfe9ff', '#2f96d4', '#0a3355') },
+  { id: 'em_ghost',     type: 'emblem', name: 'Boo',         emoji: '👻', rarity: 'common',    source: { type: 'shop', price: 100 },   tile: tile('#cfdcff', '#5c78dd', '#182561') },
+  { id: 'em_fox',       type: 'emblem', name: 'Sly Fox',     emoji: '🦊', rarity: 'common',    source: { type: 'shop', price: 100 },   tile: tile('#ffb35c', '#dd540a', '#571302') },
+  { id: 'em_dice',      type: 'emblem', name: 'High Roller', emoji: '🎲', rarity: 'common',    source: { type: 'shop', price: 100 },   tile: tile('#7dffc0', '#0d9865', '#03301e') },
+  // Rares — personality picks
+  { id: 'em_panda',     type: 'emblem', name: 'Bamboo',      emoji: '🐼', rarity: 'rare',      source: { type: 'shop', price: 300 },   tile: tile('#c8f7dd', '#2fb87b', '#07402a') },
+  { id: 'em_boba',      type: 'emblem', name: 'Boba Break',  emoji: '🧋', rarity: 'rare',      source: { type: 'shop', price: 300 },   tile: tile('#ffe2b8', '#bd7f43', '#42250e') },
+  { id: 'em_alien',     type: 'emblem', name: 'Visitor',     emoji: '👽', rarity: 'rare',      source: { type: 'shop', price: 300 },   tile: tile('#b6ff7d', '#4bab10', '#123c02') },
+  { id: 'em_ninja',     type: 'emblem', name: 'Shadow',      emoji: '🥷', rarity: 'rare',      source: { type: 'shop', price: 300 },   tile: tile('#8fa3c2', '#2c3a55', '#0a0f1c') },
+  { id: 'em_owl',       type: 'emblem', name: 'Night Owl',   emoji: '🦉', rarity: 'rare',      source: { type: 'shop', price: 300 },   tile: tile('#c9a1ff', '#5f2cae', '#1c0b3a') },
+  { id: 'em_pixel',     type: 'emblem', name: 'Pixel Pal',   emoji: '👾', rarity: 'rare',      source: { type: 'level', level: 3 },    tile: tile('#cd8bff', '#7c2fe0', '#230a4e') },
+  { id: 'em_brain',     type: 'emblem', name: 'Mastermind',  emoji: '🧠', rarity: 'rare',      source: { type: 'level', level: 5 },    tile: tile('#ff9ad5', '#d3357c', '#4b0a2c') },
+  // Epics — showpieces
+  { id: 'em_robot',     type: 'emblem', name: 'Botto',       emoji: '🤖', rarity: 'epic',      source: { type: 'shop', price: 800 },   tile: tile('#84f4ff', '#0e93cf', '#07304f') },
+  { id: 'em_unicorn',   type: 'emblem', name: 'Sparklehorn', emoji: '🦄', rarity: 'epic',      source: { type: 'shop', price: 800 },   tile: tile('#ffd3f6', '#c25ede', '#43126b') },
+  { id: 'em_wizard',    type: 'emblem', name: 'Word Wizard', emoji: '🧙', rarity: 'epic',      source: { type: 'shop', price: 800 },   tile: starTile('#b394ff', '#6524d6', '#1e0850') },
+  { id: 'em_dragon',    type: 'emblem', name: 'Dragon',      emoji: '🐉', rarity: 'epic',      source: { type: 'shop', price: 800 },   tile: tile('#8bf7c6', '#0f9d6c', '#043321') },
+  { id: 'em_crystal',   type: 'emblem', name: 'Oracle',      emoji: '🔮', rarity: 'epic',      source: { type: 'level', level: 10 },   tile: starTile('#f3b1ff', '#a325bd', '#3c0754') },
+  { id: 'em_sakura',    type: 'emblem', name: 'Sakura',      emoji: '🌸', rarity: 'epic',      source: { type: 'level', level: 12 },   tile: tile('#ffe0ee', '#f4649f', '#6e1440') },
+  // Legendaries — status symbols
+  { id: 'em_oni',       type: 'emblem', name: 'Oni Mask',    emoji: '👺', rarity: 'legendary', source: { type: 'shop', price: 2000 },  tile: tile('#ff9d76', '#d92c1c', '#4d0703') },
+  { id: 'em_crown',     type: 'emblem', name: 'Royalty',     emoji: '👑', rarity: 'legendary', source: { type: 'shop', price: 2000 },  tile: tile('#ffdf75', '#cd8306', '#4b2a00') },
+  { id: 'em_trophy',    type: 'emblem', name: 'Champion',    emoji: '🏆', rarity: 'legendary', source: { type: 'level', level: 20 },   tile: tile('#ffd75e', '#c47b08', '#402400') },
+  { id: 'em_star',      type: 'emblem', name: 'Superstar',   emoji: '🌟', rarity: 'legendary', source: { type: 'level', level: 25 },   tile: starTile('#fff0a8', '#e3a008', '#4d3000') },
+  // Mythics — the chase
+  { id: 'em_phoenix',   type: 'emblem', name: 'Phoenix',     emoji: '🔥', rarity: 'mythic',    source: { type: 'shop', price: 5000 },  tile: tile('#ffc46b', '#f04c13', '#560b06') },
+  { id: 'em_planet',    type: 'emblem', name: 'Ringworld',   emoji: '🪐', rarity: 'mythic',    source: { type: 'shop', price: 5000 },  tile: starTile('#c4b5fd', '#5b21b6', '#11043a') },
+  { id: 'em_galaxy',    type: 'emblem', name: 'Cosmic Mind', emoji: '🌌', rarity: 'mythic',    source: { type: 'challenge' },          tile: starTile('#8b7cff', '#3b1a8f', '#0a0620') },
 ];
+
+// Banner scenes — layered backgrounds (patterns + gradients baked into one
+// css string) plus floating emoji motifs for depth. shine adds a slow
+// sweep of light on legendary/mythic scenes.
+const dots = (spots) => spots.map(([x, y, s, o]) =>
+  `radial-gradient(${s}px ${s}px at ${x}% ${y}%, rgba(255,255,255,${o}), transparent 100%)`).join(',');
 
 export const BANNERS = [
-  { id: 'bn_midnight', type: 'banner', name: 'Midnight',      rarity: 'common',    source: { type: 'starter' },
-    css: 'linear-gradient(120deg, #1c0b3a 0%, #0d0620 100%)' },
-  { id: 'bn_slate',    type: 'banner', name: 'Slate',         rarity: 'common',    source: { type: 'shop', price: 100 },
-    css: 'linear-gradient(120deg, #2b3245 0%, #10131c 100%)' },
-  { id: 'bn_ocean',    type: 'banner', name: 'Deep Ocean',    rarity: 'rare',      source: { type: 'shop', price: 300 },
-    css: 'linear-gradient(120deg, #0a2a44 0%, #071726 55%, #040d16 100%)' },
-  { id: 'bn_forest',   type: 'banner', name: 'Forest Night',  rarity: 'rare',      source: { type: 'shop', price: 300 },
-    css: 'linear-gradient(120deg, #0d3624 0%, #062217 55%, #02130b 100%)' },
-  { id: 'bn_nebula',   type: 'banner', name: 'Nebula',        rarity: 'epic',      source: { type: 'shop', price: 800 },
-    css: 'linear-gradient(120deg, #3b0f8f 0%, #1c0b3a 45%, #6d28d9 100%)' },
-  { id: 'bn_ember',    type: 'banner', name: 'Ember',         rarity: 'epic',      source: { type: 'level', level: 8 },
-    css: 'linear-gradient(120deg, #7c2d12 0%, #3b0a1e 55%, #16030b 100%)' },
-  { id: 'bn_gold',     type: 'banner', name: 'Gilded',        rarity: 'legendary', source: { type: 'shop', price: 2000 },
-    css: 'linear-gradient(120deg, #a85800 0%, #3a2400 55%, #1a0f00 100%)' },
-  { id: 'bn_aurora',   type: 'banner', name: 'Aurora',        rarity: 'mythic',    source: { type: 'level', level: 30 },
-    css: 'linear-gradient(120deg, #6d28d9 0%, #0e7490 40%, #065f46 75%, #1c0b3a 100%)' },
+  { id: 'bn_midnight', type: 'banner', name: 'Midnight',       rarity: 'common', source: { type: 'starter' },
+    css: `${dots([[18, 30, 1.5, 0.8], [76, 22, 1, 0.6], [55, 65, 1, 0.5], [88, 58, 1.5, 0.55]])}, linear-gradient(120deg, #241052 0%, #12072b 55%, #0a0518 100%)` },
+  { id: 'bn_clouds',   type: 'banner', name: 'Daydream',       rarity: 'common', source: { type: 'shop', price: 100 },
+    css: 'linear-gradient(180deg, #7fb2f2 0%, #a68df0 60%, #e2a6d9 100%)',
+    motifs: [{ e: '☁️', x: '8%', y: '18%', s: 22, o: 0.85 }, { e: '☁️', x: '62%', y: '48%', s: 30, o: 0.9 }, { e: '☁️', x: '84%', y: '10%', s: 16, o: 0.7 }] },
+  { id: 'bn_slate',    type: 'banner', name: 'Steel',          rarity: 'common', source: { type: 'shop', price: 100 },
+    css: 'repeating-linear-gradient(115deg, rgba(255,255,255,0.05) 0 2px, transparent 2px 9px), linear-gradient(120deg, #39435c 0%, #1a2030 60%, #0e1220 100%)' },
+  { id: 'bn_candy',    type: 'banner', name: 'Candy Pop',      rarity: 'rare',   source: { type: 'shop', price: 300 },
+    css: 'repeating-linear-gradient(45deg, rgba(255,255,255,0.14) 0 12px, transparent 12px 26px), linear-gradient(120deg, #ff7eb9 0%, #c86bdd 55%, #6d4ad1 100%)',
+    motifs: [{ e: '🍬', x: '76%', y: '18%', s: 18, o: 0.9, r: 18 }, { e: '🍭', x: '10%', y: '46%', s: 20, o: 0.9, r: -14 }] },
+  { id: 'bn_storm',    type: 'banner', name: 'Thunderhead',    rarity: 'rare',   source: { type: 'level', level: 4 },
+    css: `${dots([[70, 20, 1.5, 0.6]])}, linear-gradient(160deg, #3c4a6b 0%, #1c2440 45%, #0b0f22 100%)`,
+    motifs: [{ e: '⚡', x: '72%', y: '30%', s: 24, o: 0.9, r: 10 }, { e: '☁️', x: '8%', y: '14%', s: 20, o: 0.55 }] },
+  { id: 'bn_ocean',    type: 'banner', name: 'Deep Ocean',     rarity: 'rare',   source: { type: 'shop', price: 300 },
+    css: `${dots([[22, 28, 2, 0.25], [38, 60, 1.5, 0.2], [30, 42, 1, 0.25]])}, linear-gradient(180deg, #0e5f8f 0%, #093a5e 45%, #041627 100%)`,
+    motifs: [{ e: '🫧', x: '14%', y: '22%', s: 16, o: 0.7 }, { e: '🐠', x: '74%', y: '44%', s: 18, o: 0.85, r: -8 }] },
+  { id: 'bn_forest',   type: 'banner', name: 'Forest Night',   rarity: 'rare',   source: { type: 'shop', price: 300 },
+    css: `${dots([[26, 40, 1.5, 0.5], [64, 26, 1, 0.45], [80, 62, 1.5, 0.4]])}, linear-gradient(160deg, #14532d 0%, #093321 55%, #02130b 100%)`,
+    motifs: [{ e: '🍃', x: '78%', y: '16%', s: 16, o: 0.8, r: 24 }, { e: '🦋', x: '12%', y: '52%', s: 14, o: 0.75, r: -10 }] },
+  { id: 'bn_sakura',   type: 'banner', name: 'Cherry Blossom', rarity: 'epic',   source: { type: 'shop', price: 800 },
+    css: 'linear-gradient(160deg, #ff9ecb 0%, #c2578f 45%, #4e1436 100%)',
+    motifs: [{ e: '🌸', x: '74%', y: '10%', s: 24, o: 0.95, r: -12 }, { e: '🌸', x: '12%', y: '46%', s: 16, o: 0.8, r: 20 }, { e: '🌸', x: '48%', y: '66%', s: 12, o: 0.6, r: -30 }] },
+  { id: 'bn_neon',     type: 'banner', name: 'Neon City',      rarity: 'epic',   source: { type: 'shop', price: 800 },
+    css: 'repeating-linear-gradient(0deg, rgba(0,0,0,0.22) 0 2px, transparent 2px 5px), radial-gradient(90% 120% at 20% 100%, rgba(255,62,175,0.55), transparent 60%), radial-gradient(90% 120% at 85% 100%, rgba(0,225,255,0.5), transparent 60%), linear-gradient(180deg, #140a2e 0%, #1e0f45 100%)',
+    motifs: [{ e: '🌆', x: '66%', y: '24%', s: 26, o: 0.9 }] },
+  { id: 'bn_nebula',   type: 'banner', name: 'Nebula',         rarity: 'epic',   source: { type: 'shop', price: 800 },
+    css: `${dots([[20, 25, 1.5, 0.9], [45, 60, 1, 0.7], [70, 30, 1.5, 0.8], [88, 66, 1, 0.6], [58, 14, 1, 0.7]])}, radial-gradient(80% 100% at 70% 20%, rgba(232,121,249,0.4), transparent 60%), linear-gradient(120deg, #4c1d95 0%, #1c0b3a 55%, #6d28d9 100%)`,
+    motifs: [{ e: '✨', x: '80%', y: '48%', s: 14, o: 0.9 }] },
+  { id: 'bn_ember',    type: 'banner', name: 'Ember',          rarity: 'epic',   source: { type: 'level', level: 8 },
+    css: `${dots([[30, 30, 1.5, 0.5], [60, 50, 1, 0.4]])}, radial-gradient(100% 120% at 50% 110%, rgba(255,120,40,0.55), transparent 60%), linear-gradient(160deg, #7c2d12 0%, #431407 55%, #16030b 100%)`,
+    motifs: [{ e: '🔥', x: '76%', y: '34%', s: 20, o: 0.85 }] },
+  { id: 'bn_temple',   type: 'banner', name: 'Ancient Temple', rarity: 'legendary', source: { type: 'shop', price: 2000 }, shine: true,
+    css: 'repeating-linear-gradient(90deg, rgba(255,203,69,0.06) 0 14px, transparent 14px 28px), linear-gradient(160deg, #7a4a12 0%, #3d2408 55%, #170d02 100%)',
+    motifs: [{ e: '⛩️', x: '72%', y: '20%', s: 28, o: 0.95 }, { e: '🏮', x: '12%', y: '42%', s: 16, o: 0.8 }] },
+  { id: 'bn_gold',     type: 'banner', name: 'Gilded',         rarity: 'legendary', source: { type: 'shop', price: 2000 }, shine: true,
+    css: `${dots([[24, 32, 1.5, 0.6], [70, 60, 1, 0.5]])}, linear-gradient(120deg, #b06104 0%, #3a2400 55%, #1a0f00 100%)`,
+    motifs: [{ e: '✦', x: '80%', y: '22%', s: 14, o: 0.9 }] },
+  { id: 'bn_galaxy',   type: 'banner', name: 'Galaxy',         rarity: 'legendary', source: { type: 'level', level: 16 }, shine: true,
+    css: `${dots([[12, 20, 1.5, 0.9], [30, 55, 1, 0.7], [48, 25, 1, 0.8], [66, 62, 1.5, 0.7], [84, 30, 1, 0.8], [92, 70, 1, 0.6]])}, radial-gradient(70% 90% at 30% 40%, rgba(109,40,217,0.5), transparent 65%), linear-gradient(140deg, #1e1b4b 0%, #0c0724 60%, #050213 100%)`,
+    motifs: [{ e: '🪐', x: '72%', y: '38%', s: 22, o: 0.95, r: -10 }] },
+  { id: 'bn_dragon',   type: 'banner', name: 'Dragon Realm',   rarity: 'mythic', source: { type: 'shop', price: 5000 }, shine: true,
+    css: `${dots([[20, 28, 1.5, 0.5]])}, radial-gradient(90% 110% at 80% 100%, rgba(16,185,129,0.4), transparent 60%), linear-gradient(150deg, #064e3b 0%, #022c22 55%, #01120c 100%)`,
+    motifs: [{ e: '🐉', x: '66%', y: '16%', s: 34, o: 0.95, r: -6 }, { e: '✦', x: '18%', y: '30%', s: 12, o: 0.8 }] },
+  { id: 'bn_aurora',   type: 'banner', name: 'Aurora',         rarity: 'mythic', source: { type: 'level', level: 30 }, shine: true,
+    css: `${dots([[16, 24, 1.5, 0.8], [80, 20, 1, 0.7], [60, 60, 1, 0.6]])}, radial-gradient(100% 90% at 30% 0%, rgba(52,211,153,0.45), transparent 55%), radial-gradient(100% 90% at 75% 0%, rgba(56,189,248,0.4), transparent 55%), linear-gradient(160deg, #312e81 0%, #131044 55%, #060318 100%)`,
+    motifs: [{ e: '❄️', x: '84%', y: '52%', s: 12, o: 0.7 }] },
 ];
 
+// Avatar frames — the ring instantly communicates rarity: silver → colored
+// glow → crystal facets → animated gold → animated rainbow aura.
 export const BORDERS = [
-  { id: 'bd_none',   type: 'border', name: 'Standard',    rarity: 'common',    source: { type: 'starter' },
-    shadow: 'none', ringColor: 'rgba(255,255,255,0.15)' },
-  { id: 'bd_violet', type: 'border', name: 'Violet Ring', rarity: 'common',    source: { type: 'shop', price: 100 },
-    shadow: '0 0 10px -2px rgba(157,92,255,0.7)', ringColor: 'rgba(157,92,255,0.8)' },
-  { id: 'bd_sky',    type: 'border', name: 'Ice Ring',    rarity: 'rare',      source: { type: 'shop', price: 300 },
-    shadow: '0 0 10px -2px rgba(56,189,248,0.7)', ringColor: 'rgba(56,189,248,0.8)' },
-  { id: 'bd_emerald',type: 'border', name: 'Emerald Ring',rarity: 'rare',      source: { type: 'level', level: 6 },
-    shadow: '0 0 10px -2px rgba(52,211,153,0.7)', ringColor: 'rgba(52,211,153,0.8)' },
-  { id: 'bd_gold',   type: 'border', name: 'Golden Ring', rarity: 'legendary', source: { type: 'shop', price: 2000 },
-    shadow: '0 0 14px -2px rgba(255,180,60,0.8)', ringColor: 'rgba(255,203,69,0.9)' },
-  { id: 'bd_mythic', type: 'border', name: 'Mythic Aura', rarity: 'mythic',    source: { type: 'shop', price: 5000 },
-    shadow: '0 0 16px -2px rgba(232,121,249,0.9)', ringColor: 'rgba(232,121,249,0.9)', animated: true },
+  { id: 'bd_none',     type: 'border', name: 'Silver',        rarity: 'common',    source: { type: 'starter' },
+    frame: { ring: 'linear-gradient(160deg, #f1f5fb 0%, #8b98ad 55%, #cdd6e4 100%)' } },
+  { id: 'bd_violet',   type: 'border', name: 'Violet Glow',   rarity: 'common',    source: { type: 'shop', price: 100 },
+    frame: { ring: 'linear-gradient(180deg, #c4b5fd, #7c3aed)', glow: '0 0 10px 0 rgba(157,92,255,0.65)' } },
+  { id: 'bd_sky',      type: 'border', name: 'Ice Glow',      rarity: 'rare',      source: { type: 'shop', price: 300 },
+    frame: { ring: 'linear-gradient(180deg, #d5f2ff, #38bdf8 60%, #0284c7)', glow: '0 0 12px 0 rgba(56,189,248,0.7)', pulse: true } },
+  { id: 'bd_emerald',  type: 'border', name: 'Emerald Glow',  rarity: 'rare',      source: { type: 'level', level: 6 },
+    frame: { ring: 'linear-gradient(180deg, #a7f3d0, #10b981 60%, #047857)', glow: '0 0 12px 0 rgba(52,211,153,0.7)', pulse: true } },
+  { id: 'bd_electric', type: 'border', name: 'Electric',      rarity: 'epic',      source: { type: 'shop', price: 800 },
+    frame: { ring: 'conic-gradient(#facc15, #22d3ee, #facc15, #22d3ee, #facc15)', glow: '0 0 13px 0 rgba(250,204,21,0.6)', pulse: true } },
+  { id: 'bd_crystal',  type: 'border', name: 'Amethyst',      rarity: 'epic',      source: { type: 'shop', price: 800 },
+    frame: { ring: 'conic-gradient(#e9d5ff, #7c3aed, #4c1d95, #a78bfa, #6d28d9, #e9d5ff)', glow: '0 0 13px 0 rgba(157,92,255,0.65)' } },
+  { id: 'bd_fire',     type: 'border', name: 'Flame',         rarity: 'epic',      source: { type: 'level', level: 18 },
+    frame: { ring: 'conic-gradient(#fed7aa, #f97316, #dc2626, #f97316, #fed7aa)', glow: '0 0 14px 0 rgba(249,115,22,0.7)', pulse: true } },
+  { id: 'bd_gold',     type: 'border', name: 'Royal Gold',    rarity: 'legendary', source: { type: 'shop', price: 2000 },
+    frame: { ring: 'conic-gradient(#fff3c4, #ffcb45, #a85800, #ffcb45, #fff3c4, #e08e05, #fff3c4)', glow: '0 0 15px 0 rgba(255,180,60,0.75)', spin: true, sparkle: true } },
+  { id: 'bd_diamond',  type: 'border', name: 'Diamond',       rarity: 'legendary', source: { type: 'level', level: 35 },
+    frame: { ring: 'conic-gradient(#ffffff, #bae6fd, #7dd3fc, #ffffff, #e0f2fe, #ffffff)', glow: '0 0 15px 0 rgba(186,230,253,0.8)', spin: true, sparkle: true } },
+  { id: 'bd_champion', type: 'border', name: 'Champion',      rarity: 'legendary', source: { type: 'challenge' },
+    frame: { ring: 'conic-gradient(#ffcb45, #9d5cff, #ffcb45, #9d5cff, #ffcb45)', glow: '0 0 15px 0 rgba(255,203,69,0.7)', spin: true, sparkle: true } },
+  { id: 'bd_mythic',   type: 'border', name: 'Rainbow Aura',  rarity: 'mythic',    source: { type: 'shop', price: 5000 },
+    frame: { ring: 'conic-gradient(#ff8bd8, #ffd36b, #7dffa8, #7db9ff, #c98bff, #ff8bd8)', glow: '0 0 18px 1px rgba(232,121,249,0.8)', spin: true, pulse: true, sparkle: true } },
 ];
 
 export const TITLES = [
@@ -94,14 +168,15 @@ export const TITLES = [
   { id: 't_founder',   type: 'title', name: 'Founder',          rarity: 'mythic',    source: { type: 'challenge' } },
 ];
 
+// Name styles — rendering classes live in index.css (.name-*).
 export const NAME_COLORS = [
-  { id: 'nc_default', type: 'nameColor', name: 'Classic',  rarity: 'common',    source: { type: 'starter' }, cls: 'text-white' },
-  { id: 'nc_violet',  type: 'nameColor', name: 'Violet',   rarity: 'common',    source: { type: 'shop', price: 100 }, cls: 'text-violet-300' },
-  { id: 'nc_sky',     type: 'nameColor', name: 'Ice',      rarity: 'rare',      source: { type: 'shop', price: 300 }, cls: 'text-sky-300' },
-  { id: 'nc_gold',    type: 'nameColor', name: 'Gold',     rarity: 'legendary', source: { type: 'level', level: 12 },
-    cls: 'text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-500' },
-  { id: 'nc_mythic',  type: 'nameColor', name: 'Prism',    rarity: 'mythic',    source: { type: 'shop', price: 5000 },
-    cls: 'text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-300 via-violet-300 to-sky-300' },
+  { id: 'nc_default',  type: 'nameColor', name: 'Classic',       rarity: 'common',    source: { type: 'starter' },           cls: 'text-white' },
+  { id: 'nc_violet',   type: 'nameColor', name: 'Violet',        rarity: 'common',    source: { type: 'shop', price: 100 },  cls: 'text-violet-300' },
+  { id: 'nc_sky',      type: 'nameColor', name: 'Ice',           rarity: 'rare',      source: { type: 'shop', price: 300 },  cls: 'text-sky-300' },
+  { id: 'nc_neon',     type: 'nameColor', name: 'Neon',          rarity: 'epic',      source: { type: 'shop', price: 800 },  cls: 'name-neon' },
+  { id: 'nc_gold',     type: 'nameColor', name: 'Gold',          rarity: 'legendary', source: { type: 'level', level: 12 },  cls: 'name-gold' },
+  { id: 'nc_champion', type: 'nameColor', name: 'Champion Glow', rarity: 'legendary', source: { type: 'shop', price: 2000 }, cls: 'name-champion' },
+  { id: 'nc_mythic',   type: 'nameColor', name: 'Rainbow',       rarity: 'mythic',    source: { type: 'shop', price: 5000 }, cls: 'name-rainbow' },
 ];
 
 export const ALL_COSMETICS = [...EMBLEMS, ...BANNERS, ...BORDERS, ...TITLES, ...NAME_COLORS];

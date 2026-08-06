@@ -58,6 +58,7 @@ export const WEEKLY = [
 export const SEASON = [
   { id: 's_play40',  stat: 'plays',   target: 40, picks: 300, name: 'Complete 40 games',   unlock: 'em_galaxy' },
   { id: 's_guess25', stat: 'guesses', target: 25, picks: 250, name: '25 correct guesses',  unlock: 't_founder' },
+  { id: 's_win15',   stat: 'wins',    target: 15, picks: 400, name: 'Win 15 games',        unlock: 'bd_champion' },
 ];
 
 export const SEASON_ID = 'S1';

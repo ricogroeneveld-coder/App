@@ -180,6 +180,75 @@
     will-change: transform;
   }
 
+  /* ── Cosmetic rarity effects ──────────────────────────────────────────
+     Frames, sparkles, shine sweeps, and name styles for the collectible
+     system. All loop slowly (5–8s) and collapse under reduced-motion. */
+
+  /* Animated frame rings (legendary gold, rainbow aura) rotate slowly. */
+  @keyframes frameSpin { to { transform: rotate(1turn); } }
+  .frame-spin { animation: frameSpin 8s linear infinite; }
+
+  /* Breathing glow layer on higher-rarity frames. */
+  @keyframes frameBreathe { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+  .frame-breathe { animation: frameBreathe 5s ease-in-out infinite; }
+
+  /* Tiny twinkling stars pinned to legendary/mythic cosmetics. */
+  @keyframes fxTwinkle {
+    0%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); }
+    50% { opacity: 0.95; transform: scale(1) rotate(25deg); }
+  }
+  .fx-twinkle {
+    animation: fxTwinkle 6s ease-in-out infinite;
+    color: #ffe9a8;
+    text-shadow: 0 0 6px rgba(255, 220, 130, 0.8);
+    pointer-events: none;
+  }
+
+  /* Slow shine sweep across a card or banner — mostly resting, one soft
+     pass every ~7s. Parent needs overflow-hidden + relative. */
+  @keyframes fxShine {
+    0%, 76% { transform: translateX(-180%) skewX(-18deg); }
+    94%, 100% { transform: translateX(300%) skewX(-18deg); }
+  }
+  .fx-shine {
+    position: absolute;
+    top: 0; bottom: 0; left: 0;
+    width: 45%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
+    animation: fxShine 7s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  /* Name styles — gradient, neon, champion glow, animated rainbow. */
+  .name-gold {
+    background-image: linear-gradient(180deg, #ffe9a8 0%, #ffb92e 55%, #e08e05 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 6px rgba(255, 190, 60, 0.35));
+  }
+  .name-neon {
+    color: #7df3ff;
+    text-shadow: 0 0 6px rgba(59, 222, 255, 0.9), 0 0 16px rgba(59, 222, 255, 0.45);
+  }
+  .name-champion {
+    background-image: linear-gradient(180deg, #fff3c4 0%, #ffcb45 60%, #f0a020 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 8px rgba(255, 203, 69, 0.55));
+  }
+  @keyframes nameRainbow { to { background-position: 300% center; } }
+  .name-rainbow {
+    background-image: linear-gradient(90deg, #ff8bd8, #ffd36b, #7dffa8, #7db9ff, #c98bff, #ff8bd8);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: nameRainbow 6s linear infinite;
+    filter: drop-shadow(0 0 6px rgba(200, 139, 255, 0.35));
+  }
+
   /* Respect reduced-motion: decorative animation collapses to a single
      instant frame. Functional transitions (press feedback) stay usable. */
   @media (prefers-reduced-motion: reduce) {
