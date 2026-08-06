@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,11 +8,27 @@ import { getGuestIdentity } from '@/lib/guestIdentity';
 import { useLang } from '@/lib/LanguageContext';
 import { toDisplayWord } from '@/lib/wordLists';
 import GameBackground from '@/components/GameBackground';
+import { grantMatchRewards } from '@/lib/playerProfile';
+import PlayerAvatar from '@/components/progression/PlayerAvatar';
+import PlayerCardModal from '@/components/progression/PlayerCardModal';
+import RewardSummary from '@/components/progression/RewardSummary';
+import usePeerProfiles from '@/components/progression/usePeerProfiles';
 
 export default function FinishedPhase({ players, guesses, room, me, roomCode }) {
   const navigate = useNavigate();
   const { t, lang } = useLang();
   const [loading, setLoading] = useState(false);
+  const [breakdown, setBreakdown] = useState(null);
+  const [cardPlayer, setCardPlayer] = useState(null);
+  const profiles = usePeerProfiles(players);
+
+  useEffect(() => {
+    let live = true;
+    grantMatchRewards({ room, players, guesses, me }).then(b => { if (live && b) setBreakdown(b); });
+    return () => { live = false; };
+    // Grant exactly once per results screen — the store is idempotent per room anyway.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [room?.id]);
   const sorted = [...players].sort((a, b) => (b.score || 0) - (a.score || 0));
   const topScore = sorted[0]?.score || 0;
   const winners = sorted.filter(p => (p.score || 0) === topScore);
@@ -97,15 +113,13 @@ export default function FinishedPhase({ players, guesses, room, me, roomCode }) 
             const isTop = pScore === topScore;
             return (
               <motion.div key={p.id} initial={{ opacity:0, x:-20 }} animate={{ opacity:1, x:0 }} transition={{ delay: i * 0.07 }}
-                className={`flex items-center gap-2.5 px-3 py-1.5 rounded-2xl ring-1 ${isTop
+                onClick={() => setCardPlayer(p)} role="button" tabIndex={0}
+                onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setCardPlayer(p)}
+                className={`flex items-center gap-2.5 px-3 py-1.5 rounded-2xl ring-1 cursor-pointer transition-transform duration-150 active:scale-[0.98] ${isTop
                   ? 'bg-gradient-to-b from-[#3a2400]/70 to-[#1a0f00]/70 ring-[#ffcf7a]/50 shadow-[inset_0_1px_1px_rgba(255,220,150,0.2)]'
                   : 'bg-white/5 ring-white/5'}`}>
                 <span className={`font-bold w-7 text-center ${rank <= 3 ? 'text-xl' : 'text-sm text-slate-400'}`}>{medal}</span>
-                <div className="relative w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-[0_2px_6px_-1px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.25)] overflow-hidden"
-                  style={{ backgroundColor: p.color }}>
-                  <span className="pointer-events-none absolute -top-1 -left-1 w-4 h-4 rounded-full bg-white/35 blur-[3px]" />
-                  <span className="relative">{p.display_name[0].toUpperCase()}</span>
-                </div>
+                <PlayerAvatar profile={profiles[p.user_id]} name={p.display_name} color={p.color} size={32} />
                 <div className="flex-1 min-w-0">
                   <p className={`font-bold text-sm truncate leading-tight ${isTop ? 'text-amber-200' : ''}`}>{p.display_name}</p>
                   <p className="text-[11px] text-slate-400 truncate">{t.secret}: <span className="text-slate-200 font-medium">{toDisplayWord(p.secret_word, lang) || '—'}</span></p>
@@ -115,6 +129,8 @@ export default function FinishedPhase({ players, guesses, room, me, roomCode }) 
             );
           })}
         </div>
+
+        {breakdown && <RewardSummary breakdown={breakdown} />}
 
         <div className="flex-1 min-h-2" />
 
@@ -136,6 +152,10 @@ export default function FinishedPhase({ players, guesses, room, me, roomCode }) 
           <Home className="w-4 h-4 mr-2" /> {t.backToHome}
         </Button>
       </div>
+
+      {cardPlayer && (
+        <PlayerCardModal player={cardPlayer} profile={profiles[cardPlayer.user_id]} onClose={() => setCardPlayer(null)} />
+      )}
     </div>
   );
 }

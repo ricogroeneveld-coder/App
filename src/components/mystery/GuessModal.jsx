@@ -7,10 +7,13 @@ import { X, Check, XCircle } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { toDisplayWord } from '@/lib/wordLists';
 import { playCorrect, playWrong } from '@/lib/sounds';
+import PlayerAvatar from '@/components/progression/PlayerAvatar';
+import usePeerProfiles from '@/components/progression/usePeerProfiles';
 
 export default function GuessModal({ target, players, guesses, me, myPlayer, roomCode, room, questions, onClose, reload }) {
   const { toast } = useToast();
   const { t, lang } = useLang();
+  const profiles = usePeerProfiles(players);
   const [selectedTarget, setSelectedTarget] = useState(target);
   const [guessWord, setGuessWord] = useState('');
   const [result, setResult] = useState(null); // 'correct' | 'wrong'
@@ -125,8 +128,7 @@ export default function GuessModal({ target, players, guesses, me, myPlayer, roo
                 ) : guessableOpponents.map(p => (
                   <button key={p.id} onClick={() => setSelectedTarget(p)}
                     className="glass-tile w-full flex items-center gap-2.5 px-3 py-2 hover:bg-white/10 transition text-left active:scale-[0.98]">
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-                      style={{ backgroundColor: p.color }}>{p.display_name[0].toUpperCase()}</div>
+                    <PlayerAvatar profile={profiles[p.user_id]} name={p.display_name} color={p.color} size={28} />
                     <span className="font-medium">{p.display_name}</span>
                   </button>
                 ))}
@@ -134,8 +136,7 @@ export default function GuessModal({ target, players, guesses, me, myPlayer, roo
             ) : (
               <div className="space-y-4">
                 <div className="glass-tile flex items-center gap-2.5 px-3 py-2">
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-                    style={{ backgroundColor: selectedTarget.color }}>{selectedTarget.display_name[0].toUpperCase()}</div>
+                  <PlayerAvatar profile={profiles[selectedTarget.user_id]} name={selectedTarget.display_name} color={selectedTarget.color} size={28} />
                   <div className="flex-1">
                     <p className="font-medium">{selectedTarget.display_name}</p>
                     <p className="text-xs text-slate-400">{t.categorie}: {room.category}</p>

@@ -11,6 +11,7 @@ import Home from '@/pages/Home';
 import BrowseLobbies from '@/pages/BrowseLobbies';
 import MysteryGame from '@/pages/MysteryGame';
 import ProfileSettings from '@/pages/ProfileSettings';
+import Profile from '@/pages/Profile';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
@@ -35,6 +36,7 @@ const AnimatedRoutes = () => {
           <Route path="/" element={<Home />} />
           <Route path="/browse-lobbies" element={<BrowseLobbies />} />
           <Route path="/mystery/:code" element={<MysteryGame />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/profile-settings" element={<ProfileSettings />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />

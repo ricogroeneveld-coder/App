@@ -9,6 +9,9 @@ import { useLang } from '@/lib/LanguageContext';
 import GameBackground from '@/components/GameBackground';
 import lobbyTitleImage from '../../../lobby-title.webp';
 import CategorySelector from './CategorySelector';
+import PlayerAvatar from '@/components/progression/PlayerAvatar';
+import PlayerCardModal from '@/components/progression/PlayerCardModal';
+import usePeerProfiles from '@/components/progression/usePeerProfiles';
 
 function categoryMeta(cat) {
   if (!cat) return null;
@@ -28,6 +31,8 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
   const [loading, setLoading] = useState(false);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [showCategorySelector, setShowCategorySelector] = useState(false);
+  const [cardPlayer, setCardPlayer] = useState(null);
+  const profiles = usePeerProfiles(players);
   const isHost = room.host_id === me?.id;
   const meta = categoryMeta(selectedCategory);
 
@@ -185,12 +190,10 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
             <div className="grid grid-cols-2 gap-1.5 max-h-[156px] overflow-y-auto hide-scrollbar" style={{ overscrollBehaviorY: 'none' }}>
               {players.map((p, i) => (
                 <motion.div key={p.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                  className="glass-tile flex items-center gap-2 h-9 px-2">
-                  <div className="relative w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 shadow-[0_2px_6px_-1px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.25)] overflow-hidden"
-                    style={{ backgroundColor: p.color }}>
-                    <span className="pointer-events-none absolute -top-1 -left-1 w-3.5 h-3.5 rounded-full bg-white/35 blur-[3px]" />
-                    <span className="relative">{p.display_name[0].toUpperCase()}</span>
-                  </div>
+                  onClick={() => setCardPlayer(p)} role="button" tabIndex={0}
+                  onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setCardPlayer(p)}
+                  className="glass-tile flex items-center gap-2 h-9 px-2 cursor-pointer transition-transform duration-150 active:scale-[0.97]">
+                  <PlayerAvatar profile={profiles[p.user_id]} name={p.display_name} color={p.color} size={24} />
                   <span className="flex-1 min-w-0 font-semibold text-xs text-white truncate">{p.display_name}</span>
                   {p.user_id === room.host_id && <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" fill="currentColor" />}
                   {p.user_id === me?.id && (
@@ -281,6 +284,10 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
           )}
         </div>
       </div>
+
+      {cardPlayer && (
+        <PlayerCardModal player={cardPlayer} profile={profiles[cardPlayer.user_id]} onClose={() => setCardPlayer(null)} />
+      )}
     </div>
   );
 }

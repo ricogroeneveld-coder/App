@@ -3,6 +3,8 @@ import { MysteryChat } from '@/api/db';
 import { Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLang } from '@/lib/LanguageContext';
+import PlayerAvatar from '@/components/progression/PlayerAvatar';
+import usePeerProfiles from '@/components/progression/usePeerProfiles';
 
 const EMOTES = ['😂', '🔥', '👀', '💀', '🤔', '😱', '🎉', '👏', '😏', '🤯'];
 
@@ -18,6 +20,7 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
   const [wakeEpoch, setWakeEpoch] = useState(0);
   const bottomRef = useRef(null);
   const pendingIdRef = useRef(0);
+  const profiles = usePeerProfiles(messages);
 
   // Re-fetch + re-subscribe when the tab wakes — the background-suspended
   // realtime socket misses messages and can come back dead.
@@ -105,10 +108,7 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : ''}`}>
-                <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-                  style={{ backgroundColor: msg.color }}>
-                  {(msg.display_name || '?')[0].toUpperCase()}
-                </div>
+                <PlayerAvatar profile={profiles[msg.user_id]} name={msg.display_name} color={msg.color} size={24} />
                 <div className={`max-w-[75%] px-3 py-2 rounded-2xl text-sm transition-opacity ${
                   msg._pending ? 'opacity-50' : msg._failed ? 'opacity-40 ring-1 ring-rose-500/50' : 'opacity-100'
                 } ${isMe ? 'bg-gradient-to-b from-violet-500 to-violet-700 text-white rounded-br-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_2px_6px_-2px_rgba(0,0,0,0.4)]' : 'bg-white/10 text-white rounded-bl-sm ring-1 ring-white/5'}`}>

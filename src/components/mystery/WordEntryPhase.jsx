@@ -7,10 +7,13 @@ import { Lock, Check, Clock, Search, Pencil, ChevronsDown, ArrowLeft } from 'luc
 import { WORD_LISTS, WORD_LISTS_NL, PREMIUM_WORD_LISTS, shortCategory } from '@/lib/wordLists';
 import { useLang } from '@/lib/LanguageContext';
 import GameBackground from '@/components/GameBackground';
+import PlayerAvatar from '@/components/progression/PlayerAvatar';
+import usePeerProfiles from '@/components/progression/usePeerProfiles';
 
 export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }) {
   const { toast } = useToast();
   const { t, lang } = useLang();
+  const profiles = usePeerProfiles(players);
   const [selected, setSelected] = useState('');
   const [customInput, setCustomInput] = useState('');
   const [search, setSearch] = useState('');
@@ -175,11 +178,7 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
         <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.2 }} className="glass-card mt-3 p-3 space-y-1.5">
           {players.map(p => (
             <div key={p.id} className="glass-tile flex items-center gap-2.5 h-9 px-2.5">
-              <div className="relative w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 shadow-[0_2px_6px_-1px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.25)] overflow-hidden"
-                style={{ backgroundColor: p.color }}>
-                <span className="pointer-events-none absolute -top-1 -left-1 w-3.5 h-3.5 rounded-full bg-white/35 blur-[3px]" />
-                <span className="relative">{p.display_name[0].toUpperCase()}</span>
-              </div>
+              <PlayerAvatar profile={profiles[p.user_id]} name={p.display_name} color={p.color} size={24} />
               <span className="flex-1 min-w-0 text-xs font-semibold truncate">{p.display_name}</span>
               {p.user_id === me?.id && <span className="shrink-0 px-1.5 py-0.5 rounded-full bg-violet-500/20 ring-1 ring-violet-400/40 text-[9px] font-bold text-violet-200">{t.you}</span>}
               {p.word_submitted

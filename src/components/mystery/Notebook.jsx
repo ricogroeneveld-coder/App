@@ -3,9 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Trophy, Lightbulb } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { toDisplayWord } from '@/lib/wordLists';
+import PlayerAvatar from '@/components/progression/PlayerAvatar';
+import usePeerProfiles from '@/components/progression/usePeerProfiles';
 
 export default function Notebook({ players, questions, guesses, me, myPlayer }) {
   const { t, lang } = useLang();
+  const profiles = usePeerProfiles(players);
   const opponents = players.filter(p => p.user_id !== me?.id);
   const [pageIdx, setPageIdx] = useState(0);
   const touchStartX = useRef(null);
@@ -58,10 +61,7 @@ export default function Notebook({ players, questions, guesses, me, myPlayer }) 
         </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
-              style={{ backgroundColor: target.color }}>
-              {target.display_name[0].toUpperCase()}
-            </div>
+            <PlayerAvatar profile={profiles[target.user_id]} name={target.display_name} color={target.color} size={32} />
             <div className="min-w-0">
               <p className="font-semibold truncate">{target.display_name}</p>
               <p className="text-xs text-slate-400">{pageIdx+1} / {opponents.length}</p>

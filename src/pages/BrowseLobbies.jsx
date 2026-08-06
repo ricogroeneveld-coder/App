@@ -7,6 +7,8 @@ import { ChevronLeft, RefreshCw, LogIn, Globe, Loader2 } from 'lucide-react';
 import { getGuestIdentity } from '@/lib/guestIdentity';
 import { useLang } from '@/lib/LanguageContext';
 import GameBackground from '@/components/GameBackground';
+import PlayerAvatar from '@/components/progression/PlayerAvatar';
+import usePeerProfiles from '@/components/progression/usePeerProfiles';
 
 const PULL_THRESHOLD = 70;
 
@@ -23,6 +25,7 @@ export default function BrowseLobbies() {
   const [isPulling, setIsPulling] = useState(false);
   const touchStartY = useRef(null);
   const scrollRef = useRef(null);
+  const profiles = usePeerProfiles(publicLobbies.map(r => ({ user_id: r.host_id })));
 
   const fetchLobbies = async () => {
     setLobbiesLoading(true);
@@ -175,10 +178,7 @@ export default function BrowseLobbies() {
                   onClick={() => joinLobby(room)}
                   disabled={loading !== null}
                   className="glass-panel w-full p-2.5 flex items-center gap-2.5 text-left transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5 hover:ring-white/20 disabled:opacity-50">
-                  <span className="relative w-9 h-9 rounded-full bg-gradient-to-br from-[#9d5cff] to-[#3b0f8f] ring-1 ring-[#9d5cff]/50 shadow-[0_2px_6px_-1px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.25)] flex items-center justify-center text-[13px] font-bold text-white shrink-0 overflow-hidden">
-                    <span className="pointer-events-none absolute -top-1 -left-1 w-4 h-4 rounded-full bg-white/35 blur-[3px]" />
-                    <span className="relative">{(room.host_name || '?')[0].toUpperCase()}</span>
-                  </span>
+                  <PlayerAvatar profile={profiles[room.host_id]} name={room.host_name} color="#6d28d9" size={36} />
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-white text-[13px] truncate leading-tight">{room.host_name}'s lobby</p>
                     <p className="text-[11px] text-slate-400 font-mono tracking-[0.12em]">{room.room_code}</p>

@@ -8,6 +8,8 @@ import { getGuestIdentity, setGuestName, hasGuestName } from '@/lib/guestIdentit
 import { Link } from 'react-router-dom';
 import { useLang } from '@/lib/LanguageContext';
 import GameBackground from '@/components/GameBackground';
+import PlayerAvatar from '@/components/progression/PlayerAvatar';
+import { loadProfile, getProfile, subscribeProfile, ensureDailyLogin } from '@/lib/playerProfile';
 import heroImage from '../../home-hero.webp';
 
 const PLAYER_COLORS = ['#6366f1','#ec4899','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ef4444','#14b8a6','#f97316','#06b6d4','#84cc16','#a855f7'];
@@ -22,6 +24,21 @@ export default function Home() {
   const [nameSet, setNameSet] = useState(hasGuestName());
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [showCreateSheet, setShowCreateSheet] = useState(false);
+  const [profile, setProfile] = useState(getProfile());
+
+  useEffect(() => {
+    let cancelled = false;
+    loadProfile().then(p => { if (!cancelled) setProfile(p); });
+    if (hasGuestName()) {
+      ensureDailyLogin().then(res => {
+        if (res && !cancelled) {
+          toast({ title: `🎁 ${t.dailyReward}: +${res.picks} Picks`, description: res.streak > 1 ? `🔥 ${res.streak} ${t.dayStreak}` : undefined });
+        }
+      });
+    }
+    const unsub = subscribeProfile(setProfile);
+    return () => { cancelled = true; unsub(); };
+  }, []);
 
   useEffect(() => {
     setNameSet(hasGuestName());
@@ -242,18 +259,17 @@ export default function Home() {
         ) : (
           <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.2 }}>
           <div className="space-y-5 cards-shift">
-            {/* Profile card */}
-            <div className="relative h-20 rounded-[28px] bg-gradient-to-b from-white/[0.08] to-black/[0.18] backdrop-blur-md ring-1 ring-[#6d28d9]/60 shadow-[0_1px_2px_rgba(0,0,0,0.35),0_8px_16px_-8px_rgba(0,0,0,0.55),0_20px_30px_-18px_rgba(0,0,0,0.5),0_0_12px_-6px_rgba(109,40,217,0.45),inset_0_1px_0_rgba(255,255,255,0.1),inset_0_-1px_0_rgba(0,0,0,0.25)] px-4 flex items-center gap-3 overflow-hidden">
+            {/* Profile card — tap opens the full profile */}
+            <div onClick={() => navigate('/profile')} role="button" tabIndex={0}
+              onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && navigate('/profile')}
+              className="relative h-20 rounded-[28px] bg-gradient-to-b from-white/[0.08] to-black/[0.18] backdrop-blur-md ring-1 ring-[#6d28d9]/60 shadow-[0_1px_2px_rgba(0,0,0,0.35),0_8px_16px_-8px_rgba(0,0,0,0.55),0_20px_30px_-18px_rgba(0,0,0,0.5),0_0_12px_-6px_rgba(109,40,217,0.45),inset_0_1px_0_rgba(255,255,255,0.1),inset_0_-1px_0_rgba(0,0,0,0.25)] px-4 flex items-center gap-3 overflow-hidden cursor-pointer transition-transform duration-150 active:scale-[0.98]">
               <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
-              <div className="relative w-[52px] h-[52px] rounded-full bg-gradient-to-br from-[#9d5cff] to-[#3b0f8f] ring-2 ring-[#9d5cff]/50 shadow-[0_3px_6px_-1px_rgba(0,0,0,0.55),0_1px_2px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.3)] flex items-center justify-center text-white font-bold shrink-0 overflow-hidden">
-                <span className="pointer-events-none absolute -top-2 -left-2 w-7 h-7 rounded-full bg-white/35 blur-[5px]" />
-                <span className="relative">{getGuestIdentity().name.charAt(0).toUpperCase()}</span>
-              </div>
+              <PlayerAvatar profile={profile} name={getGuestIdentity().name} size={52} />
               <span className="text-sm text-slate-300 min-w-0 truncate">
                 {t.playingAs} <span className="text-amber-400 font-bold">{getGuestIdentity().name}</span>{' '}
                 <Crown className="inline w-3.5 h-3.5 text-amber-400 -mt-0.5" fill="currentColor" />
               </span>
-              <button onClick={() => { localStorage.removeItem('mystery_guest_name'); setNameSet(false); setNameInput(''); }}
+              <button onClick={e => { e.stopPropagation(); localStorage.removeItem('mystery_guest_name'); setNameSet(false); setNameInput(''); }}
                 className="ml-auto shrink-0 px-3 py-1.5 rounded-lg bg-gradient-to-b from-white/[0.06] to-black/10 ring-1 ring-violet-500/50 shadow-[0_1px_2px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.12)] text-xs font-bold text-white hover:bg-violet-500/15 hover:ring-violet-400/70 transition-all duration-150 active:scale-[0.98] select-none">
                 {t.change}
               </button>
