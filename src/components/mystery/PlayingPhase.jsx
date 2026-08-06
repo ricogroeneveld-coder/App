@@ -267,7 +267,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
             initial={{ opacity: 0, scale: 0.85 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.85 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-emerald-500 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2 max-w-xs w-[calc(100%-3rem)]"
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-gradient-to-b from-emerald-400 to-emerald-700 text-white px-4 py-3 rounded-2xl ring-1 ring-emerald-300/50 shadow-[0_8px_24px_-4px_rgba(0,0,0,0.6),0_0_20px_-4px_rgba(52,211,153,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] flex items-center gap-2 max-w-xs w-[calc(100%-3rem)]"
           >
             <CheckCircle2 className="w-5 h-5 shrink-0" />
             <p className="text-sm font-semibold">
@@ -339,10 +339,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
             {isHintPhase && !allHintsSubmitted && (
               <motion.div initial={{ opacity:0, y:-10 }} animate={{ opacity:1, y:0 }}
                 className="rounded-2xl bg-yellow-500/15 ring-2 ring-yellow-400/40 p-5">
-                <div className="flex items-center gap-2 mb-1">
-                  <Lightbulb className="w-5 h-5 text-yellow-400" />
-                  <p className="text-base font-bold text-yellow-300">{t.hintRound}</p>
-                  </div>
+                <p className="text-base font-bold text-yellow-300 mb-1">{t.hintRound}</p>
                   <p className="text-xs text-slate-400 mb-4">{t.hintRoundSub}</p>
                 {myHintSubmitted ? (
                   <div>
@@ -373,7 +370,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
                         placeholder={t.hintPlaceholder}
                         className="flex-1 h-10 px-3 rounded-xl bg-white/5 ring-1 ring-yellow-400/40 text-white placeholder:text-slate-500 text-base md:text-sm focus:outline-none focus:ring-yellow-400" />
                       <Button onClick={submitHint} disabled={submittingHint || !hintText.trim()}
-                        className="h-10 px-4 bg-yellow-500 hover:bg-yellow-600 border-0 text-sm font-semibold">
+                        className="h-10 px-4 rounded-xl bg-gradient-to-b from-amber-400 to-amber-600 hover:brightness-110 border-0 text-sm font-bold text-[#2c1500] shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_2px_6px_-2px_rgba(0,0,0,0.5)] active:scale-[0.98] transition-all">
                         {submittingHint ? '…' : t.share}
                       </Button>
                     </div>
@@ -433,7 +430,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
                       className="w-full h-10 px-3 rounded-xl bg-white/5 ring-1 ring-white/10 text-white placeholder:text-slate-500 text-base md:text-sm focus:outline-none focus:ring-violet-400 mb-3" />
                     <div className="flex gap-2">
                       <Button onClick={submitQuestion} disabled={submittingQ || !questionText.trim()}
-                        className="flex-1 bg-violet-500 hover:bg-violet-600 border-0 text-sm h-9">
+                        className="violet-solid-btn flex-1 h-9 border-0 bg-transparent hover:bg-transparent text-sm font-bold">
                         {t.askQuestion}
                       </Button>
                       <Button onClick={skipToAutoQuestion} disabled={autoAsking || submittingQ}
@@ -516,7 +513,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
         )}
 
         {tab === 'chat' && (
-          <div className="flex flex-col" style={{ height: 'calc(100vh - 160px)' }}>
+          <div className="flex flex-col" style={{ height: 'calc(100dvh - 160px)' }}>
             <ChatPanel roomCode={roomCode} me={me} myPlayer={myPlayer} onEmoteRain={() => {}} />
           </div>
         )}

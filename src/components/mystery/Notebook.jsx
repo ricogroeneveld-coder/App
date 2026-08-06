@@ -53,7 +53,7 @@ export default function Notebook({ players, questions, guesses, me, myPlayer }) 
       {/* Player tabs */}
       <div className="flex items-center gap-3 mb-5">
         <button onClick={() => setPageIdx(Math.max(0, pageIdx-1))} disabled={pageIdx === 0}
-          className="p-2 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-30 transition">
+          className="w-11 h-11 flex items-center justify-center rounded-xl bg-gradient-to-b from-white/[0.07] to-black/20 ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-white/10 disabled:opacity-30 transition active:scale-[0.98]">
           <ChevronLeft className="w-4 h-4" />
         </button>
         <div className="flex-1 min-w-0">
@@ -70,7 +70,7 @@ export default function Notebook({ players, questions, guesses, me, myPlayer }) 
           </div>
         </div>
         <button onClick={() => setPageIdx(Math.min(opponents.length-1, pageIdx+1))} disabled={pageIdx >= opponents.length-1}
-          className="p-2 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-30 transition">
+          className="w-11 h-11 flex items-center justify-center rounded-xl bg-gradient-to-b from-white/[0.07] to-black/20 ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-white/10 disabled:opacity-30 transition active:scale-[0.98]">
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>

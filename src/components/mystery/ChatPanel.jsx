@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MysteryChat } from '@/api/db';
 import { Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLang } from '@/lib/LanguageContext';
 
 const EMOTES = ['😂', '🔥', '👀', '💀', '🤔', '😱', '🎉', '👏', '😏', '🤯'];
 
@@ -10,6 +11,7 @@ function extractEmote(text) {
 }
 
 export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
+  const { t } = useLang();
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
@@ -78,7 +80,7 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto space-y-2 pb-2 pr-1 min-h-0" style={{ overscrollBehaviorY: 'none' }}>
         {messages.length === 0 && (
-          <p className="text-center text-slate-500 text-sm py-8">No messages yet. Say hi! 👋</p>
+          <p className="text-center text-slate-500 text-sm py-8">{t.chatEmpty}</p>
         )}
         <AnimatePresence initial={false}>
           {messages.map(msg => {
@@ -94,10 +96,10 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
                 </div>
                 <div className={`max-w-[75%] px-3 py-2 rounded-2xl text-sm transition-opacity ${
                   msg._pending ? 'opacity-50' : msg._failed ? 'opacity-40 ring-1 ring-rose-500/50' : 'opacity-100'
-                } ${isMe ? 'bg-violet-500 text-white rounded-br-sm' : 'bg-white/10 text-white rounded-bl-sm'}`}>
+                } ${isMe ? 'bg-gradient-to-b from-violet-500 to-violet-700 text-white rounded-br-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_2px_6px_-2px_rgba(0,0,0,0.4)]' : 'bg-white/10 text-white rounded-bl-sm ring-1 ring-white/5'}`}>
                   {!isMe && <p className="text-[10px] font-semibold mb-0.5 opacity-60">{msg.display_name}</p>}
                   <p>{msg.message}</p>
-                  {msg._failed && <p className="text-[10px] text-rose-400 mt-0.5">Failed to send</p>}
+                  {msg._failed && <p className="text-[10px] text-rose-400 mt-0.5">{t.chatFailed}</p>}
                 </div>
               </motion.div>
             );
@@ -119,11 +121,11 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
           value={text}
           onChange={e => setText(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && send()}
-          placeholder="Type a message…"
-          className="flex-1 h-10 px-3 rounded-xl bg-white/5 ring-1 ring-white/10 text-white placeholder:text-slate-500 text-base md:text-sm focus:outline-none focus:ring-violet-400"
+          placeholder={t.chatPlaceholder}
+          className="flex-1 h-10 px-3 rounded-xl bg-gradient-to-b from-[#1e0d42]/80 to-[#0a0518]/90 shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1px_rgba(183,148,255,0.3)] text-white placeholder:text-slate-500 text-base md:text-sm focus:outline-none focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1.5px_rgba(157,92,255,0.6)] transition-shadow"
         />
         <button onClick={send} disabled={!text.trim() || sending}
-          className="w-10 h-10 rounded-xl bg-violet-500 hover:bg-violet-600 flex items-center justify-center disabled:opacity-40 transition shrink-0">
+          className="violet-solid-btn w-10 h-10 flex items-center justify-center disabled:opacity-40 shrink-0">
           <Send className="w-4 h-4 text-white" />
         </button>
       </div>

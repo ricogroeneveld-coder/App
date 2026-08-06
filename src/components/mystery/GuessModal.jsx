@@ -89,7 +89,7 @@ export default function GuessModal({ target, players, guesses, me, myPlayer, roo
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
       <motion.div initial={{ opacity:0, y:40 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:40 }}
-        className="w-full max-w-md rounded-3xl bg-slate-900 ring-1 ring-white/10 p-6">
+        className="glass-card w-full max-w-md bg-slate-900/95 p-5">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-bold">{t.makeAGuessTitle}</h3>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/10"><X className="w-4 h-4" /></button>
@@ -104,7 +104,7 @@ export default function GuessModal({ target, players, guesses, me, myPlayer, roo
             <p className="text-slate-400 mt-1">{t.guessedWord(selectedTarget?.display_name)}</p>
             <p className="text-2xl font-bold mt-2">{toDisplayWord(selectedTarget?.secret_word, lang)}</p>
             <p className="text-sm text-amber-400 mt-3">{t.plusOnePoint}</p>
-            <Button onClick={onClose} className="mt-5 w-full bg-emerald-500 hover:bg-emerald-600 border-0">{t.continueBtn}</Button>
+            <Button onClick={onClose} className="mt-5 w-full h-11 rounded-xl bg-gradient-to-b from-emerald-400 to-emerald-700 hover:brightness-110 border-0 font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_-2px_rgba(0,0,0,0.5)] active:scale-[0.98] transition-all">{t.continueBtn}</Button>
           </div>
         ) : result === 'wrong' ? (
           <div className="text-center py-6">
@@ -113,7 +113,7 @@ export default function GuessModal({ target, players, guesses, me, myPlayer, roo
             </div>
             <p className="text-xl font-bold text-rose-400">{t.wrongGuess}</p>
             <p className="text-slate-400 mt-1">{t.notTheirWord(selectedTarget?.display_name)}</p>
-            <Button onClick={onClose} className="mt-5 w-full bg-white/10 border-white/10 text-white hover:bg-white/15">{t.close}</Button>
+            <Button onClick={onClose} className="mt-5 w-full h-11 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold active:scale-[0.98] transition-all">{t.close}</Button>
           </div>
         ) : (
           <>
@@ -162,7 +162,7 @@ export default function GuessModal({ target, players, guesses, me, myPlayer, roo
                 )}
 
                 <Button onClick={submitGuess} disabled={submitting || !guessWord.trim()}
-                  className="w-full bg-gradient-to-r from-violet-500 to-pink-600 hover:from-violet-600 hover:to-pink-700 border-0 font-semibold">
+                  className="violet-solid-btn w-full h-11 border-0 bg-transparent hover:bg-transparent font-bold">
                   {submitting ? t.submitting : t.submitGuess}
                 </Button>
               </div>

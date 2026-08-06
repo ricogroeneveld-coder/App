@@ -134,6 +134,9 @@ const translations = {
     tabNotebook: 'Notebook',
     tabPlayers: 'Players',
     tabChat: 'Chat',
+    chatEmpty: 'No messages yet. Say hi! 👋',
+    chatPlaceholder: 'Type a message…',
+    chatFailed: 'Failed to send',
     categorie: 'Category',
     room: 'Room',
     // Guess Modal
@@ -332,6 +335,9 @@ const translations = {
     tabNotebook: 'Notities',
     tabPlayers: 'Spelers',
     tabChat: 'Chat',
+    chatEmpty: 'Nog geen berichten. Zeg hoi! 👋',
+    chatPlaceholder: 'Typ een bericht…',
+    chatFailed: 'Versturen mislukt',
     categorie: 'Categorie',
     room: 'Kamer',
     // Guess Modal

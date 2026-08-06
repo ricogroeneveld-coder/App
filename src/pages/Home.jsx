@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MysteryRoom, MysteryPlayer } from '@/api/db';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { Settings, X, ChevronRight, Crown, Users, HelpCircle, Globe } from 'lucide-react';
 import { getGuestIdentity, setGuestName, hasGuestName } from '@/lib/guestIdentity';
@@ -198,15 +196,17 @@ export default function Home() {
 
         {!nameSet ? (
           <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.2 }} className="space-y-3">
-            <p className="text-center text-slate-300 font-medium mb-2">{t.whatsYourName}</p>
-            <Input value={nameInput} onChange={e => setNameInput(e.target.value)}
+            <p className="text-center text-slate-300 font-semibold mb-2">{t.whatsYourName}</p>
+            <input value={nameInput} onChange={e => setNameInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && confirmName()}
               placeholder={t.displayNamePlaceholder}
-              className="h-14 text-lg text-center bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-violet-400" />
-            <Button onClick={confirmName}
-              className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-violet-500 to-pink-600 hover:from-violet-600 hover:to-pink-700 border-0">
-              {t.letsPlay}
-            </Button>
+              className="w-full h-14 text-lg text-center rounded-2xl bg-gradient-to-b from-[#1e0d42]/80 to-[#0a0518]/90 shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1px_rgba(183,148,255,0.3)] text-white placeholder:text-slate-500 focus:outline-none focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1.5px_rgba(157,92,255,0.6),0_0_12px_-2px_rgba(157,92,255,0.4)] transition-shadow" />
+            <button onClick={confirmName}
+              className="gold-btn w-full h-14 rounded-2xl flex items-center justify-center">
+              <span className="relative text-lg font-extrabold tracking-tight text-[#2c1500] drop-shadow-[0_1px_0_rgba(255,255,255,0.25)]">
+                {t.letsPlay}
+              </span>
+            </button>
           </motion.div>
         ) : (
           <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.2 }}>
