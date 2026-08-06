@@ -60,6 +60,19 @@ export default function BrowseLobbies() {
     touchStartY.current = null;
   };
 
+  const [wakeEpoch, setWakeEpoch] = useState(0);
+  useEffect(() => {
+    const wake = () => {
+      if (document.visibilityState === 'visible') setWakeEpoch(n => n + 1);
+    };
+    document.addEventListener('visibilitychange', wake);
+    window.addEventListener('pageshow', wake);
+    return () => {
+      document.removeEventListener('visibilitychange', wake);
+      window.removeEventListener('pageshow', wake);
+    };
+  }, []);
+
   useEffect(() => {
     fetchLobbies();
     const unsub = MysteryRoom.subscribe((event) => {
@@ -68,7 +81,7 @@ export default function BrowseLobbies() {
       }
     });
     return unsub;
-  }, []);
+  }, [wakeEpoch]);
 
   const joinLobby = async (room) => {
     const guest = getGuestIdentity();

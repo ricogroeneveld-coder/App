@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MysteryRoom, MysteryPlayer, MysteryQuestion, MysteryGuess } from '@/api/db';
 import { Loader2 } from 'lucide-react';
@@ -10,6 +10,8 @@ import { getGuestIdentity } from '@/lib/guestIdentity';
 import GameBackground from '@/components/GameBackground';
 import { Button } from '@/components/ui/button';
 
+const PLAYER_COLORS = ['#6366f1','#ec4899','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ef4444','#14b8a6','#f97316','#06b6d4','#84cc16','#a855f7'];
+
 export default function MysteryGame() {
   const { code } = useParams();
   const navigate = useNavigate();
@@ -20,8 +22,30 @@ export default function MysteryGame() {
   const [me, setMe] = useState(null);
   const [myPlayer, setMyPlayer] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Bumped when the tab wakes up — re-runs the subscribe effect so dead
+  // realtime channels are replaced and state is re-fetched.
+  const [sessionEpoch, setSessionEpoch] = useState(0);
+  const rejoiningRef = useRef(false);
 
   const roomCode = code?.toUpperCase();
+
+  // Mobile browsers suspend the realtime socket while the tab is in the
+  // background, so events are silently missed and channels can come back
+  // dead. When the tab becomes visible again (app switch, tab switch,
+  // bfcache restore, network back), re-subscribe fresh and reload state.
+  useEffect(() => {
+    const wake = () => {
+      if (document.visibilityState === 'visible') setSessionEpoch(n => n + 1);
+    };
+    document.addEventListener('visibilitychange', wake);
+    window.addEventListener('pageshow', wake);
+    window.addEventListener('online', wake);
+    return () => {
+      document.removeEventListener('visibilitychange', wake);
+      window.removeEventListener('pageshow', wake);
+      window.removeEventListener('online', wake);
+    };
+  }, []);
 
   const loadAll = useCallback(async () => {
     const [rooms, ps, qs, gs] = await Promise.all([
@@ -64,13 +88,33 @@ export default function MysteryGame() {
       clearTimeout(debounceTimer);
       unsubs.forEach(u => u && u());
     };
-  }, [roomCode, loadAll]);
+  }, [roomCode, loadAll, sessionEpoch]);
 
   useEffect(() => {
     if (me && players.length) {
       setMyPlayer(players.find(p => p.user_id === me.id) || null);
     }
   }, [me, players]);
+
+  // Refresh self-healing: reloading the page runs the beforeunload cleanup
+  // below, which deletes our player row — so a lobby member who refreshes
+  // would land in a lobby they're no longer part of. Quietly rejoin.
+  useEffect(() => {
+    if (loading || !room || room.status !== 'lobby' || !me) return;
+    if (players.some(p => p.user_id === me.id)) return;
+    if (players.length >= 12 || rejoiningRef.current) return;
+    rejoiningRef.current = true;
+    MysteryPlayer.create({
+      room_code: roomCode,
+      user_id: me.id,
+      display_name: me.full_name,
+      score: 0,
+      word_submitted: false,
+      word_revealed: false,
+      is_eliminated: false,
+      color: PLAYER_COLORS[players.length % PLAYER_COLORS.length],
+    }).then(() => loadAll()).catch(() => {}).finally(() => { rejoiningRef.current = false; });
+  }, [loading, room, players, me, roomCode, loadAll]);
 
   // Clean up lobby when tab/window closes
   useEffect(() => {
@@ -142,7 +186,6 @@ export default function MysteryGame() {
   }
 
   if (isEliminated) {
-    const PLAYER_COLORS = ['#6366f1','#ec4899','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ef4444','#14b8a6','#f97316','#06b6d4','#84cc16','#a855f7'];
     const handleRejoin = async () => {
       await MysteryPlayer.update(myPlayer.id, { is_eliminated: false });
       await loadAll();

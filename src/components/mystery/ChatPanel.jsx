@@ -15,8 +15,23 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
+  const [wakeEpoch, setWakeEpoch] = useState(0);
   const bottomRef = useRef(null);
   const pendingIdRef = useRef(0);
+
+  // Re-fetch + re-subscribe when the tab wakes — the background-suspended
+  // realtime socket misses messages and can come back dead.
+  useEffect(() => {
+    const wake = () => {
+      if (document.visibilityState === 'visible') setWakeEpoch(n => n + 1);
+    };
+    document.addEventListener('visibilitychange', wake);
+    window.addEventListener('pageshow', wake);
+    return () => {
+      document.removeEventListener('visibilitychange', wake);
+      window.removeEventListener('pageshow', wake);
+    };
+  }, []);
 
   useEffect(() => {
     MysteryChat.filter({ room_code: roomCode }, 'created_date', 60)
@@ -30,7 +45,7 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
       }
     });
     return unsub;
-  }, [roomCode]);
+  }, [roomCode, wakeEpoch]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
