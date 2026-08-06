@@ -92,9 +92,18 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Prevent iOS rubber-band bounce on the root */
+  /* The document itself never scrolls — every screen owns an internal
+     scroll frame instead. This kills the iOS quirk where 100vh exceeds the
+     visible viewport (collapsing browser chrome), which otherwise makes the
+     whole page — fixed bars included — draggable by the difference. */
   html, body {
     overscroll-behavior: none;
+    height: 100%;
+    overflow: hidden;
+  }
+  #root {
+    height: 100%;
+    overflow: hidden;
   }
 
   /* Prevent default zoom on double-tap for interactive elements */

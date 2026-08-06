@@ -27,7 +27,7 @@ const AnimatedRoutes = () => {
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -20 }}
         transition={{ duration: 0.18, ease: 'easeInOut' }}
-        style={{ minHeight: '100vh' }}
+        style={{ minHeight: '100dvh' }}
       >
         {/* Sign-in is entirely optional — nothing below is gated behind it.
             Gameplay routes work the same whether or not you're signed in. */}
