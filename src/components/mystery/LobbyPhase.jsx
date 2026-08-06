@@ -139,8 +139,11 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
         )}
       </AnimatePresence>
 
-      {/* Everything fits on screen — no scrolling */}
-      <div className="relative z-10 w-full max-w-md">
+      {/* Everything fits on screen — no scrolling. Full-height column:
+          info (title, code, players) reads top-down, while the host's two
+          actions (category + start) sink to the bottom thumb zone — the
+          spacer collapses on short screens so nothing ever clips. */}
+      <div className="relative z-10 w-full max-w-md flex flex-col min-h-0 self-stretch">
         {/* Title */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-3">
           <img src={lobbyTitleImage} alt="The Interactive Guessing Game" className="w-full max-w-[220px] mx-auto"
@@ -196,7 +199,11 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
               ))}
             </div>
           </motion.div>
+        </div>
 
+        <div className="flex-1 min-h-2" />
+
+        <div className="space-y-2">
           {/* Selected Category — host only, entire card is tappable */}
           {isHost && (
             <motion.button type="button" onClick={() => setShowCategorySelector(true)}
