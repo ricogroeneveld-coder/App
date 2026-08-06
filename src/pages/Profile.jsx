@@ -23,45 +23,60 @@ function sourceLabel(c, t) {
   return '';
 }
 
-function CosmeticTile({ c, owned, equipped, onTap, justUnlocked }) {
+/**
+ * The one cosmetic card. Fixed vertical slots — status (lock/equipped),
+ * artwork, name, rarity badge, footer (price or unlock source) — so every
+ * card in every grid is pixel-identical in size, padding, and rhythm.
+ */
+function CosmeticCard({ c, owned, equipped, onTap, justUnlocked, footer, footerClass }) {
   const rar = RARITIES[c.rarity];
   return (
     <motion.button onClick={() => onTap(c)}
       animate={justUnlocked ? { scale: [0.7, 1.12, 1] } : {}}
       transition={{ duration: 0.45 }}
-      className={`glass-panel relative p-2 flex flex-col items-center gap-1 text-center transition-all duration-150 active:scale-[0.97] hover:-translate-y-0.5 ring-1 ${equipped ? 'ring-[#ffcf7a]/70' : rar.ring} ${!owned ? 'opacity-80' : ''}`}>
-      {equipped && (
-        <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-gradient-to-b from-[#ffcb45] to-[#e08e05] ring-2 ring-[#0d0620] flex items-center justify-center shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
-          <Check className="w-3 h-3 text-[#2c1500]" strokeWidth={3.5} />
-        </span>
-      )}
-      {/* Preview */}
-      {c.type === 'emblem' && (
-        <span className="w-10 h-10 rounded-full flex items-center justify-center text-xl"
-          style={{ background: c.tile, boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.2)' }}>{c.emoji}</span>
-      )}
-      {c.type === 'banner' && (
-        <span className="w-full h-10 rounded-lg" style={{ background: c.css, boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.15)' }} />
-      )}
-      {c.type === 'border' && (
-        <span className="w-10 h-10 rounded-full bg-black/40 flex items-center justify-center"
-          style={{ boxShadow: `inset 0 0 0 2px ${c.ringColor}${c.shadow !== 'none' ? `, ${c.shadow}` : ''}` }}>
-          <span className="text-lg">🙂</span>
-        </span>
-      )}
-      {c.type === 'title' && (
-        <span className={`h-10 flex items-center text-xs font-extrabold ${rar.text}`}>{c.name}</span>
-      )}
-      {c.type === 'nameColor' && (
-        <span className={`h-10 flex items-center text-sm font-extrabold ${c.cls}`}>Name</span>
-      )}
-      <span className="text-[10px] font-bold text-slate-200 leading-tight truncate w-full">{c.name}</span>
-      <span className={`text-[8px] font-extrabold px-1.5 py-px rounded-full ${rar.chip}`}>{rar.label}</span>
-      {!owned && (
-        <span className="absolute top-1.5 left-1.5 w-4 h-4 rounded-full bg-black/60 flex items-center justify-center">
-          <Lock className="w-2.5 h-2.5 text-slate-300" />
-        </span>
-      )}
+      className={`glass-panel w-full rounded-2xl p-2 flex flex-col items-center text-center transition-all duration-150 active:scale-[0.97] hover:-translate-y-0.5 ring-1 ${equipped ? 'ring-[#ffcf7a]/70' : rar.ring} ${!owned && !footer ? 'opacity-80' : ''}`}>
+      {/* Status slot — equipped check, lock, or empty; always 16px tall */}
+      <span className="h-4 flex items-center justify-center">
+        {equipped ? (
+          <span className="w-4 h-4 rounded-full bg-gradient-to-b from-[#ffcb45] to-[#e08e05] flex items-center justify-center shadow-[0_1px_3px_rgba(0,0,0,0.5)]">
+            <Check className="w-2.5 h-2.5 text-[#2c1500]" strokeWidth={3.5} />
+          </span>
+        ) : !owned ? (
+          <Lock className="w-3 h-3 text-slate-400" />
+        ) : null}
+      </span>
+      {/* Artwork slot — always 44px tall */}
+      <span className="h-11 w-full flex items-center justify-center mt-1">
+        {c.type === 'emblem' && (
+          <span className="w-11 h-11 rounded-full flex items-center justify-center text-xl"
+            style={{ background: c.tile, boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.2)' }}>{c.emoji}</span>
+        )}
+        {c.type === 'banner' && (
+          <span className="w-full h-11 rounded-lg" style={{ background: c.css, boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.15)' }} />
+        )}
+        {c.type === 'border' && (
+          <span className="w-11 h-11 rounded-full bg-black/40 flex items-center justify-center"
+            style={{ boxShadow: `inset 0 0 0 2px ${c.ringColor}${c.shadow !== 'none' ? `, ${c.shadow}` : ''}` }}>
+            <span className="text-lg">🙂</span>
+          </span>
+        )}
+        {c.type === 'title' && (
+          <span className={`w-full text-[11px] font-extrabold leading-tight ${rar.text}`}>“{c.name}”</span>
+        )}
+        {c.type === 'nameColor' && (
+          <span className={`text-sm font-extrabold ${c.cls}`}>Name</span>
+        )}
+      </span>
+      {/* Name slot — one line, always 16px tall */}
+      <span className="h-4 w-full mt-1.5 text-[10px] font-bold text-slate-100 leading-4 truncate">{c.name}</span>
+      {/* Rarity slot — always 16px tall */}
+      <span className={`h-4 mt-1 px-2 flex items-center rounded-full text-[8px] font-extrabold ${rar.chip}`}>
+        {rar.label}
+      </span>
+      {/* Footer slot — price or unlock source; always 16px tall */}
+      <span className={`h-4 mt-1 flex items-center text-[10px] font-extrabold tabular-nums ${footerClass || 'text-amber-300'}`}>
+        {footer || ' '}
+      </span>
     </motion.button>
   );
 }
@@ -219,16 +234,16 @@ export default function Profile() {
                 <div key={type} className="mb-4">
                   <p className="section-label mb-2">{TYPE_LABELS[type]}</p>
                   <div className="grid grid-cols-3 gap-2">
-                    {ALL_COSMETICS.filter(c => c.type === type).map(c => (
-                      <div key={c.id} className="relative">
-                        <CosmeticTile c={c} owned={profile.owned.includes(c.id)}
+                    {ALL_COSMETICS.filter(c => c.type === type).map(c => {
+                      const owned = profile.owned.includes(c.id);
+                      return (
+                        <CosmeticCard key={c.id} c={c} owned={owned}
                           equipped={profile.equipped?.[c.type] === c.id}
-                          onTap={onTapCosmetic} justUnlocked={justUnlocked === c.id} />
-                        {!profile.owned.includes(c.id) && (
-                          <p className="text-center text-[9px] font-bold text-slate-500 mt-0.5">{sourceLabel(c, t)}</p>
-                        )}
-                      </div>
-                    ))}
+                          onTap={onTapCosmetic} justUnlocked={justUnlocked === c.id}
+                          footer={owned ? '' : sourceLabel(c, t)}
+                          footerClass={owned ? '' : 'text-slate-500'} />
+                      );
+                    })}
                   </div>
                 </div>
               ))}
@@ -242,13 +257,11 @@ export default function Profile() {
                   <p className="section-label mb-2 flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-amber-300" /> {t.featured}
                   </p>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-3 gap-2">
                     {featured.map(c => (
-                      <div key={c.id}>
-                        <CosmeticTile c={c} owned={false} equipped={false}
-                          onTap={onTapCosmetic} justUnlocked={justUnlocked === c.id} />
-                        <p className="text-center text-[10px] font-extrabold text-amber-300 mt-1">{c.source.price} Picks</p>
-                      </div>
+                      <CosmeticCard key={c.id} c={c} owned={false} equipped={false}
+                        onTap={onTapCosmetic} justUnlocked={justUnlocked === c.id}
+                        footer={`${c.source.price} Picks`} />
                     ))}
                   </div>
                 </div>
@@ -261,11 +274,9 @@ export default function Profile() {
                     <p className="section-label mb-2">{TYPE_LABELS[type]}</p>
                     <div className="grid grid-cols-3 gap-2">
                       {items.map(c => (
-                        <div key={c.id}>
-                          <CosmeticTile c={c} owned={false} equipped={false}
-                            onTap={onTapCosmetic} justUnlocked={justUnlocked === c.id} />
-                          <p className="text-center text-[10px] font-extrabold text-amber-300 mt-0.5">{c.source.price}</p>
-                        </div>
+                        <CosmeticCard key={c.id} c={c} owned={false} equipped={false}
+                          onTap={onTapCosmetic} justUnlocked={justUnlocked === c.id}
+                          footer={`${c.source.price} Picks`} />
                       ))}
                     </div>
                   </div>
