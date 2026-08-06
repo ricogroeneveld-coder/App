@@ -8,7 +8,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useLang } from '@/lib/LanguageContext';
 import {
   loadProfile, getProfile, subscribeProfile, purchaseCosmetic, equipCosmetic,
-  challengeState, favoriteCategory,
+  challengeState, favoriteCategory, devUnlockAll, devResetProfile,
 } from '@/lib/playerProfile';
 import { ALL_COSMETICS, cosmeticById, RARITIES, TYPE_LABELS } from '@/lib/cosmetics';
 import { shortCategory } from '@/lib/wordLists';
@@ -114,7 +114,9 @@ export default function Profile() {
   const [justUnlocked, setJustUnlocked] = useState(null);
 
   useEffect(() => {
-    loadProfile().then(setProfile);
+    const dev = new URLSearchParams(window.location.search).get('dev');
+    const load = dev === 'unlock' ? devUnlockAll() : dev === 'reset' ? devResetProfile() : loadProfile();
+    load.then(setProfile);
     return subscribeProfile(setProfile);
   }, []);
 

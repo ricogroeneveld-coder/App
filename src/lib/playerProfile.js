@@ -8,7 +8,7 @@ import {
   ECONOMY, levelFromXp, dailyChallenges, WEEKLY, SEASON, SEASON_ID,
   todayKey, weekKey, loginReward,
 } from './progression';
-import { STARTER_OWNED, DEFAULT_EQUIPPED, cosmeticById, levelUnlocks } from './cosmetics';
+import { STARTER_OWNED, DEFAULT_EQUIPPED, cosmeticById, levelUnlocks, ALL_COSMETICS } from './cosmetics';
 
 const LS_KEY = 'wmp_profile_v1';
 let cache = null;
@@ -19,7 +19,12 @@ export function subscribeProfile(fn) {
   listeners.add(fn);
   return () => listeners.delete(fn);
 }
-function emit() { listeners.forEach(fn => { try { fn(cache); } catch {} }); }
+function emit() {
+  // Fresh snapshot per emit — cache is mutated in place, and React setState
+  // bails out on an identical reference, silently skipping re-renders.
+  const snap = { ...cache };
+  listeners.forEach(fn => { try { fn(snap); } catch {} });
+}
 
 function blankProfile() {
   const guest = getGuestIdentity();
@@ -291,6 +296,23 @@ export function equipCosmetic(id) {
   cache.equipped = { ...cache.equipped, [c.type]: id };
   save();
   return true;
+}
+
+// ── Dev/test helpers ───────────────────────────────────────────────────────
+// Triggered from /profile?dev=unlock and /profile?dev=reset for testing.
+
+export async function devUnlockAll() {
+  await loadProfile();
+  cache.owned = ALL_COSMETICS.map(c => c.id);
+  cache.picks = 99999;
+  save();
+  return cache;
+}
+
+export async function devResetProfile() {
+  cache = blankProfile();
+  save();
+  return cache;
 }
 
 export function favoriteCategory() {
