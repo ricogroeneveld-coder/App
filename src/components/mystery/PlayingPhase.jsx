@@ -355,7 +355,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
 
       <div
         className={`flex-1 min-h-0 p-4 ${tab === 'chat' || tab === 'questions' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto hide-scrollbar'}`}
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 4rem)' }}
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 4.75rem)' }}
       >
         {tab === 'questions' && (
           <div className="flex flex-col flex-1 min-h-0 w-full max-w-lg mx-auto">
