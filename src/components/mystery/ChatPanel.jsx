@@ -112,7 +112,7 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
       <div className="flex gap-2 py-2 overflow-x-auto">
         {EMOTES.map(e => (
           <button key={e} onClick={() => setText(prev => prev + e)}
-            className="text-xl hover:scale-125 transition-transform shrink-0">{e}</button>
+            className="w-9 h-9 flex items-center justify-center text-xl hover:scale-125 active:scale-95 transition-transform shrink-0">{e}</button>
         ))}
       </div>
 
@@ -121,7 +121,7 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
           value={text}
           onChange={e => setText(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && send()}
-          placeholder={t.chatPlaceholder}
+          placeholder={t.chatPlaceholder} enterKeyHint="send"
           className="inset-input flex-1 h-10 px-3 text-base md:text-sm"
         />
         <button onClick={send} disabled={!text.trim() || sending}

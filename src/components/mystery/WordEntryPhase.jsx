@@ -106,7 +106,7 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
                   value={customInput}
                   onChange={e => setCustomInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && submitWord()}
-                  placeholder={t.enterSecretWord}
+                  placeholder={t.enterSecretWord} enterKeyHint="done"
                   className="w-full h-12 px-4 rounded-xl bg-gradient-to-b from-[#1e0d42]/80 to-[#0a0518]/90 shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1px_rgba(251,191,36,0.3)] text-white placeholder:text-slate-500 text-base focus:outline-none focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1.5px_rgba(251,191,36,0.6)] transition-shadow"
                 />
                 <p className="text-xs text-slate-500">{t.keepItSecret}</p>
@@ -127,7 +127,7 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
                   <input
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    placeholder={t.search(shortCategory(room.category))}
+                    placeholder={t.search(shortCategory(room.category))} enterKeyHint="search"
                     className="inset-input w-full h-10 pl-9 pr-4 text-base md:text-sm"
                   />
                 </div>

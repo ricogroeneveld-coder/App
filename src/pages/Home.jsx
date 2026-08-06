@@ -199,7 +199,7 @@ export default function Home() {
             <p className="text-center text-slate-300 font-semibold mb-2">{t.whatsYourName}</p>
             <input value={nameInput} onChange={e => setNameInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && confirmName()}
-              placeholder={t.displayNamePlaceholder}
+              placeholder={t.displayNamePlaceholder} enterKeyHint="go" autoComplete="nickname" autoCorrect="off"
               className="inset-input w-full h-14 text-lg text-center rounded-2xl" />
             <button onClick={confirmName}
               className="gold-btn w-full h-14 rounded-2xl flex items-center justify-center">
@@ -257,7 +257,7 @@ export default function Home() {
               </span>
               <input value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase())}
                 onKeyDown={e => e.key === 'Enter' && handleJoin()}
-                placeholder={t.roomCodePlaceholder} maxLength={6}
+                placeholder={t.roomCodePlaceholder} maxLength={6} enterKeyHint="go" autoCapitalize="characters" autoCorrect="off" autoComplete="off" spellCheck={false}
                 className="relative flex-1 min-w-0 h-10 rounded-xl bg-gradient-to-b from-[#1e0d42]/80 to-[#0a0518]/90 shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1px_rgba(183,148,255,0.3)] px-2 outline-none text-white text-base tracking-wide uppercase placeholder:text-white/40 placeholder:tracking-normal placeholder:text-xs focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1.5px_rgba(56,189,248,0.7),0_0_10px_-2px_rgba(56,189,248,0.5)] transition-shadow" />
               <button onClick={handleJoin} disabled={loading !== null}
                 className="relative h-10 px-2 shrink-0 rounded-xl bg-gradient-to-b from-sky-300 via-sky-400 to-sky-700 shadow-[0_1px_2px_rgba(0,0,0,0.4),0_4px_10px_-2px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.35)] hover:brightness-110 text-white font-bold text-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-60 overflow-hidden">

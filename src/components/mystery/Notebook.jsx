@@ -78,8 +78,9 @@ export default function Notebook({ players, questions, guesses, me, myPlayer }) 
       {/* Dot indicators */}
       <div className="flex justify-center gap-1.5 mb-5">
         {opponents.map((_,i) => (
-          <button key={i} onClick={() => setPageIdx(i)}
-            className={`w-2 h-2 rounded-full transition ${i === pageIdx ? 'bg-violet-400' : 'bg-white/20'}`} />
+          <button key={i} onClick={() => setPageIdx(i)} className="p-1.5 -m-0.5 flex items-center justify-center">
+            <span className={`w-2 h-2 rounded-full transition ${i === pageIdx ? 'bg-violet-400' : 'bg-white/20'}`} />
+          </button>
         ))}
       </div>
 

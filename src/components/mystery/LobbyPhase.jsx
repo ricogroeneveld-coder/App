@@ -151,7 +151,9 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
         <div className="space-y-2">
           {/* Room code — hero card, same material as the Home profile card */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-            className="glass-card px-4 py-2.5 flex items-center justify-between gap-3">
+            onClick={copyCode} role="button" tabIndex={0}
+            onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && copyCode()}
+            className="glass-card px-4 py-2.5 flex items-center justify-between gap-3 cursor-pointer transition-transform duration-150 active:scale-[0.98]">
             <div className="min-w-0">
               <p className="text-[10px] uppercase tracking-[0.18em] text-slate-300 font-extrabold mb-0.5">{t.roomCode}</p>
               <p className="text-[26px] font-extrabold tracking-[0.14em] text-white leading-none"
@@ -159,7 +161,7 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
                 {roomCode}
               </p>
             </div>
-            <button onClick={copyCode}
+            <button onClick={e => { e.stopPropagation(); copyCode(); }} tabIndex={-1}
               className={`shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-b from-white/[0.07] to-black/20 backdrop-blur-sm ring-1 shadow-[0_1px_2px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.08)] transition-all duration-150 active:scale-[0.98] select-none ${copied ? 'ring-emerald-400/50' : 'ring-white/10 hover:bg-white/10 hover:ring-violet-400/40'}`}>
               <motion.span key={copied ? 'check' : 'copy'} initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', duration: 0.35 }}>
                 {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-slate-200" />}
@@ -234,7 +236,9 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
                     {loading ? t.starting : t.startGame}
                   </span>
                   <span className="block text-[11px] font-medium text-[#4a2c0c] leading-tight truncate">
-                    {selectedCategory ? `${t.category}: ${shortCategory(selectedCategory)}` : t.selectCategory}
+                    {!selectedCategory ? t.selectCategory
+                      : players.length < 2 ? t.needTwoPlayers
+                      : `${t.category}: ${shortCategory(selectedCategory)}`}
                   </span>
                 </span>
                 <span className="relative w-9 h-9 rounded-full bg-gradient-to-b from-[#190c00] to-[#060300] ring-1 ring-[#ffcf7a]/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.45),0_2px_6px_rgba(0,0,0,0.55)] flex items-center justify-center shrink-0">

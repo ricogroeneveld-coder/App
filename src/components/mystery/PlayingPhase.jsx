@@ -367,7 +367,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
                     <div className="flex gap-2">
                       <input value={hintText} onChange={e => setHintText(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && submitHint()}
-                        placeholder={t.hintPlaceholder}
+                        placeholder={t.hintPlaceholder} enterKeyHint="send"
                         className="inset-input flex-1 h-10 px-3 text-base md:text-sm" />
                       <Button onClick={submitHint} disabled={submittingHint || !hintText.trim()}
                         className="h-10 px-4 rounded-xl bg-gradient-to-b from-amber-400 to-amber-600 hover:brightness-110 border-0 text-sm font-bold text-[#2c1500] shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_2px_6px_-2px_rgba(0,0,0,0.5)] active:scale-[0.98] transition-all">
@@ -401,9 +401,9 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
                       <p className="text-white font-semibold mb-3">"{latestQuestion.question_text}"</p>
                       <div className="flex gap-3">
                         <Button onClick={() => submitAnswer(latestQuestion.id, true)} disabled={submittingAnswer}
-                          className="flex-1 rounded-xl bg-gradient-to-b from-emerald-400 to-emerald-700 hover:brightness-110 border-0 font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_-2px_rgba(0,0,0,0.5)] active:scale-[0.98] transition-all">{t.yes}</Button>
+                          className="flex-1 h-11 rounded-xl bg-gradient-to-b from-emerald-400 to-emerald-700 hover:brightness-110 border-0 font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_-2px_rgba(0,0,0,0.5)] active:scale-[0.98] transition-all">{t.yes}</Button>
                         <Button onClick={() => submitAnswer(latestQuestion.id, false)} disabled={submittingAnswer}
-                          className="flex-1 rounded-xl bg-gradient-to-b from-rose-400 to-rose-700 hover:brightness-110 border-0 font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_-2px_rgba(0,0,0,0.5)] active:scale-[0.98] transition-all">{t.no}</Button>
+                          className="flex-1 h-11 rounded-xl bg-gradient-to-b from-rose-400 to-rose-700 hover:brightness-110 border-0 font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_-2px_rgba(0,0,0,0.5)] active:scale-[0.98] transition-all">{t.no}</Button>
                       </div>
                     </motion.div>
                   )}
@@ -426,7 +426,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
                     </div>
                     <input value={questionText} onChange={e => setQuestionText(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && submitQuestion()}
-                      placeholder={t.askPlaceholder}
+                      placeholder={t.askPlaceholder} enterKeyHint="send"
                       className="inset-input w-full h-10 px-3 text-base md:text-sm mb-3" />
                     <div className="flex gap-2">
                       <Button onClick={submitQuestion} disabled={submittingQ || !questionText.trim()}

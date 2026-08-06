@@ -205,7 +205,7 @@ function WordSelector({ category, value, onChange, wrongGuesses }) {
           <input
             value={search}
             onChange={e => { setSearch(e.target.value); onChange(e.target.value); }}
-            placeholder={t.searchOrType}
+            placeholder={t.searchOrType} enterKeyHint="done"
             className="inset-input w-full h-10 pl-9 pr-4 text-base md:text-sm"
           />
         </div>
@@ -213,7 +213,7 @@ function WordSelector({ category, value, onChange, wrongGuesses }) {
       {!showList && (
         <input value={value} onChange={e => onChange(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && e.preventDefault()}
-          placeholder={t.whatIsTheirWord}
+          placeholder={t.whatIsTheirWord} enterKeyHint="done"
           className="inset-input w-full h-12 px-4 text-base md:text-sm" />
       )}
       {showList && filtered.length > 0 && (
