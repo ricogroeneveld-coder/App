@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { MysteryRoom, MysteryPlayer } from '@/api/db';
 import { useToast } from '@/components/ui/use-toast';
 import { Settings, X, ChevronRight, Crown, Users, HelpCircle, Globe, Lock } from 'lucide-react';
-import { getGuestIdentity, setGuestName, hasGuestName } from '@/lib/guestIdentity';
+import { getGuestIdentity, setGuestName, hasGuestName, MAX_NAME_LENGTH } from '@/lib/guestIdentity';
 import { Link } from 'react-router-dom';
 import { useLang } from '@/lib/LanguageContext';
 import GameBackground from '@/components/GameBackground';
@@ -246,9 +246,10 @@ export default function Home() {
         {!nameSet ? (
           <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.2 }} className="space-y-3">
             <p className="text-center text-slate-300 font-semibold mb-2">{t.whatsYourName}</p>
-            <input value={nameInput} onChange={e => setNameInput(e.target.value)}
+            <input value={nameInput} onChange={e => setNameInput(e.target.value.slice(0, MAX_NAME_LENGTH))}
               onKeyDown={e => e.key === 'Enter' && confirmName()}
               placeholder={t.displayNamePlaceholder} enterKeyHint="go" autoComplete="nickname" autoCorrect="off"
+              maxLength={MAX_NAME_LENGTH}
               className="inset-input w-full h-14 text-lg text-center rounded-2xl" />
             <button onClick={confirmName}
               className="gold-btn w-full h-14 rounded-2xl flex items-center justify-center">
