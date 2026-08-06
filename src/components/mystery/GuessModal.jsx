@@ -92,7 +92,7 @@ export default function GuessModal({ target, players, guesses, me, myPlayer, roo
         className="glass-card w-full max-w-md bg-slate-900/95 p-5">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-bold">{t.makeAGuessTitle}</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/10"><X className="w-4 h-4" /></button>
+          <button onClick={onClose} className="p-2.5 -m-1 rounded-xl hover:bg-white/10" aria-label={t.close}><X className="w-5 h-5" /></button>
         </div>
 
         {result === 'correct' ? (

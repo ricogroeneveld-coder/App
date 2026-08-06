@@ -286,7 +286,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
         <button
           onClick={() => setShowLeaveConfirm(true)}
           className="shrink-0 w-9 h-9 rounded-xl bg-gradient-to-b from-white/[0.07] to-black/20 ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-rose-500/15 hover:ring-rose-400/30 text-slate-400 hover:text-rose-400 transition flex items-center justify-center active:scale-[0.98]"
-          title={t.leave}
+          title={t.leave} aria-label={t.leave}
         >
           <LogOut className="w-4 h-4" />
         </button>

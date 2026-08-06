@@ -131,6 +131,7 @@ export default function ProfileSettings() {
         <button
           onClick={() => navigate('/')}
           className="header-btn"
+          aria-label="Back"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>

@@ -124,7 +124,7 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
           placeholder={t.chatPlaceholder} enterKeyHint="send"
           className="inset-input flex-1 h-10 px-3 text-base md:text-sm"
         />
-        <button onClick={send} disabled={!text.trim() || sending}
+        <button onClick={send} disabled={!text.trim() || sending} aria-label="Send"
           className="violet-solid-btn w-10 h-10 flex items-center justify-center disabled:opacity-40 shrink-0">
           <Send className="w-4 h-4 text-white" />
         </button>

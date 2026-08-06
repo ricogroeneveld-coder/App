@@ -86,14 +86,14 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
 
       {/* Back button — identical to Home's header buttons */}
       <div className="absolute left-4 z-20" style={{ top: 'max(env(safe-area-inset-top), 0.75rem)' }}>
-        <button onClick={() => navigate('/')} className="header-btn">
+        <button onClick={() => navigate('/')} className="header-btn" aria-label="Back">
           <ArrowLeft className="w-5 h-5" />
         </button>
       </div>
 
       {/* How to play button — identical to Home's header buttons */}
       <div className="absolute right-4 z-20" style={{ top: 'max(env(safe-area-inset-top), 0.75rem)' }}>
-        <button onClick={() => setShowHowToPlay(true)} className="header-btn">
+        <button onClick={() => setShowHowToPlay(true)} className="header-btn" aria-label={t.howToPlayShort}>
           <HelpCircle className="w-5 h-5" />
         </button>
       </div>
@@ -105,8 +105,8 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
             className="glass-card w-full max-w-md bg-slate-900/95 p-6 max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-bold text-white">{t.howToPlay}</h2>
-              <button onClick={() => setShowHowToPlay(false)} className="p-1.5 rounded-lg hover:bg-white/10 text-slate-400">
-                <X className="w-4 h-4" />
+              <button onClick={() => setShowHowToPlay(false)} className="p-2.5 -m-1 rounded-xl hover:bg-white/10 text-slate-400" aria-label={t.gotIt}>
+                <X className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-4 text-sm text-slate-300">
@@ -164,7 +164,7 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
                 {roomCode}
               </p>
             </div>
-            <button onClick={e => { e.stopPropagation(); copyCode(); }} tabIndex={-1}
+            <button onClick={e => { e.stopPropagation(); copyCode(); }} tabIndex={-1} aria-label={t.roomCode}
               className={`shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-b from-white/[0.07] to-black/20 backdrop-blur-sm ring-1 shadow-[0_1px_2px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.08)] transition-all duration-150 active:scale-[0.98] select-none ${copied ? 'ring-emerald-400/50' : 'ring-white/10 hover:bg-white/10 hover:ring-violet-400/40'}`}>
               <motion.span key={copied ? 'check' : 'copy'} initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', duration: 0.35 }}>
                 {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-slate-200" />}

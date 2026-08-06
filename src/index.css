@@ -171,6 +171,24 @@
     will-change: transform;
   }
 
+  /* Respect reduced-motion: decorative animation collapses to a single
+     instant frame. Functional transitions (press feedback) stay usable. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Keyboard focus — visible ring on the custom button materials */
+  .header-btn:focus-visible, .gold-btn:focus-visible, .violet-btn:focus-visible,
+  .violet-solid-btn:focus-visible, .glass-card:focus-visible, .glass-tile:focus-visible {
+    outline: 2px solid rgba(157, 92, 255, 0.8);
+    outline-offset: 2px;
+  }
+
   /* Select-none for interactive UI — text in message/chat areas keeps selection */
   button, [role="button"], [role="tab"], nav, .select-none-interactive {
     -webkit-user-select: none;

@@ -131,14 +131,14 @@ export default function Home() {
 
       {/* How to play button */}
       <div className="absolute left-4 z-20" style={{ top: 'max(env(safe-area-inset-top), 0.75rem)' }}>
-        <button onClick={() => setShowHowToPlay(true)} className="header-btn">
+        <button onClick={() => setShowHowToPlay(true)} className="header-btn" aria-label={t.howToPlayShort}>
           <HelpCircle className="w-5 h-5" />
         </button>
       </div>
 
       {/* Profile settings link */}
       <div className="absolute right-4 z-20" style={{ top: 'max(env(safe-area-inset-top), 0.75rem)' }}>
-        <Link to="/profile-settings" className="header-btn">
+        <Link to="/profile-settings" className="header-btn" aria-label={t.settings}>
           <Settings className="w-5 h-5" />
         </Link>
       </div>
@@ -150,8 +150,8 @@ export default function Home() {
             className="glass-card w-full max-w-md bg-slate-900/95 p-6 max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-bold text-white">{t.howToPlay}</h2>
-              <button onClick={() => setShowHowToPlay(false)} className="p-1.5 rounded-lg hover:bg-white/10 text-slate-400">
-                <X className="w-4 h-4" />
+              <button onClick={() => setShowHowToPlay(false)} className="p-2.5 -m-1 rounded-xl hover:bg-white/10 text-slate-400" aria-label={t.gotIt}>
+                <X className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-4 text-sm text-slate-300">

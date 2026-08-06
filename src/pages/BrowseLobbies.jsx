@@ -105,7 +105,7 @@ export default function BrowseLobbies() {
       {/* Header — pinned, never scrolls */}
       <div className="relative z-10 w-full max-w-md mx-auto px-4 shrink-0">
         <div className="flex items-center gap-3 pt-2 pb-4">
-          <Link to="/" className="header-btn shrink-0">
+          <Link to="/" className="header-btn shrink-0" aria-label="Back">
             <ChevronLeft className="w-5 h-5" />
           </Link>
           <div className="min-w-0">
@@ -116,6 +116,7 @@ export default function BrowseLobbies() {
             onClick={fetchLobbies}
             disabled={lobbiesLoading}
             className="header-btn ml-auto shrink-0 disabled:opacity-40"
+            aria-label={t.loading}
           >
             <RefreshCw className={`w-4 h-4 ${lobbiesLoading ? 'animate-spin' : ''}`} />
           </button>
