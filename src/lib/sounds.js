@@ -87,3 +87,13 @@ export function playPop() {
     tone(660, 0, 0.08, 'triangle', 0.08);
   });
 }
+// Cosmetic unlock: sparkly rising run with a shimmer on top
+export function playUnlock() {
+  play(() => {
+    tone(659.25, 0, 0.10, 'triangle', 0.14);    // E5
+    tone(783.99, 0.08, 0.10, 'triangle', 0.16); // G5
+    tone(1046.5, 0.16, 0.14, 'triangle', 0.18); // C6
+    tone(1318.5, 0.26, 0.22, 'triangle', 0.16); // E6
+    tone(2093.0, 0.30, 0.30, 'sine', 0.10);     // C7 shimmer
+  });
+}

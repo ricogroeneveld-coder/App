@@ -10,6 +10,7 @@ import { useLang } from '@/lib/LanguageContext';
 import GameBackground from '@/components/GameBackground';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import { loadProfile, getProfile, subscribeProfile, ensureDailyLogin } from '@/lib/playerProfile';
+import { ALL_COSMETICS, cosmeticById } from '@/lib/cosmetics';
 import heroImage from '../../home-hero.webp';
 
 const PLAYER_COLORS = ['#6366f1','#ec4899','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ef4444','#14b8a6','#f97316','#06b6d4','#84cc16','#a855f7'];
@@ -265,9 +266,26 @@ export default function Home() {
               className="relative h-20 rounded-[28px] bg-gradient-to-b from-white/[0.08] to-black/[0.18] backdrop-blur-md ring-1 ring-[#6d28d9]/60 shadow-[0_1px_2px_rgba(0,0,0,0.35),0_8px_16px_-8px_rgba(0,0,0,0.55),0_20px_30px_-18px_rgba(0,0,0,0.5),0_0_12px_-6px_rgba(109,40,217,0.45),inset_0_1px_0_rgba(255,255,255,0.1),inset_0_-1px_0_rgba(0,0,0,0.25)] px-4 flex items-center gap-3 overflow-hidden cursor-pointer transition-transform duration-150 active:scale-[0.98]">
               <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
               <PlayerAvatar profile={profile} name={getGuestIdentity().name} size={52} />
-              <span className="text-sm text-slate-300 min-w-0 truncate">
-                {t.playingAs} <span className="text-amber-400 font-bold">{getGuestIdentity().name}</span>{' '}
-                <Crown className="inline w-3.5 h-3.5 text-amber-400 -mt-0.5" fill="currentColor" />
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm text-slate-300 truncate leading-tight">
+                  {t.playingAs}{' '}
+                  <span className={`font-bold ${cosmeticById(profile?.equipped?.nameColor)?.cls || 'text-amber-400'}`}>
+                    {getGuestIdentity().name}
+                  </span>{' '}
+                  <Crown className="inline w-3.5 h-3.5 text-amber-400 -mt-0.5" fill="currentColor" />
+                </span>
+                <span onClick={e => { e.stopPropagation(); navigate('/profile?tab=shop'); }}
+                  className="mt-0.5 flex items-center gap-1.5 text-[11px] font-bold text-slate-400 leading-tight">
+                  <span className="text-amber-300 tabular-nums">{profile?.picks || 0} Picks</span>
+                  <span className="text-slate-600">·</span>
+                  <span className="text-violet-300">✨ {t.shop}</span>
+                  {ALL_COSMETICS.some(c => c.source.type === 'shop' && !profile?.owned?.includes(c.id) && (profile?.picks || 0) >= c.source.price) && (
+                    <span className="px-1 py-px rounded bg-gradient-to-b from-[#ffcb45] to-[#e08e05] text-[#2c1500] text-[8px] font-extrabold leading-tight"
+                      style={{ animation: 'livePulse 2.4s ease-in-out infinite' }}>
+                      {t.newBadge}
+                    </span>
+                  )}
+                </span>
               </span>
               <button onClick={e => { e.stopPropagation(); localStorage.removeItem('mystery_guest_name'); setNameSet(false); setNameInput(''); }}
                 className="ml-auto shrink-0 px-3 py-1.5 rounded-lg bg-gradient-to-b from-white/[0.06] to-black/10 ring-1 ring-violet-500/50 shadow-[0_1px_2px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.12)] text-xs font-bold text-white hover:bg-violet-500/15 hover:ring-violet-400/70 transition-all duration-150 active:scale-[0.98] select-none">

@@ -11,7 +11,9 @@ import lobbyTitleImage from '../../../lobby-title.webp';
 import CategorySelector from './CategorySelector';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import PlayerCardModal from '@/components/progression/PlayerCardModal';
+import BannerArt from '@/components/progression/BannerArt';
 import usePeerProfiles from '@/components/progression/usePeerProfiles';
+import { cosmeticById } from '@/lib/cosmetics';
 
 function categoryMeta(cat) {
   if (!cat) return null;
@@ -188,21 +190,32 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
               <span className="text-xs font-bold text-slate-300">{players.length} / 12 players</span>
             </div>
             <div className="grid grid-cols-2 gap-1.5 max-h-[156px] overflow-y-auto hide-scrollbar" style={{ overscrollBehaviorY: 'none' }}>
-              {players.map((p, i) => (
-                <motion.div key={p.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                  onClick={() => setCardPlayer(p)} role="button" tabIndex={0}
-                  onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setCardPlayer(p)}
-                  className="glass-tile flex items-center gap-2 h-9 px-2 cursor-pointer transition-transform duration-150 active:scale-[0.97]">
-                  <PlayerAvatar profile={profiles[p.user_id]} name={p.display_name} color={p.color} size={24} />
-                  <span className="flex-1 min-w-0 font-semibold text-xs text-white truncate">{p.display_name}</span>
-                  {p.user_id === room.host_id && <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" fill="currentColor" />}
-                  {p.user_id === me?.id && (
-                    <span className="shrink-0 px-1.5 py-0.5 rounded-full bg-violet-500/20 ring-1 ring-violet-400/40 text-[9px] font-bold text-violet-200">
-                      {t.you}
-                    </span>
-                  )}
-                </motion.div>
-              ))}
+              {players.map((p, i) => {
+                const pProfile = profiles[p.user_id];
+                const pBanner = pProfile ? cosmeticById(pProfile.equipped?.banner) : null;
+                const pNameCls = pProfile ? cosmeticById(pProfile.equipped?.nameColor)?.cls : null;
+                return (
+                  <motion.div key={p.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+                    onClick={() => setCardPlayer(p)} role="button" tabIndex={0}
+                    onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setCardPlayer(p)}
+                    className="glass-tile relative overflow-hidden flex items-center gap-2 h-9 px-2 cursor-pointer transition-transform duration-150 active:scale-[0.97]">
+                    {pBanner && (
+                      <>
+                        <BannerArt banner={pBanner} className="absolute inset-0" motifScale={0.55} />
+                        <span aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/50 via-black/25 to-black/45" />
+                      </>
+                    )}
+                    <PlayerAvatar profile={pProfile} name={p.display_name} color={p.color} size={24} className="relative" />
+                    <span className={`relative flex-1 min-w-0 font-semibold text-xs truncate ${pNameCls || 'text-white'}`}>{p.display_name}</span>
+                    {p.user_id === room.host_id && <Crown className="relative w-3.5 h-3.5 text-amber-400 shrink-0" fill="currentColor" />}
+                    {p.user_id === me?.id && (
+                      <span className="relative shrink-0 px-1.5 py-0.5 rounded-full bg-violet-500/20 ring-1 ring-violet-400/40 text-[9px] font-bold text-violet-200">
+                        {t.you}
+                      </span>
+                    )}
+                  </motion.div>
+                );
+              })}
             </div>
           </motion.div>
         </div>

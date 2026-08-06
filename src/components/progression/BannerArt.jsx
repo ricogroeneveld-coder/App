@@ -6,7 +6,7 @@ import React from 'react';
  * slow shine sweep on legendary/mythic scenes. Fills its parent; place it
  * as the first (absolute) child behind banner content.
  */
-export default function BannerArt({ banner, className = '', style = {} }) {
+export default function BannerArt({ banner, className = '', style = {}, motifScale = 1 }) {
   const b = banner || {};
   return (
     <span aria-hidden className={`block overflow-hidden pointer-events-none ${className}`}
@@ -14,7 +14,7 @@ export default function BannerArt({ banner, className = '', style = {} }) {
       {(b.motifs || []).map((m, i) => (
         <span key={i} className="absolute select-none"
           style={{
-            left: m.x, top: m.y, fontSize: m.s, lineHeight: 1,
+            left: m.x, top: m.y, fontSize: m.s * motifScale, lineHeight: 1,
             opacity: m.o ?? 0.6, transform: `rotate(${m.r || 0}deg)`,
             filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.35))',
           }}>

@@ -16,7 +16,9 @@ import { getRandomQuestion } from '@/lib/questionBank';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import PlayerCardModal from '@/components/progression/PlayerCardModal';
+import BannerArt from '@/components/progression/BannerArt';
 import usePeerProfiles from '@/components/progression/usePeerProfiles';
+import { cosmeticById } from '@/lib/cosmetics';
 
 const QUESTION_TIMER_SECONDS = 120;
 
@@ -529,20 +531,26 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
               return (
                 <div key={p.id} onClick={() => setCardPlayer(p)} role="button" tabIndex={0}
                   onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setCardPlayer(p)}
-                  className={`flex items-center gap-2.5 px-3 py-2 rounded-xl ring-1 transition cursor-pointer active:scale-[0.98]
+                  className={`relative overflow-hidden flex items-center gap-2.5 px-3 py-2 rounded-xl ring-1 transition cursor-pointer active:scale-[0.98]
                   ${p.is_eliminated ? 'bg-white/3 ring-white/5 opacity-50' : isMe ? 'bg-violet-500/10 ring-violet-400/30' : 'bg-white/5 ring-white/5'}`}>
-                  <span className="text-xs text-slate-500 w-4 text-center font-mono">{i+1}</span>
-                  <PlayerAvatar profile={profiles[p.user_id]} name={p.display_name} color={p.color} size={28} />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{p.display_name}{isMe && <span className="ml-1 text-[10px] text-violet-400">({t.you.toLowerCase()})</span>}</p>
-                    <p className="text-xs text-slate-500">
+                  {!p.is_eliminated && profiles[p.user_id] && cosmeticById(profiles[p.user_id].equipped?.banner) && (
+                    <>
+                      <BannerArt banner={cosmeticById(profiles[p.user_id].equipped?.banner)} className="absolute inset-0" motifScale={0.65} />
+                      <span aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/55 via-black/30 to-black/50" />
+                    </>
+                  )}
+                  <span className="relative text-xs text-slate-400 w-4 text-center font-mono">{i+1}</span>
+                  <PlayerAvatar profile={profiles[p.user_id]} name={p.display_name} color={p.color} size={28} className="relative" />
+                  <div className="relative flex-1 min-w-0">
+                    <p className={`font-medium text-sm truncate ${(profiles[p.user_id] && cosmeticById(profiles[p.user_id].equipped?.nameColor)?.cls) || ''}`}>{p.display_name}{isMe && <span className="ml-1 text-[10px] text-violet-400">({t.you.toLowerCase()})</span>}</p>
+                    <p className="text-xs text-slate-400">
                       {p.word_revealed ? t.wordRevealed(toDisplayWord(p.secret_word, lang))
                         : p.is_eliminated ? t.eliminated
                         : isQuestioner ? t.askingNow
                         : t.active}
                     </p>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="relative flex items-center gap-1 shrink-0">
                     <Trophy className="w-3.5 h-3.5 text-amber-400" />
                     <span className="text-sm font-bold text-amber-300">{p.score || 0}</span>
                   </div>

@@ -8,7 +8,9 @@ import { WORD_LISTS, WORD_LISTS_NL, PREMIUM_WORD_LISTS, shortCategory } from '@/
 import { useLang } from '@/lib/LanguageContext';
 import GameBackground from '@/components/GameBackground';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
+import BannerArt from '@/components/progression/BannerArt';
 import usePeerProfiles from '@/components/progression/usePeerProfiles';
+import { cosmeticById } from '@/lib/cosmetics';
 
 export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }) {
   const { toast } = useToast();
@@ -176,16 +178,27 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
         )}
 
         <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.2 }} className="glass-card mt-3 p-3 space-y-1.5">
-          {players.map(p => (
-            <div key={p.id} className="glass-tile flex items-center gap-2.5 h-9 px-2.5">
-              <PlayerAvatar profile={profiles[p.user_id]} name={p.display_name} color={p.color} size={24} />
-              <span className="flex-1 min-w-0 text-xs font-semibold truncate">{p.display_name}</span>
-              {p.user_id === me?.id && <span className="shrink-0 px-1.5 py-0.5 rounded-full bg-violet-500/20 ring-1 ring-violet-400/40 text-[9px] font-bold text-violet-200">{t.you}</span>}
-              {p.word_submitted
-                ? <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                : <Clock className="w-4 h-4 text-slate-500 animate-pulse shrink-0" />}
-            </div>
-          ))}
+          {players.map(p => {
+            const pProfile = profiles[p.user_id];
+            const pBanner = pProfile ? cosmeticById(pProfile.equipped?.banner) : null;
+            const pNameCls = pProfile ? cosmeticById(pProfile.equipped?.nameColor)?.cls : null;
+            return (
+              <div key={p.id} className="glass-tile relative overflow-hidden flex items-center gap-2.5 h-9 px-2.5">
+                {pBanner && (
+                  <>
+                    <BannerArt banner={pBanner} className="absolute inset-0" motifScale={0.55} />
+                    <span aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/50 via-black/25 to-black/45" />
+                  </>
+                )}
+                <PlayerAvatar profile={pProfile} name={p.display_name} color={p.color} size={24} className="relative" />
+                <span className={`relative flex-1 min-w-0 text-xs font-semibold truncate ${pNameCls || 'text-white'}`}>{p.display_name}</span>
+                {p.user_id === me?.id && <span className="relative shrink-0 px-1.5 py-0.5 rounded-full bg-violet-500/20 ring-1 ring-violet-400/40 text-[9px] font-bold text-violet-200">{t.you}</span>}
+                {p.word_submitted
+                  ? <Check className="relative w-4 h-4 text-emerald-400 shrink-0" />
+                  : <Clock className="relative w-4 h-4 text-slate-500 animate-pulse shrink-0" />}
+              </div>
+            );
+          })}
         </motion.div>
 
         {isHost && allSubmitted && (

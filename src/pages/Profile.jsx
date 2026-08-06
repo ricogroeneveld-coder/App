@@ -5,6 +5,7 @@ import { ArrowLeft, Settings, Lock, Check, Sparkles } from 'lucide-react';
 import GameBackground from '@/components/GameBackground';
 import PlayerAvatar, { AvatarFrame, EmblemTile } from '@/components/progression/PlayerAvatar';
 import BannerArt from '@/components/progression/BannerArt';
+import PurchaseModal from '@/components/progression/PurchaseModal';
 import { useToast } from '@/components/ui/use-toast';
 import { useLang } from '@/lib/LanguageContext';
 import {
@@ -125,8 +126,12 @@ export default function Profile() {
   const { toast } = useToast();
   const { t } = useLang();
   const [profile, setProfile] = useState(getProfile());
-  const [tab, setTab] = useState('collection'); // collection | shop | challenges
+  const [tab, setTab] = useState(() => {
+    const wanted = new URLSearchParams(window.location.search).get('tab');
+    return ['collection', 'shop', 'challenges'].includes(wanted) ? wanted : 'collection';
+  });
   const [justUnlocked, setJustUnlocked] = useState(null);
+  const [purchase, setPurchase] = useState(null); // { c, balance } captured at tap
 
   useEffect(() => {
     loadProfile().then(setProfile);
@@ -157,14 +162,7 @@ export default function Profile() {
       return;
     }
     if (c.source.type === 'shop') {
-      const res = purchaseCosmetic(c.id);
-      if (res.ok) {
-        setJustUnlocked(c.id);
-        toast({ title: `${t.unlocked} ${c.name}!`, description: `-${c.source.price} Picks` });
-        setTimeout(() => setJustUnlocked(null), 900);
-      } else if (res.reason === 'picks') {
-        toast({ title: t.notEnoughPicks, variant: 'destructive' });
-      }
+      setPurchase({ c, balance: profile.picks || 0 });
     } else if (c.source.type === 'level') {
       toast({ title: `${t.unlockAtLevel} ${c.source.level}` });
     } else {
@@ -172,11 +170,22 @@ export default function Profile() {
     }
   };
 
+  const confirmPurchase = (c) => {
+    const res = purchaseCosmetic(c.id);
+    if (res.ok) {
+      setJustUnlocked(c.id);
+      setTimeout(() => setJustUnlocked(null), 900);
+    } else if (res.reason === 'picks') {
+      toast({ title: t.notEnoughPicks, variant: 'destructive' });
+    }
+    return res;
+  };
+
   const shopItems = ALL_COSMETICS.filter(c => c.source.type === 'shop');
   // Two featured items rotate daily
   const seed = Number(todayKey().replaceAll('-', ''));
   const notOwnedShop = shopItems.filter(c => !profile.owned.includes(c.id));
-  const featured = [0, 1].map(i => notOwnedShop[(seed + i * 3) % Math.max(notOwnedShop.length, 1)]).filter(Boolean);
+  const featured = [...new Set([0, 1, 2].map(i => notOwnedShop[(seed + i * 3) % Math.max(notOwnedShop.length, 1)]))].filter(Boolean);
   const ch = challengeState();
 
   return (
@@ -278,14 +287,20 @@ export default function Profile() {
             <motion.div key="shop" initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} transition={{ duration: 0.15 }}>
               {featured.length > 0 && (
                 <div className="mb-4">
-                  <p className="section-label mb-2 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-300" /> {t.featured}
-                  </p>
+                  <div className="flex items-baseline justify-between mb-2">
+                    <p className="section-label flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-300" /> {t.featured}
+                    </p>
+                    <p className="text-[10px] font-bold text-slate-500">{t.rotatesDaily}</p>
+                  </div>
                   <div className="grid grid-cols-3 gap-2">
                     {featured.map(c => (
-                      <CosmeticCard key={c.id} c={c} owned={false} equipped={false}
-                        onTap={onTapCosmetic} justUnlocked={justUnlocked === c.id}
-                        footer={`${c.source.price} Picks`} />
+                      <div key={c.id} className="featured-float">
+                        <CosmeticCard c={c} owned={false} equipped={false}
+                          onTap={onTapCosmetic} justUnlocked={justUnlocked === c.id}
+                          footer={`${c.source.price} Picks`}
+                          footerClass={(profile.picks || 0) >= c.source.price ? 'text-amber-300' : 'text-slate-500'} />
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -300,7 +315,8 @@ export default function Profile() {
                       {items.map(c => (
                         <CosmeticCard key={c.id} c={c} owned={false} equipped={false}
                           onTap={onTapCosmetic} justUnlocked={justUnlocked === c.id}
-                          footer={`${c.source.price} Picks`} />
+                          footer={`${c.source.price} Picks`}
+                          footerClass={(profile.picks || 0) >= c.source.price ? 'text-amber-300' : 'text-slate-500'} />
                       ))}
                     </div>
                   </div>
@@ -343,6 +359,12 @@ export default function Profile() {
           </button>
         </div>
       </div>
+
+      {purchase && (
+        <PurchaseModal cosmetic={purchase.c} balance={purchase.balance}
+          typeLabel={TYPE_LABELS[purchase.c.type].replace(/s$/, '')}
+          onConfirm={confirmPurchase} onClose={() => setPurchase(null)} />
+      )}
     </div>
   );
 }
