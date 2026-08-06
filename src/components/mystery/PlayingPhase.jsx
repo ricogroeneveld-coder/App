@@ -291,10 +291,11 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
           : myWord.length <= 14 ? 'text-xs'
           : myWord.length <= 20 ? 'text-[11px]'
           : 'text-[10px]';
-        // While the word is revealed it's the most important thing on
-        // screen — hand it the wider share until it's hidden again.
-        const catFlex = showMyWord ? 'flex-[4]' : 'flex-[5]';
-        const wordFlex = showMyWord ? 'flex-[5]' : 'flex-[4]';
+        // Hidden, the pill hugs its content (just the label and dots);
+        // revealed, the word becomes the most important thing on screen and
+        // takes the wider flexible share until it's hidden again.
+        const catFlex = showMyWord ? 'flex-[4]' : 'flex-1';
+        const wordFlex = showMyWord ? 'flex-[5] min-w-[92px]' : 'shrink-0';
         return (
       <div className="px-3 py-2.5 flex items-center gap-2 border-b border-white/5 bg-black/20 backdrop-blur-sm">
         <button
@@ -321,7 +322,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
 
         <button
           onClick={() => setShowMyWord(v => !v)}
-          className={`${wordFlex} min-w-[92px] self-stretch flex flex-col items-end justify-center px-2.5 py-1 rounded-xl bg-gradient-to-b from-white/[0.06] to-black/[0.12] ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-white/10 transition active:scale-[0.98]`}
+          className={`${wordFlex} self-stretch flex flex-col items-end justify-center px-2.5 py-1 rounded-xl bg-gradient-to-b from-white/[0.06] to-black/[0.12] ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-white/10 transition active:scale-[0.98]`}
           title={t.myWord}
         >
           <p className="text-[10px] uppercase tracking-wide text-slate-500 leading-none">{t.myWord}</p>
