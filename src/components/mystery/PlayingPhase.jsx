@@ -354,11 +354,13 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
       </AnimatePresence>
 
       <div
-        className={`flex-1 min-h-0 p-4 ${tab === 'chat' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto hide-scrollbar'}`}
+        className={`flex-1 min-h-0 p-4 ${tab === 'chat' || tab === 'questions' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto hide-scrollbar'}`}
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 4rem)' }}
       >
         {tab === 'questions' && (
-          <div className="max-w-lg mx-auto space-y-4">
+          <div className="flex flex-col flex-1 min-h-0 w-full max-w-lg mx-auto">
+            {/* Scrollable history — cards and feed only; actions live below */}
+            <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar space-y-4 pb-2" style={{ overscrollBehaviorY: 'contain' }}>
 
             {/* Dedicated hint round — blocks normal question UI until all hints submitted */}
             {isHintPhase && !allHintsSubmitted && (
@@ -434,10 +436,24 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
                   )}
                 </AnimatePresence>
 
+              </>
+            )}
+
+            <div className="space-y-3 mt-2">
+              {[...questions].reverse().map(q => (
+                <QuestionCard key={q.id} question={q} players={players} me={me} />
+              ))}
+            </div>
+            </div>
+
+            {/* Bottom action panel — pinned in the thumb zone above the tab
+                bar. Read above, type/ask/guess here. */}
+            {(!isHintPhase || allHintsSubmitted) && (
+              <div className="shrink-0 pt-2 space-y-2">
                 {isMyTurnToAsk && (
-                  <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }}
-                    className="rounded-2xl bg-violet-500/10 ring-1 ring-violet-400/30 p-4">
-                    <div className="flex items-center justify-between mb-3">
+                  <motion.div initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }}
+                    className="rounded-2xl bg-violet-500/10 ring-1 ring-violet-400/30 p-3">
+                    <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <Mic className="w-4 h-4 text-violet-400" />
                         <p className="text-sm font-semibold text-violet-300">{t.yourTurnToAsk}</p>
@@ -452,15 +468,15 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
                     <input value={questionText} onChange={e => setQuestionText(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && submitQuestion()}
                       placeholder={t.askPlaceholder} enterKeyHint="send"
-                      className="inset-input w-full h-10 px-3 text-base md:text-sm mb-3" />
+                      className="inset-input w-full h-10 px-3 text-base md:text-sm mb-2" />
                     <div className="flex gap-2">
                       <Button onClick={submitQuestion} disabled={submittingQ || !questionText.trim()}
-                        className="violet-solid-btn flex-1 h-9 border-0 bg-transparent hover:bg-transparent text-sm font-bold">
+                        className="violet-solid-btn flex-1 h-10 border-0 bg-transparent hover:bg-transparent text-sm font-bold">
                         {t.askQuestion}
                       </Button>
                       <Button onClick={skipToAutoQuestion} disabled={autoAsking || submittingQ}
                         variant="ghost"
-                        className="h-9 px-3 text-slate-400 hover:text-amber-300 hover:bg-amber-500/10 text-xs border border-white/10"
+                        className="h-10 px-3 text-slate-400 hover:text-amber-300 hover:bg-amber-500/10 text-xs border border-white/10"
                         title={t.skipTitle}>
                         <Zap className="w-3.5 h-3.5 mr-1" />
                         {autoAsking ? '…' : t.skipToAI}
@@ -470,34 +486,23 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
                 )}
 
                 {!isMyTurnToAsk && !myPlayer?.is_eliminated && (
-                  <div className="text-center text-sm text-slate-400 py-2">
+                  <div className="text-center text-xs text-slate-400 font-medium">
                     {currentQuestionPending
                       ? `⏳ ${t.waitingForAnswers}`
                       : questioner ? t.isTurnToAsk(questioner.display_name) : ''}
                   </div>
                 )}
 
-                {/* Guess button — word_revealed players can still guess others */}
-                {!myPlayer?.is_eliminated && !myPlayer?.word_revealed && (
+                {/* Guess — word_revealed players can still guess others */}
+                {!myPlayer?.is_eliminated && (
                   <Button onClick={() => setGuessTarget('pick')} disabled={!canGuess}
-                    className="w-full h-10 rounded-xl bg-gradient-to-b from-pink-500/25 to-pink-900/25 hover:from-pink-500/35 hover:to-pink-900/30 border border-pink-400/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_2px_8px_-2px_rgba(236,72,153,0.35)] text-pink-200 font-bold text-sm active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed">
-                    {!canGuess ? t.guessIn(questionsNeeded - questions.length) : t.makeAGuess}
+                    className="w-full h-11 rounded-xl bg-gradient-to-b from-pink-500/25 to-pink-900/25 hover:from-pink-500/35 hover:to-pink-900/30 border border-pink-400/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_2px_8px_-2px_rgba(236,72,153,0.35)] text-pink-200 font-bold text-sm active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                    {!canGuess ? t.guessIn(questionsNeeded - questions.length)
+                      : myPlayer?.word_revealed ? t.guessOthers : t.makeAGuess}
                   </Button>
                 )}
-                {myPlayer?.word_revealed && !myPlayer?.is_eliminated && (
-                  <Button onClick={() => setGuessTarget('pick')} disabled={!canGuess}
-                    className="w-full h-10 rounded-xl bg-gradient-to-b from-pink-500/25 to-pink-900/25 hover:from-pink-500/35 hover:to-pink-900/30 border border-pink-400/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_2px_8px_-2px_rgba(236,72,153,0.35)] text-pink-200 font-bold text-sm active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed">
-                    {!canGuess ? t.guessIn(questionsNeeded - questions.length) : t.guessOthers}
-                  </Button>
-                )}
-              </>
+              </div>
             )}
-
-            <div className="space-y-3 mt-2">
-              {[...questions].reverse().map(q => (
-                <QuestionCard key={q.id} question={q} players={players} me={me} />
-              ))}
-            </div>
           </div>
         )}
 
