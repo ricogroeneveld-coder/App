@@ -114,11 +114,18 @@ export default function Profile() {
   const [justUnlocked, setJustUnlocked] = useState(null);
 
   useEffect(() => {
-    const dev = new URLSearchParams(window.location.search).get('dev');
-    const load = dev === 'unlock' ? devUnlockAll() : dev === 'reset' ? devResetProfile() : loadProfile();
-    load.then(setProfile);
+    loadProfile().then(setProfile);
     return subscribeProfile(setProfile);
   }, []);
+
+  // TEMP: visible test switch — everything owned + 99999 Picks on, fresh
+  // profile off. Remove before release.
+  const testModeOn = ALL_COSMETICS.every(c => profile.owned?.includes(c.id));
+  const toggleTestMode = () => {
+    (testModeOn ? devResetProfile() : devUnlockAll()).then(() => {
+      toast({ title: testModeOn ? 'Profile reset' : 'Everything unlocked!' });
+    });
+  };
 
   const banner = cosmeticById(profile.equipped?.banner);
   const title = cosmeticById(profile.equipped?.title);
@@ -306,6 +313,20 @@ export default function Profile() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* TEMP: test-mode switch — remove before release */}
+        <div className="glass-tile flex items-center justify-between gap-3 px-3 py-2.5 mt-1 mb-2">
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-white">Test mode</p>
+            <p className="text-[10px] text-slate-400 font-medium">Unlock all cosmetics + 99,999 Picks. Off resets the profile.</p>
+          </div>
+          <button onClick={toggleTestMode} role="switch" aria-checked={testModeOn} aria-label="Test mode"
+            className={`shrink-0 w-11 h-6 rounded-full p-0.5 transition-colors duration-200 ${testModeOn
+              ? 'bg-gradient-to-b from-[#ffcb45] to-[#e08e05]'
+              : 'bg-black/40 ring-1 ring-white/15'}`}>
+            <span className={`block w-5 h-5 rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.5)] transition-transform duration-200 ${testModeOn ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
       </div>
     </div>
   );

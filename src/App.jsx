@@ -6,6 +6,7 @@ import { LanguageProvider } from '@/lib/LanguageContext';
 import { AuthProvider } from '@/lib/AuthContext';
 import ScrollToTop from './components/ScrollToTop';
 import { useEffect } from 'react';
+import { devUnlockAll, devResetProfile } from '@/lib/playerProfile';
 // Add page imports here
 import Home from '@/pages/Home';
 import BrowseLobbies from '@/pages/BrowseLobbies';
@@ -57,8 +58,19 @@ function useForcedDarkTheme() {
   }, []);
 }
 
+// Dev/test switch usable from ANY route — static hosts often 404 on deep
+// links, so ?dev=unlock must also work from the root URL.
+function useDevParam() {
+  useEffect(() => {
+    const dev = new URLSearchParams(window.location.search).get('dev');
+    if (dev === 'unlock') devUnlockAll();
+    else if (dev === 'reset') devResetProfile();
+  }, []);
+}
+
 function App() {
   useForcedDarkTheme();
+  useDevParam();
 
   return (
     <LanguageProvider>
