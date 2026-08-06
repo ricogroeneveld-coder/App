@@ -145,10 +145,10 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
           spacer collapses on short screens so nothing ever clips. */}
       <div className="relative z-10 w-full max-w-md flex flex-col min-h-0 self-stretch">
         {/* Title */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-3">
-          <img src={lobbyTitleImage} alt="The Interactive Guessing Game" className="w-full max-w-[220px] mx-auto"
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-2">
+          <img src={lobbyTitleImage} alt="The Interactive Guessing Game" className="lobby-logo w-full mx-auto"
             style={{ filter: 'drop-shadow(0 0 18px rgba(168,109,255,0.35)) drop-shadow(0 6px 10px rgba(0,0,0,0.45))' }} />
-          <p className="text-xs font-semibold text-white/[0.7] tracking-wide mt-0.5">{t.waitingForPlayers}</p>
+          <p className="text-xs font-semibold text-white/[0.7] tracking-wide">{t.waitingForPlayers}</p>
         </motion.div>
 
         <div className="space-y-2">

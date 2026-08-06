@@ -335,7 +335,10 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
         )}
       </AnimatePresence>
 
-      <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar p-4" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 4rem)' }}>
+      <div
+        className={`flex-1 min-h-0 p-4 ${tab === 'chat' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto hide-scrollbar'}`}
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 4rem)' }}
+      >
         {tab === 'questions' && (
           <div className="max-w-lg mx-auto space-y-4">
 
@@ -517,7 +520,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
         )}
 
         {tab === 'chat' && (
-          <div className="flex flex-col" style={{ height: 'calc(100dvh - 160px)' }}>
+          <div className="flex flex-col flex-1 min-h-0 w-full max-w-lg mx-auto">
             <ChatPanel roomCode={roomCode} me={me} myPlayer={myPlayer} onEmoteRain={() => {}} />
           </div>
         )}

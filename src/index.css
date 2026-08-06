@@ -207,6 +207,17 @@
     pointer-events: none;
   }
 
+  /* Lobby logo — the visual anchor of the waiting room. Height-tiered: full
+     presence on normal/tall phones, scaled down on short viewports so the
+     no-scroll lobby column never clips. */
+  .lobby-logo { max-width: 240px; }
+  @media (min-height: 700px) {
+    .lobby-logo { max-width: 300px; }
+  }
+  @media (min-height: 800px) {
+    .lobby-logo { max-width: 330px; }
+  }
+
   /* Toast entrance — rises from the bottom edge with a soft settle */
   @keyframes toastIn {
     from { opacity: 0; transform: translateY(16px) scale(0.97); }
