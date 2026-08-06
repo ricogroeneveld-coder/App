@@ -179,18 +179,13 @@ export default function Home() {
             <motion.div initial={{ scale:0 }} animate={{ scale:1 }} transition={{ type:'spring', duration:0.8 }}
               className="relative flex items-center justify-center pt-2 pb-1">
               {/* One combined logo+mascots asset — the composition stays
-                  identical on every phone width. Idle life: a slow 3px float
-                  and a glow breath share the same 7s clock (phase-locked, the
-                  glow peaks as the logo rises), plus a glossy light pass every
-                  15s masked to the artwork's own pixels. */}
+                  identical on every phone width. Idle life: a slow float and a
+                  glow breath share the same 6s clock (phase-locked, the glow
+                  peaks as the logo rises). */}
               <div className="hero-float relative z-10 w-full max-w-[400px]">
                 <span aria-hidden className="hero-glow" />
                 <img src={heroImage} alt="What's my Pick!" className="relative w-full"
                   style={{ filter: 'drop-shadow(0 0 20px rgba(168,109,255,0.4)) drop-shadow(0 10px 14px rgba(0,0,0,0.45))' }} />
-                <span aria-hidden className="hero-shine"
-                  style={{ WebkitMaskImage: `url(${heroImage})`, maskImage: `url(${heroImage})`, WebkitMaskSize: '100% 100%', maskSize: '100% 100%' }}>
-                  <span className="hero-shine-stripe" />
-                </span>
               </div>
             </motion.div>
             <p className="text-center text-[18px] font-semibold text-white/[0.78] tracking-wide mt-2 translate-y-3">

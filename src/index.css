@@ -183,16 +183,16 @@
     50% { opacity: 0.45; transform: scale(0.8); }
   }
 
-  /* Hero logo idle — slow 3px float and glow breath on one shared 7s clock
-     so they stay phase-locked: the glow is brightest as the logo rises. The
+  /* Hero logo idle — slow float and glow breath on one shared 6s clock so
+     they stay phase-locked: the glow is brightest as the logo rises. The
      glow lives on its own opacity-animated layer (animating drop-shadow would
      repaint every frame). */
   @keyframes heroFloat {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-3px); }
+    50% { transform: translateY(-7px); }
   }
   .hero-float {
-    animation: heroFloat 7s ease-in-out infinite;
+    animation: heroFloat 6s ease-in-out infinite;
     will-change: transform;
   }
   @keyframes heroGlowBreathe {
@@ -203,33 +203,8 @@
     position: absolute;
     inset: -12%;
     background: radial-gradient(ellipse 55% 48% at 50% 46%, rgba(160,100,255,0.3), transparent 70%);
-    animation: heroGlowBreathe 7s ease-in-out infinite;
+    animation: heroGlowBreathe 6s ease-in-out infinite;
     pointer-events: none;
-  }
-
-  /* Glossy reflection pass over the logo — the sweep container is masked to
-     the artwork's pixels so the light only shows on the art itself. One soft
-     1.7s pass every 15s; transform/opacity only. */
-  .hero-shine {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    pointer-events: none;
-  }
-  .hero-shine-stripe {
-    position: absolute;
-    top: 0; bottom: 0; left: 0;
-    width: 60%;
-    background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.55) 50%, transparent 80%);
-    animation: heroShine 15s linear infinite;
-    will-change: transform, opacity;
-  }
-  @keyframes heroShine {
-    0% { transform: translateX(-100%) skewX(-18deg); opacity: 0; }
-    2% { opacity: 0.4; }
-    9% { opacity: 0.4; }
-    11.5% { transform: translateX(280%) skewX(-18deg); opacity: 0; }
-    100% { transform: translateX(280%) skewX(-18deg); opacity: 0; }
   }
 
   /* Toast entrance — rises from the bottom edge with a soft settle */
