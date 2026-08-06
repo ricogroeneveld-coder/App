@@ -3,9 +3,10 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MysteryRoom, MysteryPlayer } from '@/api/db';
 import { useToast } from '@/components/ui/use-toast';
-import { ChevronLeft, RefreshCw, Users, LogIn, Globe } from 'lucide-react';
+import { ChevronLeft, RefreshCw, LogIn, Globe, Loader2 } from 'lucide-react';
 import { getGuestIdentity } from '@/lib/guestIdentity';
 import { useLang } from '@/lib/LanguageContext';
+import GameBackground from '@/components/GameBackground';
 
 const PULL_THRESHOLD = 70;
 
@@ -99,25 +100,24 @@ export default function BrowseLobbies() {
         paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)',
       }}
     >
-      <div className="fixed inset-0 -z-10 bg-gradient-to-br from-slate-950 via-violet-950 to-slate-950" />
+      <GameBackground />
 
       {/* Header — pinned, never scrolls */}
       <div className="relative z-10 w-full max-w-md mx-auto px-4 shrink-0">
-        <div className="flex items-center gap-3 pt-3 pb-5">
-          <Link to="/"
-            className="w-11 h-11 flex items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10 hover:bg-white/10 transition shrink-0">
-            <ChevronLeft className="w-5 h-5 text-slate-300" />
+        <div className="flex items-center gap-3 pt-2 pb-4">
+          <Link to="/" className="header-btn shrink-0">
+            <ChevronLeft className="w-5 h-5" />
           </Link>
           <div className="min-w-0">
-            <h1 className="text-lg font-bold text-white">{t.openLobbies}</h1>
-            <p className="text-xs text-slate-400 truncate">{t.openLobbiesDesc}</p>
+            <h1 className="text-lg font-extrabold tracking-tight text-white leading-tight">{t.openLobbies}</h1>
+            <p className="text-xs font-medium text-slate-400 truncate">{t.openLobbiesDesc}</p>
           </div>
           <button
             onClick={fetchLobbies}
             disabled={lobbiesLoading}
-            className="ml-auto w-11 h-11 shrink-0 flex items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10 hover:bg-white/10 transition disabled:opacity-40"
+            className="header-btn ml-auto shrink-0 disabled:opacity-40"
           >
-            <RefreshCw className={`w-4 h-4 text-slate-300 ${lobbiesLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${lobbiesLoading ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>
@@ -136,35 +136,46 @@ export default function BrowseLobbies() {
             className="absolute top-0 left-0 right-0 flex justify-center items-center z-10 pointer-events-none transition-all"
             style={{ height: `${pullY}px` }}
           >
-            <RefreshCw className={`w-5 h-5 text-lime-400 transition-transform ${pullY >= PULL_THRESHOLD ? 'animate-spin' : ''}`}
+            <RefreshCw className={`w-5 h-5 text-violet-400 transition-transform ${pullY >= PULL_THRESHOLD ? 'animate-spin' : ''}`}
               style={{ transform: `rotate(${(pullY / PULL_THRESHOLD) * 360}deg)` }} />
           </div>
         )}
 
         <div className="w-full max-w-md mx-auto px-4">
           {lobbiesLoading ? (
-            <p className="text-center text-slate-500 text-sm py-10">{t.loading}</p>
+            <div className="flex flex-col items-center gap-3 py-12">
+              <Loader2 className="w-7 h-7 text-violet-400 animate-spin drop-shadow-[0_0_8px_rgba(157,92,255,0.5)]" />
+              <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider">{t.loading}</p>
+            </div>
           ) : publicLobbies.length === 0 ? (
-            <div className="text-center py-16">
-              <Globe className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-              <p className="text-slate-500 text-sm">{t.noOpenLobbies}</p>
+            <div className="text-center py-14">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-[20px] bg-gradient-to-b from-[#2a1150] to-[#0d0620] ring-1 ring-violet-400/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_5px_12px_-8px_rgba(0,0,0,0.45)] flex items-center justify-center">
+                <Globe className="w-7 h-7 text-violet-300" />
+              </div>
+              <p className="text-slate-400 text-sm font-medium">{t.noOpenLobbies}</p>
             </div>
           ) : (
             <div className="space-y-2 pb-8">
-              {publicLobbies.map(room => (
-                <motion.button key={room.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+              {publicLobbies.map((room, i) => (
+                <motion.button key={room.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
                   onClick={() => joinLobby(room)}
                   disabled={loading !== null}
-                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-black/40 ring-1 ring-lime-400/30 hover:ring-lime-400/60 transition text-left disabled:opacity-50">
-                  <div className="min-w-0">
-                    <p className="font-semibold text-white text-sm truncate">{room.host_name}'s lobby</p>
-                    <p className="text-xs text-slate-400 font-mono">{room.room_code}</p>
+                  className="glass-panel w-full p-2.5 flex items-center gap-2.5 text-left transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5 hover:ring-white/20 disabled:opacity-50">
+                  <span className="relative w-9 h-9 rounded-full bg-gradient-to-br from-[#9d5cff] to-[#3b0f8f] ring-1 ring-[#9d5cff]/50 shadow-[0_2px_6px_-1px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.25)] flex items-center justify-center text-[13px] font-bold text-white shrink-0 overflow-hidden">
+                    <span className="pointer-events-none absolute -top-1 -left-1 w-4 h-4 rounded-full bg-white/35 blur-[3px]" />
+                    <span className="relative">{(room.host_name || '?')[0].toUpperCase()}</span>
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-white text-[13px] truncate leading-tight">{room.host_name}'s lobby</p>
+                    <p className="text-[11px] text-slate-400 font-mono tracking-[0.12em]">{room.room_code}</p>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-slate-400 shrink-0">
-                    <Users className="w-3.5 h-3.5" />
-                    <span className="mr-1">{t.waiting}</span>
-                    <LogIn className="w-4 h-4 text-lime-400" />
-                  </div>
+                  <span className="shrink-0 flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/10 ring-1 ring-emerald-400/25">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" style={{ animation: 'livePulse 2s ease-in-out infinite' }} />
+                    <span className="text-[10px] font-bold text-emerald-300">{t.waiting}</span>
+                  </span>
+                  <span className="shrink-0 w-8 h-8 rounded-full bg-gradient-to-b from-white/[0.07] to-black/20 ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center">
+                    <LogIn className="w-3.5 h-3.5 text-violet-300" />
+                  </span>
                 </motion.button>
               ))}
             </div>

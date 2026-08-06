@@ -161,4 +161,62 @@
     -webkit-user-select: none;
     user-select: none;
   }
+
+  /* Live-lobby indicator pulse */
+  @keyframes livePulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(0.8); }
+  }
+}
+
+/* ── Design tokens ─────────────────────────────────────────────────────────
+   The one card/button material set for the whole game. Every screen builds
+   from these instead of hand-rolling shadows, so materials stay identical. */
+@layer components {
+  /* Primary glass card — purple-rimmed, lit from above */
+  .glass-card {
+    @apply relative rounded-[24px] bg-gradient-to-b from-white/[0.08] to-black/[0.18] backdrop-blur-md ring-1 ring-[#6d28d9]/60 shadow-[0_1px_2px_rgba(0,0,0,0.4),0_6px_12px_-8px_rgba(0,0,0,0.5),0_14px_22px_-16px_rgba(0,0,0,0.45),0_0_8px_-6px_rgba(109,40,217,0.32),inset_0_1px_0_rgba(255,255,255,0.1),inset_0_-1px_0_rgba(0,0,0,0.25)] overflow-hidden;
+  }
+  .glass-card::before {
+    content: '';
+    @apply pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent;
+  }
+
+  /* Neutral glass card — same material without the purple rim, for secondary
+     surfaces (pack rows, list items) so the purple rim stays special */
+  .glass-panel {
+    @apply relative rounded-[20px] bg-gradient-to-b from-white/[0.07] to-black/[0.16] ring-1 ring-white/10 shadow-[0_2px_3px_rgba(0,0,0,0.4),0_5px_12px_-8px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.12)];
+  }
+
+  /* Inner tile — rows inside a glass card */
+  .glass-tile {
+    @apply rounded-2xl bg-white/5 ring-1 ring-white/5;
+  }
+
+  /* Round header button (back / help / settings / copy) */
+  .header-btn {
+    @apply w-11 h-11 flex items-center justify-center rounded-full bg-gradient-to-b from-white/[0.07] to-black/20 backdrop-blur-sm ring-1 ring-white/10 shadow-[0_1px_2px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-white/10 hover:ring-violet-400/40 transition-all duration-150 active:scale-[0.98] select-none text-slate-200;
+  }
+
+  /* Gold hero CTA material — radius set by the caller */
+  .gold-btn {
+    @apply relative bg-[linear-gradient(180deg,#fdeeb8_0%,#ffcb45_16%,#e08e05_40%,#a85800_66%,#5e2c00_100%)] shadow-[0_2px_3px_rgba(0,0,0,0.4),0_8px_14px_-8px_rgba(0,0,0,0.5),0_14px_22px_-16px_rgba(0,0,0,0.35),0_0_6px_-6px_rgba(255,180,60,0.18),0_0_0_1px_rgba(255,214,120,0.45),inset_0_1px_1px_rgba(255,255,255,0.2),inset_0_-6px_10px_-6px_rgba(110,45,0,0.4)] transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5 hover:brightness-[1.04] overflow-hidden disabled:opacity-60 select-none;
+  }
+  /* Top sheen for the gold CTA */
+  .gold-btn::before {
+    content: '';
+    @apply pointer-events-none absolute inset-0;
+    background: radial-gradient(ellipse 55% 60% at 50% -8%, rgba(255,255,255,0.55), transparent 70%);
+  }
+
+  /* Secondary violet pill button */
+  .violet-btn {
+    @apply rounded-xl bg-gradient-to-b from-white/[0.06] to-black/10 ring-1 ring-violet-500/50 shadow-[0_1px_2px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.12)] text-white hover:bg-violet-500/15 hover:ring-violet-400/70 transition-all duration-150 active:scale-[0.98] select-none;
+  }
+
+  /* Solid violet button — gradient + inner highlight so it reads as a game
+     control, never a flat web button */
+  .violet-solid-btn {
+    @apply rounded-xl bg-gradient-to-b from-violet-400 via-violet-500 to-violet-800 text-white font-bold shadow-[0_1px_2px_rgba(0,0,0,0.4),0_4px_10px_-2px_rgba(0,0,0,0.5),0_0_0_1px_rgba(157,92,255,0.35),inset_0_1px_0_rgba(255,255,255,0.35)] hover:brightness-110 transition-all duration-150 active:scale-[0.98] select-none;
+  }
 }

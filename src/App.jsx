@@ -47,23 +47,16 @@ const AnimatedRoutes = () => {
   );
 };
 
-function useSystemTheme() {
+// The game is dark-only: force dark theme tokens everywhere so shared UI
+// (toasts, dialogs, form controls) never renders light on light-mode devices.
+function useForcedDarkTheme() {
   useEffect(() => {
-    const root = document.documentElement;
-    const apply = (dark) => {
-      if (dark) root.classList.add('dark');
-      else root.classList.remove('dark');
-    };
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    apply(mq.matches);
-    const handler = (e) => apply(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
+    document.documentElement.classList.add('dark');
   }, []);
 }
 
 function App() {
-  useSystemTheme();
+  useForcedDarkTheme();
 
   return (
     <LanguageProvider>

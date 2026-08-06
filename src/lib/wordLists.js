@@ -9,6 +9,29 @@ export const CATEGORY_EMOJIS = {
   'Household Objects': '🏠',
 };
 
+// Short display labels for tight UI (selection chips, subtitles). The full
+// name stays the canonical value everywhere in game logic and storage —
+// this only affects what's printed where space is scarce.
+const CATEGORY_SHORT = {
+  'Football Players': 'Football',
+  'European Countries': 'Europe',
+  'Household Objects': 'Household',
+  'Movie Characters': 'Characters',
+  'European Cities': 'Euro Cities',
+  'World Capitals': 'Capitals',
+  'Famous Landmarks': 'Landmarks',
+  'Fast Food Chains': 'Fast Food',
+  'Marvel/DC Heroes': 'Superheroes',
+  'Marvel/DC Villains': 'Villains',
+  'Harry Potter Characters': 'Harry Potter',
+  'Star Wars Characters': 'Star Wars',
+  'Disney Characters': 'Disney',
+};
+
+export function shortCategory(cat) {
+  return CATEGORY_SHORT[cat] || cat;
+}
+
 // Dutch translations for categories that contain common words (not proper nouns)
 export const WORD_LISTS_NL = {
   Pets: [

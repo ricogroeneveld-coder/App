@@ -9,6 +9,7 @@ import { Settings, X, ChevronRight, Crown, Users, HelpCircle, Globe } from 'luci
 import { getGuestIdentity, setGuestName, hasGuestName } from '@/lib/guestIdentity';
 import { Link } from 'react-router-dom';
 import { useLang } from '@/lib/LanguageContext';
+import GameBackground from '@/components/GameBackground';
 import logoImage from '../../logo.webp';
 import mascotRed from '../../mascot-red.webp';
 import mascotBlue from '../../mascot-blue.webp';
@@ -130,41 +131,19 @@ export default function Home() {
         paddingBottom: 'max(env(safe-area-inset-bottom), 0.5rem)',
       }}
     >
-      <div className="fixed inset-0 -z-10 bg-[#07040f]" />
-      {/* Soft light entering from above — sells a single overhead light source */}
-      <div className="fixed inset-0 -z-10" style={{ background: 'radial-gradient(ellipse 120% 38% at 50% -8%, rgba(255,255,255,0.05), transparent 60%)' }} />
-      {/* Focused spotlight directly behind the logo — tighter falloff, less wash */}
-      <div className="fixed inset-0 -z-10" style={{ background: 'radial-gradient(ellipse 46% 26% at 50% 21%, rgba(160,100,255,0.42), transparent 68%)' }} />
-      {/* Broad ambient wash, kept subtle */}
-      <div className="fixed inset-0 -z-10" style={{ background: 'radial-gradient(ellipse 90% 55% at 50% 15%, rgba(140,90,220,0.22), transparent 70%)' }} />
-      <div className="fixed inset-0 -z-10" style={{ background: 'radial-gradient(ellipse 100% 60% at 50% 100%, rgba(70,32,140,0.18), transparent 62%)' }} />
-      {/* Whisper of warm undertone low in frame — slight color variation so it never reads flat */}
-      <div className="fixed inset-0 -z-10" style={{ background: 'radial-gradient(ellipse 55% 26% at 50% 96%, rgba(140,70,20,0.07), transparent 65%)' }} />
-      <div className="fixed inset-0 -z-10 opacity-70" style={{
-        backgroundImage: 'radial-gradient(1.5px 1.5px at 12% 12%, rgba(255,255,255,0.8), transparent), radial-gradient(1px 1px at 28% 6%, rgba(255,255,255,0.5), transparent), radial-gradient(1.5px 1.5px at 65% 5%, rgba(255,255,255,0.6), transparent), radial-gradient(1px 1px at 80% 14%, rgba(255,255,255,0.5), transparent), radial-gradient(1.5px 1.5px at 92% 8%, rgba(255,255,255,0.7), transparent), radial-gradient(1px 1px at 6% 30%, rgba(255,255,255,0.4), transparent), radial-gradient(1.5px 1.5px at 95% 28%, rgba(255,255,255,0.6), transparent), radial-gradient(1px 1px at 4% 55%, rgba(255,255,255,0.4), transparent), radial-gradient(1.5px 1.5px at 93% 50%, rgba(255,255,255,0.5), transparent), radial-gradient(1px 1px at 15% 68%, rgba(255,255,255,0.35), transparent), radial-gradient(1.5px 1.5px at 88% 70%, rgba(255,255,255,0.45), transparent), radial-gradient(1px 1px at 40% 78%, rgba(255,255,255,0.3), transparent), radial-gradient(1.5px 1.5px at 70% 88%, rgba(255,255,255,0.4), transparent), radial-gradient(1px 1px at 25% 92%, rgba(255,255,255,0.3), transparent), radial-gradient(1.5px 1.5px at 55% 95%, rgba(255,255,255,0.35), transparent)',
-        backgroundSize: '100% 100%',
-        animation: 'twinkle 6s ease-in-out infinite alternate, driftSlow 50s ease-in-out infinite alternate',
-        willChange: 'transform, opacity',
-      }} />
-      <div className="fixed inset-0 -z-10" style={{ boxShadow: 'inset 0 0 min(42vw,290px) rgba(0,0,0,0.92)' }} />
+      <GameBackground spotlight />
 
       {/* How to play button */}
       <div className="absolute left-4 z-20" style={{ top: 'max(env(safe-area-inset-top), 0.75rem)' }}>
-        <button
-          onClick={() => setShowHowToPlay(true)}
-          className="w-11 h-11 flex items-center justify-center rounded-full bg-gradient-to-b from-white/[0.07] to-black/20 backdrop-blur-sm ring-1 ring-white/10 shadow-[0_1px_2px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-white/10 hover:ring-violet-400/40 transition-all duration-150 active:scale-[0.98] select-none-interactive text-slate-200"
-        >
+        <button onClick={() => setShowHowToPlay(true)} className="header-btn">
           <HelpCircle className="w-5 h-5" />
         </button>
       </div>
 
       {/* Profile settings link */}
       <div className="absolute right-4 z-20" style={{ top: 'max(env(safe-area-inset-top), 0.75rem)' }}>
-        <Link
-          to="/profile-settings"
-          className="w-11 h-11 flex items-center justify-center rounded-full bg-gradient-to-b from-white/[0.07] to-black/20 backdrop-blur-sm ring-1 ring-white/10 shadow-[0_1px_2px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-white/10 hover:ring-violet-400/40 transition-all duration-150 active:scale-[0.98] select-none-interactive"
-        >
-          <Settings className="w-5 h-5 text-slate-200" />
+        <Link to="/profile-settings" className="header-btn">
+          <Settings className="w-5 h-5" />
         </Link>
       </div>
 
@@ -172,7 +151,7 @@ export default function Home() {
       {showHowToPlay && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
           <motion.div initial={{ opacity:0, y:40 }} animate={{ opacity:1, y:0 }}
-            className="w-full max-w-md rounded-3xl bg-slate-900 ring-1 ring-white/10 p-6 max-h-[85vh] overflow-y-auto">
+            className="glass-card w-full max-w-md bg-slate-900/95 p-6 max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-bold text-white">{t.howToPlay}</h2>
               <button onClick={() => setShowHowToPlay(false)} className="p-1.5 rounded-lg hover:bg-white/10 text-slate-400">
@@ -191,7 +170,7 @@ export default function Home() {
               ))}
             </div>
             <button onClick={() => setShowHowToPlay(false)}
-              className="mt-6 w-full h-11 rounded-xl bg-violet-500 hover:bg-violet-600 text-white font-semibold text-sm transition">
+              className="violet-solid-btn mt-6 w-full h-11 text-sm">
               {t.gotIt}
             </button>
           </motion.div>
@@ -279,7 +258,7 @@ export default function Home() {
               <input value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase())}
                 onKeyDown={e => e.key === 'Enter' && handleJoin()}
                 placeholder={t.roomCodePlaceholder} maxLength={6}
-                className="relative flex-1 min-w-0 h-10 rounded-xl bg-gradient-to-b from-[#1e0d42]/80 to-[#0a0518]/90 shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1px_rgba(183,148,255,0.3)] px-2 outline-none text-white text-sm tracking-wide uppercase placeholder:text-white/40 placeholder:tracking-normal placeholder:text-xs focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1.5px_rgba(56,189,248,0.7),0_0_10px_-2px_rgba(56,189,248,0.5)] transition-shadow" />
+                className="relative flex-1 min-w-0 h-10 rounded-xl bg-gradient-to-b from-[#1e0d42]/80 to-[#0a0518]/90 shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1px_rgba(183,148,255,0.3)] px-2 outline-none text-white text-base tracking-wide uppercase placeholder:text-white/40 placeholder:tracking-normal placeholder:text-xs focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1.5px_rgba(56,189,248,0.7),0_0_10px_-2px_rgba(56,189,248,0.5)] transition-shadow" />
               <button onClick={handleJoin} disabled={loading !== null}
                 className="relative h-10 px-2 shrink-0 rounded-xl bg-gradient-to-b from-sky-300 via-sky-400 to-sky-700 shadow-[0_1px_2px_rgba(0,0,0,0.4),0_4px_10px_-2px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.35)] hover:brightness-110 text-white font-bold text-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-60 overflow-hidden">
                 <span className="pointer-events-none absolute inset-x-0.5 top-0.5 h-1/2 rounded-t-[10px] bg-gradient-to-b from-white/40 to-transparent" />

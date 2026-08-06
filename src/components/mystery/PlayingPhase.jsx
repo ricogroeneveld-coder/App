@@ -9,7 +9,8 @@ import ChatPanel from '@/components/mystery/ChatPanel';
 import EmojiRain from '@/components/mystery/EmojiRain';
 import { BookOpen, MessageCircleQuestion, HelpCircle, Trophy, Mic, Users, MessageCircle, Zap, Timer, Lightbulb, CheckCircle2, LogOut } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
-import { toDisplayWord } from '@/lib/wordLists';
+import { toDisplayWord, shortCategory } from '@/lib/wordLists';
+import GameBackground from '@/components/GameBackground';
 import { playAlert, playHint } from '@/lib/sounds';
 import { getRandomQuestion } from '@/lib/questionBank';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -253,9 +254,10 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
 
   return (
     <div
-      className="h-dvh overflow-hidden bg-gradient-to-br from-slate-950 via-violet-950 to-slate-950 text-white flex flex-col"
+      className="h-dvh overflow-hidden text-white flex flex-col relative"
       style={{ paddingTop: 'env(safe-area-inset-top)' }}
     >
+      <GameBackground />
       <EmojiRain emote={emojiRainEmote} trigger={emojiRainTrigger} />
 
       {/* Correct guess alert */}
@@ -276,23 +278,23 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
       </AnimatePresence>
 
       {/* Header */}
-      <div className="px-3 py-2.5 flex items-center gap-2 border-b border-white/5">
+      <div className="px-3 py-2.5 flex items-center gap-2 border-b border-white/5 bg-black/20 backdrop-blur-sm">
         <button
           onClick={() => setShowLeaveConfirm(true)}
-          className="shrink-0 w-9 h-9 rounded-xl bg-white/5 ring-1 ring-white/10 hover:bg-rose-500/15 hover:ring-rose-400/30 text-slate-400 hover:text-rose-400 transition flex items-center justify-center"
+          className="shrink-0 w-9 h-9 rounded-xl bg-gradient-to-b from-white/[0.07] to-black/20 ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-rose-500/15 hover:ring-rose-400/30 text-slate-400 hover:text-rose-400 transition flex items-center justify-center active:scale-[0.98]"
           title={t.leave}
         >
           <LogOut className="w-4 h-4" />
         </button>
 
-        <div className="flex-1 min-w-0 px-3 py-1.5 rounded-xl bg-white/5 ring-1 ring-white/10 min-w-0">
+        <div className="flex-1 min-w-0 px-3 py-1.5 rounded-xl bg-gradient-to-b from-white/[0.06] to-black/[0.12] ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
           <p className="text-[10px] uppercase tracking-wide text-slate-500 leading-none">{t.categorie}</p>
-          <p className="font-semibold text-violet-300 truncate text-sm leading-tight mt-0.5">{room.category}</p>
+          <p className="font-bold text-violet-300 truncate text-sm leading-tight mt-0.5">{shortCategory(room.category)}</p>
         </div>
 
         <button
           onClick={() => navigator.clipboard?.writeText(roomCode)}
-          className="shrink-0 flex flex-col items-center px-3 py-1.5 rounded-xl bg-violet-500/10 ring-1 ring-violet-400/20 hover:bg-violet-500/20 transition"
+          className="shrink-0 flex flex-col items-center px-3 py-1.5 rounded-xl bg-violet-500/10 ring-1 ring-violet-400/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-violet-500/20 transition active:scale-[0.98]"
           title={t.room}
         >
           <p className="text-[10px] uppercase tracking-wide text-violet-400/70 leading-none">{t.room}</p>
@@ -301,11 +303,11 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
 
         <button
           onClick={() => setShowMyWord(v => !v)}
-          className="shrink-0 flex flex-col items-end px-3 py-1.5 rounded-xl bg-white/5 ring-1 ring-white/10 hover:bg-white/10 transition min-w-[96px]"
+          className="shrink-0 flex flex-col items-end px-3 py-1.5 rounded-xl bg-gradient-to-b from-white/[0.06] to-black/[0.12] ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-white/10 transition min-w-[96px] active:scale-[0.98]"
           title={t.myWord}
         >
           <p className="text-[10px] uppercase tracking-wide text-slate-500 leading-none">{t.myWord}</p>
-          <p className="font-semibold text-violet-300 text-sm leading-tight mt-0.5 truncate max-w-[88px]">
+          <p className="font-bold text-violet-300 text-sm leading-tight mt-0.5 truncate max-w-[88px]">
             {showMyWord ? toDisplayWord(myPlayer?.secret_word, lang) : '••••••'}
           </p>
         </button>
@@ -315,14 +317,14 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
       <AnimatePresence>
         {showLeaveConfirm && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
-              className="bg-slate-900 ring-1 ring-white/10 rounded-2xl p-6 max-w-sm w-full">
-              <p className="font-bold text-lg mb-2">Spel verlaten?</p>
-              <p className="text-slate-400 text-sm mb-5">Je wordt als uitgeschakeld gemarkeerd.</p>
-              <div className="flex gap-3">
-                <Button onClick={() => setShowLeaveConfirm(false)} variant="ghost" className="flex-1 border border-white/10">Annuleer</Button>
-                <Button onClick={leaveGame} className="flex-1 bg-rose-500 hover:bg-rose-600 border-0">Verlaten</Button>
+              className="glass-card bg-slate-900/95 p-5 max-w-sm w-full">
+              <p className="font-extrabold text-lg mb-1">{t.leaveQuestion}</p>
+              <p className="text-slate-400 text-sm mb-4">{t.leaveBody}</p>
+              <div className="flex gap-2.5">
+                <Button onClick={() => setShowLeaveConfirm(false)} variant="ghost" className="flex-1 h-11 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10">{t.cancel}</Button>
+                <Button onClick={leaveGame} className="flex-1 h-11 rounded-xl bg-rose-500 hover:bg-rose-600 border-0 font-bold">{t.leave}</Button>
               </div>
             </motion.div>
           </motion.div>
@@ -402,9 +404,9 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
                       <p className="text-white font-semibold mb-3">"{latestQuestion.question_text}"</p>
                       <div className="flex gap-3">
                         <Button onClick={() => submitAnswer(latestQuestion.id, true)} disabled={submittingAnswer}
-                          className="flex-1 bg-emerald-500 hover:bg-emerald-600 border-0">{t.yes}</Button>
+                          className="flex-1 rounded-xl bg-gradient-to-b from-emerald-400 to-emerald-700 hover:brightness-110 border-0 font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_-2px_rgba(0,0,0,0.5)] active:scale-[0.98] transition-all">{t.yes}</Button>
                         <Button onClick={() => submitAnswer(latestQuestion.id, false)} disabled={submittingAnswer}
-                          className="flex-1 bg-rose-500 hover:bg-rose-600 border-0">{t.no}</Button>
+                          className="flex-1 rounded-xl bg-gradient-to-b from-rose-400 to-rose-700 hover:brightness-110 border-0 font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_-2px_rgba(0,0,0,0.5)] active:scale-[0.98] transition-all">{t.no}</Button>
                       </div>
                     </motion.div>
                   )}
@@ -456,13 +458,13 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
                 {/* Guess button — word_revealed players can still guess others */}
                 {!myPlayer?.is_eliminated && !myPlayer?.word_revealed && (
                   <Button onClick={() => setGuessTarget('pick')} disabled={!canGuess}
-                    className="w-full h-10 bg-pink-500/20 hover:bg-pink-500/30 border border-pink-400/30 text-pink-300 text-sm disabled:opacity-40 disabled:cursor-not-allowed">
+                    className="w-full h-10 rounded-xl bg-gradient-to-b from-pink-500/25 to-pink-900/25 hover:from-pink-500/35 hover:to-pink-900/30 border border-pink-400/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_2px_8px_-2px_rgba(236,72,153,0.35)] text-pink-200 font-bold text-sm active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed">
                     {!canGuess ? t.guessIn(questionsNeeded - questions.length) : t.makeAGuess}
                   </Button>
                 )}
                 {myPlayer?.word_revealed && !myPlayer?.is_eliminated && (
                   <Button onClick={() => setGuessTarget('pick')} disabled={!canGuess}
-                    className="w-full h-10 bg-pink-500/20 hover:bg-pink-500/30 border border-pink-400/30 text-pink-300 text-sm disabled:opacity-40 disabled:cursor-not-allowed">
+                    className="w-full h-10 rounded-xl bg-gradient-to-b from-pink-500/25 to-pink-900/25 hover:from-pink-500/35 hover:to-pink-900/30 border border-pink-400/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_2px_8px_-2px_rgba(236,72,153,0.35)] text-pink-200 font-bold text-sm active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed">
                     {!canGuess ? t.guessIn(questionsNeeded - questions.length) : t.guessOthers}
                   </Button>
                 )}
@@ -522,13 +524,16 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
 
       {/* Bottom Tab Bar */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-30 flex bg-slate-950/95 backdrop-blur border-t border-white/5"
+        className="fixed bottom-0 left-0 right-0 z-30 flex bg-[#0a0616]/95 backdrop-blur-md border-t border-white/10 shadow-[0_-4px_16px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)]"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 16px)' }}
       >
         {[['questions', t.tabQuestions, MessageCircleQuestion],['notebook', t.tabNotebook, BookOpen],['players', t.tabPlayers, Users],['chat', t.tabChat, MessageCircle]].map(([id, label, Icon]) => (
           <button key={id} onClick={() => setTab(id)}
-            className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-medium transition ${tab === id ? 'text-violet-300' : 'text-slate-500'}`}>
-            <Icon className={`w-5 h-5 ${tab === id ? 'text-violet-400' : ''}`} />
+            className={`relative flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-bold transition ${tab === id ? 'text-violet-300' : 'text-slate-500'}`}>
+            {tab === id && (
+              <span className="pointer-events-none absolute top-0 inset-x-6 h-0.5 rounded-full bg-gradient-to-r from-transparent via-violet-400 to-transparent" />
+            )}
+            <Icon className={`w-5 h-5 transition-transform ${tab === id ? 'text-violet-400 scale-110 drop-shadow-[0_0_6px_rgba(157,92,255,0.6)]' : ''}`} />
             {label}
           </button>
         ))}

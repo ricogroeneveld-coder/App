@@ -11,6 +11,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { useLang } from '@/lib/LanguageContext';
 import { Switch } from '@/components/ui/switch';
 import { isSoundEnabled, setSoundEnabled, playCorrect } from '@/lib/sounds';
+import GameBackground from '@/components/GameBackground';
 
 export default function ProfileSettings() {
   const navigate = useNavigate();
@@ -118,32 +119,34 @@ export default function ProfileSettings() {
 
   return (
     <div
-      className="h-dvh overflow-hidden bg-gradient-to-br from-slate-950 via-violet-950 to-slate-950 text-white flex flex-col"
+      className="h-dvh overflow-hidden text-white flex flex-col relative"
       style={{
         paddingTop: 'max(env(safe-area-inset-top), 1rem)',
         paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)',
       }}
     >
+      <GameBackground />
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-2 pb-4">
         <button
           onClick={() => navigate('/')}
-          className="flex items-center justify-center w-11 h-11 rounded-full bg-white/5 ring-1 ring-white/10 hover:bg-white/10 transition select-none-interactive"
+          className="header-btn"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-lg font-semibold">{t.profileSettings}</h1>
+        <h1 className="text-lg font-extrabold tracking-tight">{t.profileSettings}</h1>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar px-4 pb-6 max-w-md mx-auto w-full space-y-4">
+      <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar px-4 pb-6 max-w-md mx-auto w-full space-y-3">
         {/* Profile card */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl bg-white/5 ring-1 ring-white/10 p-5 flex items-center gap-4"
+          className="glass-card p-4 flex items-center gap-3.5"
         >
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-pink-600 flex items-center justify-center flex-shrink-0">
-            <User className="w-7 h-7 text-white" />
+          <div className="relative w-[52px] h-[52px] rounded-full bg-gradient-to-br from-[#9d5cff] to-[#3b0f8f] ring-2 ring-[#9d5cff]/50 shadow-[0_3px_6px_-1px_rgba(0,0,0,0.55),0_1px_2px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.3)] flex items-center justify-center flex-shrink-0 overflow-hidden">
+            <span className="pointer-events-none absolute -top-2 -left-2 w-7 h-7 rounded-full bg-white/35 blur-[5px]" />
+            <User className="relative w-6 h-6 text-white" />
           </div>
           <div className="min-w-0">
             <p className="font-semibold text-white text-lg truncate">{displayName}</p>
@@ -164,7 +167,7 @@ export default function ProfileSettings() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.03 }}
-            className="rounded-2xl bg-violet-500/10 ring-1 ring-violet-400/20 p-5"
+            className="glass-card p-4"
           >
             <div className="flex items-center gap-3 mb-2">
               <LogIn className="w-5 h-5 text-violet-400 flex-shrink-0" />
@@ -172,7 +175,7 @@ export default function ProfileSettings() {
             </div>
             <p className="text-slate-400 text-sm mb-3">{t.signInDesc}</p>
             <Link to="/login">
-              <Button className="w-full h-11 bg-violet-500 hover:bg-violet-600 border-0 font-semibold select-none-interactive">
+              <Button className="violet-solid-btn w-full h-11 border-0 bg-transparent hover:bg-transparent font-bold select-none-interactive">
                 {t.signInCta}
               </Button>
             </Link>
@@ -184,7 +187,7 @@ export default function ProfileSettings() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.04 }}
-          className="rounded-2xl bg-white/5 ring-1 ring-white/10 p-5"
+          className="glass-panel rounded-[20px] p-4"
         >
           <div className="flex items-center gap-3 mb-3">
             <Globe className="w-5 h-5 text-violet-400 flex-shrink-0" />
@@ -193,13 +196,13 @@ export default function ProfileSettings() {
           <div className="flex gap-2">
             <button
               onClick={() => switchLang('en')}
-              className={`flex-1 h-11 rounded-xl text-sm font-semibold transition ring-1 select-none-interactive ${lang === 'en' ? 'bg-violet-500 ring-violet-400 text-white' : 'bg-white/5 ring-white/10 text-slate-300 hover:bg-white/10'}`}
+              className={`flex-1 h-11 rounded-xl text-sm font-semibold transition ring-1 select-none-interactive ${lang === 'en' ? 'bg-gradient-to-b from-violet-400 via-violet-500 to-violet-800 ring-violet-400/60 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_2px_6px_-2px_rgba(0,0,0,0.5)]' : 'bg-white/5 ring-white/10 text-slate-300 hover:bg-white/10'}`}
             >
               🇬🇧 English
             </button>
             <button
               onClick={() => switchLang('nl')}
-              className={`flex-1 h-11 rounded-xl text-sm font-semibold transition ring-1 select-none-interactive ${lang === 'nl' ? 'bg-violet-500 ring-violet-400 text-white' : 'bg-white/5 ring-white/10 text-slate-300 hover:bg-white/10'}`}
+              className={`flex-1 h-11 rounded-xl text-sm font-semibold transition ring-1 select-none-interactive ${lang === 'nl' ? 'bg-gradient-to-b from-violet-400 via-violet-500 to-violet-800 ring-violet-400/60 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_2px_6px_-2px_rgba(0,0,0,0.5)]' : 'bg-white/5 ring-white/10 text-slate-300 hover:bg-white/10'}`}
             >
               🇳🇱 Nederlands
             </button>
@@ -211,7 +214,7 @@ export default function ProfileSettings() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="rounded-2xl bg-white/5 ring-1 ring-white/10 p-5 flex items-center gap-3"
+          className="glass-panel rounded-[20px] p-4 flex items-center gap-3"
         >
           <Volume2 className="w-5 h-5 text-violet-400 flex-shrink-0" />
           <div className="flex-1 min-w-0">
@@ -231,7 +234,7 @@ export default function ProfileSettings() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.045 }}
-            className="rounded-2xl bg-white/5 ring-1 ring-white/10 p-5"
+            className="glass-panel rounded-[20px] p-4"
           >
             <div className="flex items-center gap-3 mb-3">
               <DoorOpen className="w-5 h-5 text-rose-400 flex-shrink-0" />
@@ -258,7 +261,7 @@ export default function ProfileSettings() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 }}
-            className="rounded-2xl bg-white/5 ring-1 ring-white/10 p-5"
+            className="glass-panel rounded-[20px] p-4"
           >
             <Button
               onClick={() => logout()}
@@ -276,7 +279,7 @@ export default function ProfileSettings() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.08 }}
-          className="rounded-2xl bg-white/5 ring-1 ring-white/10 p-5 space-y-3"
+          className="glass-panel rounded-[20px] p-4 space-y-3"
         >
           <div className="flex items-start gap-3">
             <Trash2 className="w-5 h-5 text-rose-400 mt-0.5 flex-shrink-0" />
@@ -315,7 +318,7 @@ export default function ProfileSettings() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 40, scale: 0.95 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-sm rounded-2xl bg-slate-900 ring-1 ring-white/10 p-6 space-y-5"
+              className="glass-card w-full max-w-sm bg-slate-900/95 p-5 space-y-4"
               style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1.5rem)' }}
             >
               <div className="flex items-center gap-3">
