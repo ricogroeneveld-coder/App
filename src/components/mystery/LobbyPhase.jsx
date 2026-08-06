@@ -153,7 +153,7 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
             className="glass-card px-4 py-2.5 flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.18em] text-slate-400 font-bold mb-0.5">{t.roomCode}</p>
+              <p className="text-[10px] uppercase tracking-[0.18em] text-slate-300 font-extrabold mb-0.5">{t.roomCode}</p>
               <p className="text-[26px] font-extrabold tracking-[0.14em] text-white leading-none"
                 style={{ textShadow: '0 0 20px rgba(157,92,255,0.5)' }}>
                 {roomCode}
@@ -174,11 +174,11 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
               <Users className="w-3.5 h-3.5 text-violet-300" />
               <span className="text-xs font-bold text-slate-300">{players.length} / 12 players</span>
             </div>
-            <div className="grid grid-cols-2 gap-1.5 max-h-[172px] overflow-y-auto hide-scrollbar" style={{ overscrollBehaviorY: 'none' }}>
+            <div className="grid grid-cols-2 gap-1.5 max-h-[156px] overflow-y-auto hide-scrollbar" style={{ overscrollBehaviorY: 'none' }}>
               {players.map((p, i) => (
                 <motion.div key={p.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                  className="glass-tile flex items-center gap-2 h-10 px-2">
-                  <div className="relative w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 shadow-[0_2px_6px_-1px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.25)] overflow-hidden"
+                  className="glass-tile flex items-center gap-2 h-9 px-2">
+                  <div className="relative w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 shadow-[0_2px_6px_-1px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.25)] overflow-hidden"
                     style={{ backgroundColor: p.color }}>
                     <span className="pointer-events-none absolute -top-1 -left-1 w-3.5 h-3.5 rounded-full bg-white/35 blur-[3px]" />
                     <span className="relative">{p.display_name[0].toUpperCase()}</span>
@@ -201,7 +201,7 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
               className="glass-card w-full px-4 py-2.5 flex items-center justify-between gap-3 text-left transition-all duration-150 active:scale-[0.98]">
               <div className="min-w-0">
-                <p className="text-[10px] uppercase tracking-wide text-slate-400 font-bold mb-0.5 whitespace-nowrap">{t.selectedCategory}</p>
+                <p className="text-[10px] uppercase tracking-wide text-slate-300 font-extrabold mb-0.5 whitespace-nowrap">{t.selectedCategory}</p>
                 {selectedCategory ? (
                   <>
                     <p className="text-base font-extrabold text-white truncate leading-tight">{meta.emoji} {shortCategory(selectedCategory)}</p>

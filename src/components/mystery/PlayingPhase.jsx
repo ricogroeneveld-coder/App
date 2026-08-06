@@ -368,7 +368,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
                       <input value={hintText} onChange={e => setHintText(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && submitHint()}
                         placeholder={t.hintPlaceholder}
-                        className="flex-1 h-10 px-3 rounded-xl bg-white/5 ring-1 ring-yellow-400/40 text-white placeholder:text-slate-500 text-base md:text-sm focus:outline-none focus:ring-yellow-400" />
+                        className="inset-input flex-1 h-10 px-3 text-base md:text-sm" />
                       <Button onClick={submitHint} disabled={submittingHint || !hintText.trim()}
                         className="h-10 px-4 rounded-xl bg-gradient-to-b from-amber-400 to-amber-600 hover:brightness-110 border-0 text-sm font-bold text-[#2c1500] shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_2px_6px_-2px_rgba(0,0,0,0.5)] active:scale-[0.98] transition-all">
                         {submittingHint ? '…' : t.share}
@@ -427,7 +427,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
                     <input value={questionText} onChange={e => setQuestionText(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && submitQuestion()}
                       placeholder={t.askPlaceholder}
-                      className="w-full h-10 px-3 rounded-xl bg-white/5 ring-1 ring-white/10 text-white placeholder:text-slate-500 text-base md:text-sm focus:outline-none focus:ring-violet-400 mb-3" />
+                      className="inset-input w-full h-10 px-3 text-base md:text-sm mb-3" />
                     <div className="flex gap-2">
                       <Button onClick={submitQuestion} disabled={submittingQ || !questionText.trim()}
                         className="violet-solid-btn flex-1 h-9 border-0 bg-transparent hover:bg-transparent text-sm font-bold">
@@ -483,15 +483,15 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
 
         {tab === 'players' && (
           <div className="max-w-lg mx-auto space-y-2">
-            <p className="text-xs text-slate-400 font-medium uppercase tracking-wide mb-3">{t.allPlayers}</p>
+            <p className="section-label mb-2.5">{t.allPlayers}</p>
             {[...players].sort((a,b) => (b.score||0) - (a.score||0)).map((p, i) => {
               const isMe = p.user_id === me?.id;
               const isQuestioner = questioner?.user_id === p.user_id;
               return (
-                <div key={p.id} className={`flex items-center gap-3 px-4 py-3 rounded-xl ring-1 transition
+                <div key={p.id} className={`flex items-center gap-2.5 px-3 py-2 rounded-xl ring-1 transition
                   ${p.is_eliminated ? 'bg-white/3 ring-white/5 opacity-50' : isMe ? 'bg-violet-500/10 ring-violet-400/30' : 'bg-white/5 ring-white/5'}`}>
                   <span className="text-xs text-slate-500 w-4 text-center font-mono">{i+1}</span>
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
                     style={{ backgroundColor: p.color }}>{p.display_name[0].toUpperCase()}</div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">{p.display_name}{isMe && <span className="ml-1 text-[10px] text-violet-400">({t.you.toLowerCase()})</span>}</p>

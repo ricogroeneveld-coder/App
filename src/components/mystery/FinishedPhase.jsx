@@ -97,7 +97,7 @@ export default function FinishedPhase({ players, guesses, room, me, roomCode }) 
             const isTop = pScore === topScore;
             return (
               <motion.div key={p.id} initial={{ opacity:0, x:-20 }} animate={{ opacity:1, x:0 }} transition={{ delay: i * 0.07 }}
-                className={`flex items-center gap-3 px-3 py-2 rounded-2xl ring-1 ${isTop
+                className={`flex items-center gap-2.5 px-3 py-1.5 rounded-2xl ring-1 ${isTop
                   ? 'bg-gradient-to-b from-[#3a2400]/70 to-[#1a0f00]/70 ring-[#ffcf7a]/50 shadow-[inset_0_1px_1px_rgba(255,220,150,0.2)]'
                   : 'bg-white/5 ring-white/5'}`}>
                 <span className={`font-bold w-7 text-center ${rank <= 3 ? 'text-xl' : 'text-sm text-slate-400'}`}>{medal}</span>

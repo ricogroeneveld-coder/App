@@ -124,8 +124,8 @@ export default function GuessModal({ target, players, guesses, me, myPlayer, roo
                   <p className="text-center text-slate-400 py-4">{t.noOneLeft}</p>
                 ) : guessableOpponents.map(p => (
                   <button key={p.id} onClick={() => setSelectedTarget(p)}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 transition text-left">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
+                    className="glass-tile w-full flex items-center gap-2.5 px-3 py-2 hover:bg-white/10 transition text-left active:scale-[0.98]">
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
                       style={{ backgroundColor: p.color }}>{p.display_name[0].toUpperCase()}</div>
                     <span className="font-medium">{p.display_name}</span>
                   </button>
@@ -133,8 +133,8 @@ export default function GuessModal({ target, players, guesses, me, myPlayer, roo
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
+                <div className="glass-tile flex items-center gap-2.5 px-3 py-2">
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
                     style={{ backgroundColor: selectedTarget.color }}>{selectedTarget.display_name[0].toUpperCase()}</div>
                   <div className="flex-1">
                     <p className="font-medium">{selectedTarget.display_name}</p>
@@ -206,7 +206,7 @@ function WordSelector({ category, value, onChange, wrongGuesses }) {
             value={search}
             onChange={e => { setSearch(e.target.value); onChange(e.target.value); }}
             placeholder={t.searchOrType}
-            className="w-full h-10 pl-9 pr-4 rounded-xl bg-white/5 ring-1 ring-white/10 text-white placeholder:text-slate-500 text-base md:text-sm focus:outline-none focus:ring-violet-400"
+            className="inset-input w-full h-10 pl-9 pr-4 text-base md:text-sm"
           />
         </div>
       )}
@@ -214,7 +214,7 @@ function WordSelector({ category, value, onChange, wrongGuesses }) {
         <input value={value} onChange={e => onChange(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && e.preventDefault()}
           placeholder={t.whatIsTheirWord}
-          className="w-full h-12 px-4 rounded-xl bg-white/5 ring-1 ring-white/10 text-white placeholder:text-slate-500 text-base md:text-sm focus:outline-none focus:ring-violet-400" />
+          className="inset-input w-full h-12 px-4 text-base md:text-sm" />
       )}
       {showList && filtered.length > 0 && (
         <div className="max-h-40 overflow-y-auto rounded-xl bg-white/5 ring-1 ring-white/10 p-2 grid grid-cols-2 gap-1">

@@ -122,7 +122,7 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
           onChange={e => setText(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && send()}
           placeholder={t.chatPlaceholder}
-          className="flex-1 h-10 px-3 rounded-xl bg-gradient-to-b from-[#1e0d42]/80 to-[#0a0518]/90 shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1px_rgba(183,148,255,0.3)] text-white placeholder:text-slate-500 text-base md:text-sm focus:outline-none focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1.5px_rgba(157,92,255,0.6)] transition-shadow"
+          className="inset-input flex-1 h-10 px-3 text-base md:text-sm"
         />
         <button onClick={send} disabled={!text.trim() || sending}
           className="violet-solid-btn w-10 h-10 flex items-center justify-center disabled:opacity-40 shrink-0">

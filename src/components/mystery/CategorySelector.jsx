@@ -77,7 +77,7 @@ export default function CategorySelector({ selectedCategory, onSelect, onClose }
                 <p className="text-xs font-semibold text-white/[0.7] tracking-wide mt-0.5">{t.chooseCategorySub}</p>
               </div>
 
-              <p className="text-xs font-bold text-slate-400 mb-2 px-1 uppercase tracking-wide">{t.selectCategory}</p>
+              <p className="section-label mb-2 px-1">{t.selectCategory}</p>
               <div className="grid grid-cols-2 gap-2 mb-5">
                 {CATEGORIES.map(cat => (
                   <SelectionCard key={cat} emoji={CATEGORY_EMOJIS[cat] || '🎯'} label={cat}
@@ -85,7 +85,7 @@ export default function CategorySelector({ selectedCategory, onSelect, onClose }
                 ))}
               </div>
 
-              <p className="text-xs font-bold text-slate-400 mb-2 px-1 uppercase tracking-wide">{t.moreCategories}</p>
+              <p className="section-label mb-2 px-1">{t.moreCategories}</p>
               <div className="space-y-2">
                 {PACKS.map(pack => {
                   const owned = isPackUnlocked(pack.id);

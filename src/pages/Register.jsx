@@ -143,10 +143,10 @@ export default function Register() {
         </>
       }
     >
-      <div className="space-y-3 mb-6">
+      <div className="space-y-2.5 mb-5">
         <Button
           variant="outline"
-          className="w-full h-12 text-sm font-medium"
+          className="w-full h-11 rounded-xl text-sm font-semibold"
           onClick={() => handleOAuth("apple")}
         >
           <AppleIcon className="w-5 h-5 mr-2" />
@@ -154,7 +154,7 @@ export default function Register() {
         </Button>
         <Button
           variant="outline"
-          className="w-full h-12 text-sm font-medium"
+          className="w-full h-11 rounded-xl text-sm font-semibold"
           onClick={() => handleOAuth("google")}
         >
           <GoogleIcon className="w-5 h-5 mr-2" />
@@ -162,7 +162,7 @@ export default function Register() {
         </Button>
       </div>
 
-      <div className="relative mb-6">
+      <div className="relative mb-5">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-border" />
         </div>
@@ -177,7 +177,7 @@ export default function Register() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3.5">
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <div className="relative">

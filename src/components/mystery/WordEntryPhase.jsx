@@ -128,7 +128,7 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                     placeholder={t.search(shortCategory(room.category))}
-                    className="w-full h-10 pl-9 pr-4 rounded-xl bg-gradient-to-b from-[#1e0d42]/80 to-[#0a0518]/90 shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1px_rgba(183,148,255,0.3)] text-white placeholder:text-slate-500 text-base md:text-sm focus:outline-none focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1.5px_rgba(157,92,255,0.6)] transition-shadow"
+                    className="inset-input w-full h-10 pl-9 pr-4 text-base md:text-sm"
                   />
                 </div>
 
@@ -174,8 +174,8 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
 
         <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.2 }} className="glass-card mt-3 p-3 space-y-1.5">
           {players.map(p => (
-            <div key={p.id} className="glass-tile flex items-center gap-2.5 h-10 px-2.5">
-              <div className="relative w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 shadow-[0_2px_6px_-1px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.25)] overflow-hidden"
+            <div key={p.id} className="glass-tile flex items-center gap-2.5 h-9 px-2.5">
+              <div className="relative w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 shadow-[0_2px_6px_-1px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.25)] overflow-hidden"
                 style={{ backgroundColor: p.color }}>
                 <span className="pointer-events-none absolute -top-1 -left-1 w-3.5 h-3.5 rounded-full bg-white/35 blur-[3px]" />
                 <span className="relative">{p.display_name[0].toUpperCase()}</span>

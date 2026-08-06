@@ -99,7 +99,7 @@ export default function Notebook({ players, questions, guesses, me, myPlayer }) 
           {/* Hints from this player */}
           {targetHints.length > 0 && (
             <div className="rounded-xl bg-yellow-500/10 ring-1 ring-yellow-400/20 p-3">
-              <p className="text-xs text-yellow-400 font-medium uppercase tracking-wide mb-2 flex items-center gap-1.5">
+              <p className="text-[11px] text-yellow-400 font-extrabold uppercase tracking-[0.14em] mb-2 flex items-center gap-1.5">
                 <Lightbulb className="w-3.5 h-3.5" /> {t.theirHints}
               </p>
               <div className="space-y-1.5">
@@ -113,7 +113,7 @@ export default function Notebook({ players, questions, guesses, me, myPlayer }) 
           {/* My guesses for this player */}
           {myGuessesForTarget.length > 0 && (
             <div className="rounded-xl bg-white/5 ring-1 ring-white/10 p-3">
-              <p className="text-xs text-slate-400 font-medium uppercase tracking-wide mb-2">{t.myGuesses}</p>
+              <p className="section-label mb-2">{t.myGuesses}</p>
               <div className="space-y-1.5">
                 {myGuessesForTarget.map((g, i) => (
                   <div key={i} className="flex items-center gap-2 text-sm">
@@ -132,7 +132,7 @@ export default function Notebook({ players, questions, guesses, me, myPlayer }) 
             </div>
           ) : (
             <div className="space-y-2">
-              <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">{t.clues}</p>
+              <p className="section-label">{t.clues}</p>
               {targetAnswers.map((clue, i) => (
                 <motion.div key={i} initial={{ opacity:0, y:5 }} animate={{ opacity:1, y:0 }} transition={{ delay: i*0.03 }}
                   className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white/5">
