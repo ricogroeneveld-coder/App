@@ -439,7 +439,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
               </>
             )}
 
-            <div className="space-y-3 mt-2">
+            <div className="space-y-2 mt-1">
               {[...questions].reverse().map(q => (
                 <QuestionCard key={q.id} question={q} players={players} me={me} />
               ))}
@@ -597,10 +597,10 @@ function QuestionCard({ question, players, me }) {
     const hintContent = question.question_text.replace('[HINT] ', '');
     return (
       <motion.div initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }}
-        className="rounded-xl bg-yellow-500/10 ring-1 ring-yellow-400/20 p-4">
-        <div className="flex items-center gap-2 mb-1">
-          <Lightbulb className="w-4 h-4 text-yellow-400" />
-          <span className="text-xs font-medium text-yellow-300">{t.theirHints.split(' ')[0]} {asker?.display_name || '?'}</span>
+        className="rounded-xl bg-yellow-500/10 ring-1 ring-yellow-400/20 p-3">
+        <div className="flex items-center gap-1.5 mb-0.5">
+          <Lightbulb className="w-3.5 h-3.5 text-yellow-400" />
+          <span className="text-[11px] font-medium text-yellow-300">{t.theirHints.split(' ')[0]} {asker?.display_name || '?'}</span>
         </div>
         <p className="text-white text-sm font-medium">"{hintContent}"</p>
       </motion.div>
@@ -609,29 +609,27 @@ function QuestionCard({ question, players, me }) {
 
   return (
     <motion.div initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }}
-      className="rounded-xl bg-white/5 ring-1 ring-white/5 p-4">
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <div className="flex-1 flex flex-wrap items-center gap-2">
-          <p className="font-medium text-sm text-white">"{question.question_text}"</p>
-          {question.is_ai && (
-            <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-300 ring-1 ring-violet-400/30 font-medium">✨ Auto</span>
-          )}
-        </div>
+      className="rounded-xl bg-white/5 ring-1 ring-white/5 p-3">
+      <div className="flex items-center justify-between gap-2 mb-0.5">
+        <p className="text-[11px] text-slate-500 truncate">
+          {t.askedBy} {asker?.display_name || '?'}
+          {question.is_ai && <span className="ml-1.5 text-violet-400">✨ Auto</span>}
+        </p>
         <div className="shrink-0">
           {question.status === 'complete'
-            ? <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">{t.done}</span>
-            : <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400">{totalAnswers}/{nonAskerCount}</span>}
+            ? <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">{t.done}</span>
+            : <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400">{totalAnswers}/{nonAskerCount}</span>}
         </div>
       </div>
-      <p className="text-xs text-slate-400 mb-3">{t.askedBy} {asker?.display_name || '?'}</p>
+      <p className="font-medium text-sm text-white">"{question.question_text}"</p>
       {question.status === 'complete' && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5 mt-2">
           {players.filter(p => p.user_id !== question.asker_id).map(p => {
             const ans = question.answers?.[p.user_id];
             const isMe = p.user_id === me?.id;
             return (
-              <div key={p.user_id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/5 text-xs">
-                <div className="w-4 h-4 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
+              <div key={p.user_id} className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-white/5 text-[11px]">
+                <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
                 <span className={isMe ? 'text-violet-300 font-medium' : 'text-slate-300'}>{isMe ? t.youShort : p.display_name}</span>
                 <span>{ans === true ? '✅' : ans === false ? '❌' : '—'}</span>
               </div>
