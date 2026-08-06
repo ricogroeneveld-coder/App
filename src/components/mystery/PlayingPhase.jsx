@@ -359,8 +359,9 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
       >
         {tab === 'questions' && (
           <div className="flex flex-col flex-1 min-h-0 w-full max-w-lg mx-auto">
-            {/* Scrollable history — cards and feed only; actions live below */}
-            <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar space-y-4 pb-2" style={{ overscrollBehaviorY: 'contain' }}>
+            {/* Transient cards stack on top; the history frame below them
+                fills the remaining height and scrolls internally */}
+            <div className="flex-1 min-h-0 flex flex-col gap-3 pb-2">
 
             {/* Dedicated hint round — blocks normal question UI until all hints submitted */}
             {isHintPhase && !allHintsSubmitted && (
@@ -439,10 +440,13 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
               </>
             )}
 
-            <div className="space-y-2 mt-1">
-              {[...questions].reverse().map(q => (
-                <QuestionCard key={q.id} question={q} players={players} me={me} />
-              ))}
+            {/* Question history — its own frame, scrolls internally */}
+            <div className="glass-card flex-1 min-h-0 p-2.5 flex flex-col">
+              <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar space-y-2" style={{ overscrollBehaviorY: 'contain' }}>
+                {[...questions].reverse().map(q => (
+                  <QuestionCard key={q.id} question={q} players={players} me={me} />
+                ))}
+              </div>
             </div>
             </div>
 
