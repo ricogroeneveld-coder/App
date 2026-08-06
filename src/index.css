@@ -284,7 +284,7 @@
 
   /* Gold hero CTA material — radius set by the caller */
   .gold-btn {
-    @apply relative bg-[linear-gradient(180deg,#fdeeb8_0%,#ffcb45_16%,#e08e05_40%,#a85800_66%,#5e2c00_100%)] shadow-[0_2px_3px_rgba(0,0,0,0.4),0_8px_14px_-8px_rgba(0,0,0,0.5),0_14px_22px_-16px_rgba(0,0,0,0.35),0_0_6px_-6px_rgba(255,180,60,0.18),0_0_0_1px_rgba(255,214,120,0.45),inset_0_1px_1px_rgba(255,255,255,0.2),inset_0_-6px_10px_-6px_rgba(110,45,0,0.4)] transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5 hover:brightness-[1.04] overflow-hidden disabled:opacity-60 select-none;
+    @apply relative bg-[linear-gradient(180deg,#fdeeb8_0%,#ffcb45_16%,#e08e05_40%,#a85800_66%,#5e2c00_100%)] shadow-[0_2px_3px_rgba(0,0,0,0.4),0_8px_14px_-8px_rgba(0,0,0,0.5),0_14px_22px_-16px_rgba(0,0,0,0.35),0_0_6px_-6px_rgba(255,180,60,0.18),0_0_0_1px_rgba(255,214,120,0.45),inset_0_1px_1px_rgba(255,255,255,0.2),inset_0_-6px_10px_-6px_rgba(110,45,0,0.4)] transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5 hover:brightness-[1.04] overflow-hidden disabled:saturate-[0.55] disabled:brightness-[0.85] disabled:opacity-95 select-none;
   }
   /* Top sheen for the gold CTA */
   .gold-btn::before {
