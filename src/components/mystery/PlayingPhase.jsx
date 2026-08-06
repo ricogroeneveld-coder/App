@@ -281,7 +281,21 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
         )}
       </AnimatePresence>
 
-      {/* Header */}
+      {/* Header — width by importance: Category > My Word > Room (compact)
+          > back (fixed). My Word never truncates by default: the type scales
+          down with length and may wrap to two lines; ellipsis only kicks in
+          past that. */}
+      {(() => {
+        const myWord = showMyWord ? (toDisplayWord(myPlayer?.secret_word, lang) || '—') : '••••••';
+        const myWordSize = !showMyWord || myWord.length <= 8 ? 'text-sm'
+          : myWord.length <= 14 ? 'text-xs'
+          : myWord.length <= 20 ? 'text-[11px]'
+          : 'text-[10px]';
+        // While the word is revealed it's the most important thing on
+        // screen — hand it the wider share until it's hidden again.
+        const catFlex = showMyWord ? 'flex-[4]' : 'flex-[5]';
+        const wordFlex = showMyWord ? 'flex-[5]' : 'flex-[4]';
+        return (
       <div className="px-3 py-2.5 flex items-center gap-2 border-b border-white/5 bg-black/20 backdrop-blur-sm">
         <button
           onClick={() => setShowLeaveConfirm(true)}
@@ -291,31 +305,34 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
           <LogOut className="w-4 h-4" />
         </button>
 
-        <div className="flex-1 min-w-0 px-3 py-1.5 rounded-xl bg-gradient-to-b from-white/[0.06] to-black/[0.12] ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+        <div className={`${catFlex} min-w-0 self-stretch flex flex-col justify-center px-3 py-1.5 rounded-xl bg-gradient-to-b from-white/[0.06] to-black/[0.12] ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]`}>
           <p className="text-[10px] uppercase tracking-wide text-slate-500 leading-none">{t.categorie}</p>
           <p className="font-bold text-violet-300 truncate text-sm leading-tight mt-0.5">{shortCategory(room.category)}</p>
         </div>
 
         <button
           onClick={() => navigator.clipboard?.writeText(roomCode)}
-          className="shrink-0 flex flex-col items-center px-3 py-1.5 rounded-xl bg-violet-500/10 ring-1 ring-violet-400/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-violet-500/20 transition active:scale-[0.98]"
+          className="shrink-0 self-stretch flex flex-col items-center justify-center px-2 rounded-xl bg-violet-500/10 ring-1 ring-violet-400/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-violet-500/20 transition active:scale-[0.98]"
           title={t.room}
         >
           <p className="text-[10px] uppercase tracking-wide text-violet-400/70 leading-none">{t.room}</p>
-          <p className="font-bold font-mono tracking-[0.2em] text-violet-200 text-sm leading-tight mt-0.5">{roomCode}</p>
+          <p className="font-bold font-mono tracking-[0.12em] text-violet-200 text-xs leading-tight mt-0.5">{roomCode}</p>
         </button>
 
         <button
           onClick={() => setShowMyWord(v => !v)}
-          className="shrink-0 flex flex-col items-end px-3 py-1.5 rounded-xl bg-gradient-to-b from-white/[0.06] to-black/[0.12] ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-white/10 transition min-w-[96px] active:scale-[0.98]"
+          className={`${wordFlex} min-w-[92px] self-stretch flex flex-col items-end justify-center px-2.5 py-1 rounded-xl bg-gradient-to-b from-white/[0.06] to-black/[0.12] ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-white/10 transition active:scale-[0.98]`}
           title={t.myWord}
         >
           <p className="text-[10px] uppercase tracking-wide text-slate-500 leading-none">{t.myWord}</p>
-          <p className="font-bold text-violet-300 text-sm leading-tight mt-0.5 truncate max-w-[88px]">
-            {showMyWord ? toDisplayWord(myPlayer?.secret_word, lang) : '••••••'}
+          <p className={`font-bold text-violet-300 ${myWordSize} leading-[1.15] mt-0.5 text-right w-full`}
+            style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', overflowWrap: 'break-word' }}>
+            {myWord}
           </p>
         </button>
       </div>
+        );
+      })()}
 
       {/* Leave confirmation */}
       <AnimatePresence>
