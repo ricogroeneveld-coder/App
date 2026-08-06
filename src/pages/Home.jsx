@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MysteryRoom, MysteryPlayer } from '@/api/db';
 import { useToast } from '@/components/ui/use-toast';
-import { Settings, X, ChevronRight, Crown, Users, HelpCircle, Globe } from 'lucide-react';
+import { Settings, X, ChevronRight, Crown, Users, HelpCircle, Globe, Lock } from 'lucide-react';
 import { getGuestIdentity, setGuestName, hasGuestName } from '@/lib/guestIdentity';
 import { Link } from 'react-router-dom';
 import { useLang } from '@/lib/LanguageContext';
@@ -20,8 +20,8 @@ export default function Home() {
   const [loading, setLoading] = useState(null);
   const [nameInput, setNameInput] = useState('');
   const [nameSet, setNameSet] = useState(hasGuestName());
-  const [isPublic] = useState(true);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const [showCreateSheet, setShowCreateSheet] = useState(false);
 
   useEffect(() => {
     setNameSet(hasGuestName());
@@ -40,7 +40,7 @@ export default function Home() {
     return code;
   };
 
-  const handleCreate = async () => {
+  const handleCreate = async (isPublic) => {
     setLoading('create');
     try {
       const guest = getGuestIdentity();
@@ -160,6 +160,50 @@ export default function Home() {
         </div>
       )}
 
+      {/* Game visibility sheet — choosing an option creates the lobby */}
+      {showCreateSheet && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4"
+          onClick={() => loading === null && setShowCreateSheet(false)}>
+          <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}
+            onClick={e => e.stopPropagation()}
+            className="glass-card w-full max-w-md bg-slate-900/95 p-5"
+            style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1.25rem)' }}>
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-lg font-extrabold tracking-tight text-white">{t.createGame}</h2>
+              <button onClick={() => setShowCreateSheet(false)} disabled={loading !== null}
+                className="p-2.5 -m-1 rounded-xl hover:bg-white/10 text-slate-400 disabled:opacity-40" aria-label={t.cancel}>
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="section-label mb-3">{t.gameVisibility}</p>
+            <div className="space-y-2.5">
+              <button onClick={() => handleCreate(true)} disabled={loading !== null}
+                className="glass-panel w-full p-3 flex items-center gap-3 text-left transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5 hover:ring-white/20 disabled:opacity-60">
+                <span className="w-11 h-11 rounded-xl bg-gradient-to-b from-[#062217] to-[#020c08] ring-1 ring-green-400/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0">
+                  <Globe className="w-5 h-5 text-green-300 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />
+                </span>
+                <span className="flex-1 min-w-0">
+                  <span className="block text-sm font-extrabold text-white leading-tight">{loading === 'create' ? t.creating : t.publicLobby}</span>
+                  <span className="block text-xs font-medium text-slate-400 leading-tight">{t.publicLobbyDesc}</span>
+                </span>
+                <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+              </button>
+              <button onClick={() => handleCreate(false)} disabled={loading !== null}
+                className="glass-panel w-full p-3 flex items-center gap-3 text-left transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5 hover:ring-white/20 disabled:opacity-60">
+                <span className="w-11 h-11 rounded-xl bg-gradient-to-b from-[#2a1150] to-[#0d0620] ring-1 ring-violet-400/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0">
+                  <Lock className="w-5 h-5 text-violet-300 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />
+                </span>
+                <span className="flex-1 min-w-0">
+                  <span className="block text-sm font-extrabold text-white leading-tight">{loading === 'create' ? t.creating : t.privateLobby}</span>
+                  <span className="block text-xs font-medium text-slate-400 leading-tight">{t.privateLobbyDesc}</span>
+                </span>
+                <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
       <div className="relative z-10 w-full max-w-md -mt-4">
         <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} className="text-center mb-5">
           <div className="hero-shift">
@@ -217,7 +261,7 @@ export default function Home() {
 
             {/* Create Game */}
             <div className="gold-breathe">
-            <button onClick={handleCreate} disabled={loading !== null}
+            <button onClick={() => setShowCreateSheet(true)} disabled={loading !== null}
               className="relative w-full h-20 rounded-[28px] bg-[linear-gradient(180deg,#fdeeb8_0%,#ffcb45_16%,#e08e05_40%,#a85800_66%,#5e2c00_100%)] shadow-[0_2px_3px_rgba(0,0,0,0.4),0_10px_18px_-8px_rgba(0,0,0,0.55),0_20px_30px_-16px_rgba(0,0,0,0.4),0_0_8px_-8px_rgba(255,180,60,0.22),0_0_0_1px_rgba(255,214,120,0.45),inset_0_1px_1px_rgba(255,255,255,0.2),inset_0_-8px_14px_-6px_rgba(110,45,0,0.42)] px-4 flex items-center gap-2.5 disabled:opacity-60 transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5 hover:brightness-[1.04] overflow-hidden">
               <span className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(ellipse 55% 60% at 50% -8%, rgba(255,255,255,0.55), transparent 70%)' }} />
               <span className="pointer-events-none absolute inset-y-0 left-[-45%] w-[45%]" style={{ background: 'linear-gradient(105deg, transparent 15%, rgba(255,255,255,0.45) 50%, transparent 85%)', animation: 'shimmerSweep 5s linear infinite', willChange: 'transform, opacity' }} />
