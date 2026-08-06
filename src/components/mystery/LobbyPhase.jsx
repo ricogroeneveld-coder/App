@@ -24,7 +24,7 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
   const navigate = useNavigate();
   const { t } = useLang();
   const [copied, setCopied] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(room.category || '');
   const [loading, setLoading] = useState(false);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [showCategorySelector, setShowCategorySelector] = useState(false);
@@ -61,6 +61,9 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
   const selectCategory = (cat) => {
     setSelectedCategory(cat);
     setShowCategorySelector(false);
+    // Persist immediately so everyone in the lobby sees the pick live —
+    // startGame writes it again, so a failure here is harmless.
+    MysteryRoom.update(room.id, { category: cat }).catch(() => {});
   };
 
   const startGame = async () => {
@@ -254,6 +257,20 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
               </button>
             </motion.div>
           )}
+
+          {!isHost && room.category && (() => {
+            const guestMeta = categoryMeta(room.category);
+            return (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+                className="glass-card px-4 py-2.5">
+                <p className="text-[10px] uppercase tracking-wide text-slate-300 font-extrabold mb-0.5 whitespace-nowrap">{t.selectedCategory}</p>
+                <p className="text-base font-extrabold text-white truncate leading-tight">{guestMeta.emoji} {shortCategory(room.category)}</p>
+                <p className="text-[11px] font-semibold text-amber-300/80 truncate">
+                  {guestMeta.isFree ? t.freeCategory : t.includedWith(guestMeta.packName)}
+                </p>
+              </motion.div>
+            );
+          })()}
 
           {!isHost && (
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
