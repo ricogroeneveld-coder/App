@@ -68,13 +68,13 @@ const ToastClose = React.forwardRef(({ className, ...props }, ref) => (
   <button
     ref={ref}
     className={cn(
-      "absolute right-1.5 top-1/2 -translate-y-1/2 rounded-lg p-2 text-white/50 transition-colors hover:text-white hover:bg-white/10 focus:outline-none active:scale-95",
+      "absolute right-1 top-1/2 -translate-y-1/2 rounded-xl p-2.5 text-white/60 transition-colors hover:text-white hover:bg-white/10 focus:outline-none active:scale-95",
       className
     )}
     toast-close=""
     {...props}
   >
-    <X className="h-4 w-4" />
+    <X className="h-5 w-5" strokeWidth={2.5} />
   </button>
 ));
 ToastClose.displayName = "ToastClose";

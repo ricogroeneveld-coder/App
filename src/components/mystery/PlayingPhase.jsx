@@ -263,17 +263,21 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
       {/* Correct guess alert */}
       <AnimatePresence>
         {correctGuessAlert && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.85 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.85 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-gradient-to-b from-emerald-400 to-emerald-700 text-white px-4 py-3 rounded-2xl ring-1 ring-emerald-300/50 shadow-[0_8px_24px_-4px_rgba(0,0,0,0.6),0_0_20px_-4px_rgba(52,211,153,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] flex items-center gap-2 max-w-xs w-[calc(100%-3rem)]"
-          >
-            <CheckCircle2 className="w-5 h-5 shrink-0" />
-            <p className="text-sm font-semibold">
-              {t.correctGuessAlert(correctGuessAlert.guesserName, correctGuessAlert.targetName, correctGuessAlert.word)}
-            </p>
-          </motion.div>
+          /* Centering lives on this wrapper — framer's inline transform on the
+             card (scale animation) would overwrite a CSS translate centering */
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6 pointer-events-none">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.85 }}
+              className="pointer-events-auto bg-gradient-to-b from-emerald-400 to-emerald-700 text-white px-4 py-3 rounded-2xl ring-1 ring-emerald-300/50 shadow-[0_8px_24px_-4px_rgba(0,0,0,0.6),0_0_20px_-4px_rgba(52,211,153,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] flex items-center gap-2 max-w-xs w-full"
+            >
+              <CheckCircle2 className="w-5 h-5 shrink-0" />
+              <p className="text-sm font-semibold">
+                {t.correctGuessAlert(correctGuessAlert.guesserName, correctGuessAlert.targetName, correctGuessAlert.word)}
+              </p>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
