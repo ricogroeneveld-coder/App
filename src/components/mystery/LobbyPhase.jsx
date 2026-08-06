@@ -80,7 +80,7 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
   return (
     <div
       className="h-dvh overflow-hidden text-white flex items-start justify-center p-4 relative"
-      style={{ paddingTop: 'max(calc(env(safe-area-inset-top) + 4.25rem), 4.75rem)', paddingBottom: 'max(env(safe-area-inset-bottom), 0.5rem)' }}
+      style={{ paddingTop: 'max(calc(env(safe-area-inset-top) + 4.25rem), 4.75rem)', paddingBottom: 'max(calc(env(safe-area-inset-bottom) + 0.75rem), 1.75rem)' }}
     >
       <GameBackground />
 

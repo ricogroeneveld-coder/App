@@ -66,7 +66,7 @@ export default function FinishedPhase({ players, guesses, room, me, roomCode }) 
       <GameBackground />
       <div
         className="w-full max-w-md flex-1 min-h-0 overflow-y-auto hide-scrollbar p-4 flex flex-col"
-        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)' }}
+        style={{ paddingBottom: 'max(calc(env(safe-area-inset-bottom) + 0.75rem), 1.75rem)' }}
       >
         <motion.div initial={{ scale:0 }} animate={{ scale:1 }} transition={{ type:'spring' }}
           className="text-center mb-5">
