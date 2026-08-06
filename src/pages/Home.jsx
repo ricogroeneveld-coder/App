@@ -8,9 +8,7 @@ import { getGuestIdentity, setGuestName, hasGuestName } from '@/lib/guestIdentit
 import { Link } from 'react-router-dom';
 import { useLang } from '@/lib/LanguageContext';
 import GameBackground from '@/components/GameBackground';
-import logoImage from '../../logo.webp';
-import mascotRed from '../../mascot-red.webp';
-import mascotBlue from '../../mascot-blue.webp';
+import heroImage from '../../home-hero.webp';
 
 const PLAYER_COLORS = ['#6366f1','#ec4899','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ef4444','#14b8a6','#f97316','#06b6d4','#84cc16','#a855f7'];
 
@@ -180,12 +178,12 @@ export default function Home() {
           <div className="hero-shift">
             <motion.div initial={{ scale:0 }} animate={{ scale:1 }} transition={{ type:'spring', duration:0.8 }}
               className="relative flex items-center justify-center pt-2 pb-1">
-              <img src={mascotRed} alt="" className="absolute z-0 left-[9px] sm:left-[-15px] top-[28%] w-16 sm:w-24" style={{ filter: 'drop-shadow(0 14px 18px rgba(0,0,0,0.7)) drop-shadow(0 2px 3px rgba(0,0,0,0.5))' }} />
-              <img src={mascotBlue} alt="" className="absolute z-0 right-[9px] sm:right-[-15px] top-[28%] w-16 sm:w-24" style={{ filter: 'drop-shadow(0 14px 18px rgba(0,0,0,0.7)) drop-shadow(0 2px 3px rgba(0,0,0,0.5))' }} />
-              <motion.img src={logoImage} alt="What's my Pick!"
+              {/* One combined logo+mascots asset — the composition stays
+                  identical on every phone width */}
+              <motion.img src={heroImage} alt="What's my Pick!"
                 animate={{ y: [0, -2, 0] }}
                 transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-                className="relative z-10 w-[267px] sm:w-[305px]"
+                className="relative z-10 w-full max-w-[400px]"
                 style={{ filter: 'drop-shadow(0 0 18px rgba(168,109,255,0.35)) drop-shadow(0 10px 14px rgba(0,0,0,0.45))' }} />
             </motion.div>
             <p className="text-center text-[18px] font-semibold text-white/[0.78] tracking-wide mt-2 translate-y-3">
@@ -229,10 +227,11 @@ export default function Home() {
             </div>
 
             {/* Create Game */}
+            <div className="gold-breathe">
             <button onClick={handleCreate} disabled={loading !== null}
               className="relative w-full h-20 rounded-[28px] bg-[linear-gradient(180deg,#fdeeb8_0%,#ffcb45_16%,#e08e05_40%,#a85800_66%,#5e2c00_100%)] shadow-[0_2px_3px_rgba(0,0,0,0.4),0_10px_18px_-8px_rgba(0,0,0,0.55),0_20px_30px_-16px_rgba(0,0,0,0.4),0_0_8px_-8px_rgba(255,180,60,0.22),0_0_0_1px_rgba(255,214,120,0.45),inset_0_1px_1px_rgba(255,255,255,0.2),inset_0_-8px_14px_-6px_rgba(110,45,0,0.42)] px-4 flex items-center gap-2.5 disabled:opacity-60 transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5 hover:brightness-[1.04] overflow-hidden">
               <span className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(ellipse 55% 60% at 50% -8%, rgba(255,255,255,0.55), transparent 70%)' }} />
-              <span className="pointer-events-none absolute inset-y-0 w-1/3" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)', animation: 'shimmerSweep 13s ease-in-out infinite' }} />
+              <span className="pointer-events-none absolute inset-y-0 left-[-45%] w-[45%]" style={{ background: 'linear-gradient(105deg, transparent 15%, rgba(255,255,255,0.45) 50%, transparent 85%)', animation: 'shimmerSweep 5s linear infinite', willChange: 'transform, opacity' }} />
               <span className="relative w-12 h-12 rounded-2xl bg-gradient-to-b from-[#190c00] to-[#060300] ring-1 ring-[#ffcf7a]/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.45),0_2px_6px_rgba(0,0,0,0.55)] flex items-center justify-center shrink-0">
                 <Crown className="w-6 h-6 text-amber-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" fill="currentColor" />
               </span>
@@ -244,6 +243,7 @@ export default function Home() {
                 <ChevronRight className="w-6 h-6 text-amber-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />
               </span>
             </button>
+            </div>
 
             {/* Join Game */}
             <div className="relative h-20 rounded-[28px] bg-gradient-to-b from-[#2a1150] via-[#1c0b3a] to-[#0d0620] shadow-[0_2px_3px_rgba(0,0,0,0.4),0_10px_18px_-8px_rgba(0,0,0,0.55),0_20px_30px_-16px_rgba(0,0,0,0.4),0_0_14px_-8px_rgba(56,189,248,0.4),0_0_0_1px_rgba(56,189,248,0.45),inset_0_1px_1px_rgba(255,255,255,0.2),inset_0_-8px_14px_-6px_rgba(0,0,0,0.42)] px-4 flex items-center gap-2.5 transition-transform duration-150 hover:-translate-y-0.5 overflow-hidden">

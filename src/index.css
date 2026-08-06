@@ -148,12 +148,27 @@
     .cards-shift { transform: translateY(-14px); }
   }
 
-  /* Create Game — very subtle shimmer sweep, once every ~13s */
+  /* Gold CTA light sweep — a soft diagonal reflection that travels the FULL
+     button width (the stripe starts at -45% and moves 322% of its own width,
+     i.e. 145% of the button, so it enters and exits past both edges), fading
+     in and out at the extremes. One pass every 5s. */
   @keyframes shimmerSweep {
-    0%, 90% { transform: translateX(-130%) skewX(-15deg); opacity: 0; }
-    93% { opacity: 0.4; }
-    97% { opacity: 0.4; }
-    100% { transform: translateX(130%) skewX(-15deg); opacity: 0; }
+    0% { transform: translateX(0) skewX(-15deg); opacity: 0; }
+    4% { opacity: 0.55; }
+    20% { opacity: 0.55; }
+    26% { transform: translateX(322%) skewX(-15deg); opacity: 0; }
+    100% { transform: translateX(322%) skewX(-15deg); opacity: 0; }
+  }
+
+  /* Gold CTA idle breathing — barely-there scale so the button feels alive.
+     Lives on a wrapper so the button's own hover/press transforms still win. */
+  @keyframes goldBreathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.008); }
+  }
+  .gold-breathe {
+    animation: goldBreathe 4.5s ease-in-out infinite;
+    will-change: transform;
   }
 
   /* Select-none for interactive UI — text in message/chat areas keeps selection */
