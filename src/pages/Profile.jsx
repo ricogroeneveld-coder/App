@@ -10,7 +10,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useLang } from '@/lib/LanguageContext';
 import {
   loadProfile, getProfile, subscribeProfile, purchaseCosmetic, equipCosmetic,
-  challengeState, favoriteCategory, devUnlockAll, devResetProfile,
+  challengeState, favoriteCategory, devUnlockAll, devResetProfile, remoteStatus,
 } from '@/lib/playerProfile';
 import { ALL_COSMETICS, cosmeticById, RARITIES, TYPE_LABELS } from '@/lib/cosmetics';
 import { shortCategory } from '@/lib/wordLists';
@@ -358,6 +358,18 @@ export default function Profile() {
             <span className={`block w-5 h-5 rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.5)] transition-transform duration-200 ${testModeOn ? 'translate-x-5' : ''}`} />
           </button>
         </div>
+
+        {/* Sync health — tells players (and the developer) whether cosmetics
+            actually reach other players. */}
+        {remoteStatus() === 'missing' ? (
+          <p className="text-center text-[10px] font-semibold text-amber-400/90 leading-relaxed px-2 pb-2">
+            ⚠ {t.syncMissing}
+          </p>
+        ) : remoteStatus() === 'ok' ? (
+          <p className="text-center text-[10px] font-medium text-emerald-400/70 pb-2">
+            ● {t.syncOk}
+          </p>
+        ) : null}
       </div>
 
       {purchase && (

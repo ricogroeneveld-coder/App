@@ -13,7 +13,20 @@ import { STARTER_OWNED, DEFAULT_EQUIPPED, cosmeticById, levelUnlocks, ALL_COSMET
 const LS_KEY = 'wmp_profile_v1';
 let cache = null;
 let remoteOk = true; // flips false once the table proves missing
+let remoteState = 'unknown'; // 'unknown' | 'ok' | 'missing'
 const listeners = new Set();
+
+// Sync health for the UI: 'ok' means profiles reach Supabase and other
+// players can see this player's cosmetics; 'missing' means the
+// player_profiles table doesn't exist (migration 0002 not run yet).
+export function remoteStatus() { return remoteState; }
+
+function markRemoteError(e) {
+  if (String(e?.message || '').includes('does not exist') || e?.code === '42P01') {
+    remoteOk = false;
+    remoteState = 'missing';
+  }
+}
 
 export function subscribeProfile(fn) {
   listeners.add(fn);
@@ -63,9 +76,10 @@ async function remoteUpsert(p) {
       ...p, updated_date: new Date().toISOString(),
     }, { onConflict: 'user_id' });
     if (error) throw error;
+    remoteState = 'ok';
   } catch (e) {
     // Table missing / offline — keep playing from localStorage.
-    if (String(e?.message || '').includes('does not exist') || e?.code === '42P01') remoteOk = false;
+    markRemoteError(e);
   }
 }
 
@@ -92,6 +106,7 @@ async function doLoadProfile() {
       const { data, error } = await supabase.from('player_profiles')
         .select('*').eq('user_id', getGuestIdentity().id).maybeSingle();
       if (error) throw error;
+      remoteState = 'ok';
       if (data) {
         // Remote wins on progression numbers (another device may be newer),
         // merged with any local-only fields.
@@ -100,7 +115,7 @@ async function doLoadProfile() {
         remoteUpsert(local);
       }
     } catch (e) {
-      if (String(e?.message || '').includes('does not exist') || e?.code === '42P01') remoteOk = false;
+      markRemoteError(e);
     }
   }
   // Keep the display name in sync with the guest identity
@@ -125,9 +140,10 @@ export async function fetchProfilesFor(userIds) {
     const { data, error } = await supabase.from('player_profiles')
       .select('*').in('user_id', userIds);
     if (error) throw error;
+    remoteState = 'ok';
     return Object.fromEntries((data || []).map(p => [p.user_id, p]));
   } catch (e) {
-    if (String(e?.message || '').includes('does not exist') || e?.code === '42P01') remoteOk = false;
+    markRemoteError(e);
     return {};
   }
 }

@@ -30,3 +30,15 @@ create policy "player_profiles open insert" on public.player_profiles
   for insert with check (true);
 create policy "player_profiles open update" on public.player_profiles
   for update using (true);
+
+-- Realtime: let clients see profile changes live, so lobby rows update the
+-- moment another player equips a new cosmetic (same pattern as 0001).
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'player_profiles'
+  ) then
+    alter publication supabase_realtime add table public.player_profiles;
+  end if;
+end $$;
