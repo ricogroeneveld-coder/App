@@ -22,13 +22,14 @@ const ToastViewport = React.forwardRef(({ ...props }, ref) => (
 ToastViewport.displayName = "ToastViewport";
 
 const toastVariants = cva(
-  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
+  "toast-in group pointer-events-auto relative flex w-full items-center justify-between gap-3 overflow-hidden rounded-2xl px-4 py-3 pr-11 transition-all",
   {
     variants: {
       variant: {
-        default: "border bg-background text-foreground",
+        default:
+          "bg-slate-900/95 backdrop-blur-md ring-1 ring-[#6d28d9]/60 text-white shadow-[0_8px_24px_-6px_rgba(0,0,0,0.6),0_0_12px_-6px_rgba(109,40,217,0.4),inset_0_1px_0_rgba(255,255,255,0.1)]",
         destructive:
-          "destructive group border-destructive bg-destructive text-destructive-foreground",
+          "destructive group bg-gradient-to-b from-rose-500 to-rose-800 ring-1 ring-rose-300/40 text-white shadow-[0_8px_24px_-6px_rgba(0,0,0,0.6),0_0_16px_-6px_rgba(244,63,94,0.5),inset_0_1px_0_rgba(255,255,255,0.25)]",
       },
     },
     defaultVariants: {
@@ -37,13 +38,16 @@ const toastVariants = cva(
   }
 );
 
-const Toast = React.forwardRef(({ className, variant, ...props }, ref) => {
+const Toast = React.forwardRef(({ className, variant, children, ...props }, ref) => {
   return (
     <div
       ref={ref}
       className={cn(toastVariants({ variant }), className)}
       {...props}
-    />
+    >
+      <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+      {children}
+    </div>
   );
 });
 Toast.displayName = "Toast";
@@ -64,7 +68,7 @@ const ToastClose = React.forwardRef(({ className, ...props }, ref) => (
   <button
     ref={ref}
     className={cn(
-      "absolute right-2 top-2 rounded-md p-2 text-foreground/50 opacity-100 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-[.destructive]:text-red-300 group-[.destructive]:hover:text-red-50 group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600",
+      "absolute right-1.5 top-1/2 -translate-y-1/2 rounded-lg p-2 text-white/50 transition-colors hover:text-white hover:bg-white/10 focus:outline-none active:scale-95",
       className
     )}
     toast-close=""
@@ -78,7 +82,7 @@ ToastClose.displayName = "ToastClose";
 const ToastTitle = React.forwardRef(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("text-sm font-semibold", className)}
+    className={cn("text-sm font-bold leading-tight", className)}
     {...props}
   />
 ));
@@ -87,7 +91,7 @@ ToastTitle.displayName = "ToastTitle";
 const ToastDescription = React.forwardRef(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("text-sm opacity-90", className)}
+    className={cn("text-xs font-medium opacity-80 leading-snug", className)}
     {...props}
   />
 ));
