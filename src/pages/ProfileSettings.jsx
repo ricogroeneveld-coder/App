@@ -12,7 +12,7 @@ import { useLang } from '@/lib/LanguageContext';
 import { Switch } from '@/components/ui/switch';
 import { isSoundEnabled, setSoundEnabled, playCorrect } from '@/lib/sounds';
 import GameBackground from '@/components/GameBackground';
-import PlayerAvatar, { AvatarFrame, EmblemTile } from '@/components/progression/PlayerAvatar';
+import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import BannerArt from '@/components/progression/BannerArt';
 import { cosmeticById, RARITIES } from '@/lib/cosmetics';
 import { getProfile, loadProfile } from '@/lib/playerProfile';
@@ -164,17 +164,28 @@ export default function ProfileSettings() {
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass-card p-4 flex items-center gap-3.5"
+          className="relative rounded-[20px] overflow-hidden ring-1 ring-white/15 shadow-[0_10px_24px_-12px_rgba(0,0,0,0.7)]"
         >
-          <PlayerAvatar profile={cosmeticProfile} name={displayName} size={52} />
-          <div className="min-w-0">
-            <p className="font-semibold text-white text-lg truncate">{displayName}</p>
-            <p className="text-slate-400 text-sm font-mono truncate">{displaySub}</p>
-            {isRegistered && (
-              <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full bg-violet-500/30 text-violet-300 font-medium">
-                {t.registeredAccount}
-              </span>
-            )}
+          <BannerArt banner={cosmeticById(cosmeticProfile.equipped?.banner)} animated className="absolute inset-0" motifScale={0.7} />
+          <span aria-hidden className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/35 to-black/50" />
+          <div className="relative p-4 flex items-center gap-3.5">
+            <span style={{ filter: 'drop-shadow(0 6px 10px rgba(0,0,0,0.55))' }}>
+              <PlayerAvatar profile={cosmeticProfile} name={displayName} size={52} />
+            </span>
+            <div className="min-w-0">
+              <p className={`font-extrabold text-lg leading-tight truncate drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)] ${cosmeticById(cosmeticProfile.equipped?.nameColor)?.cls || 'text-white'}`}>{displayName}</p>
+              {cosmeticById(cosmeticProfile.equipped?.title) && (
+                <span className={`inline-flex items-center max-w-full h-5 mt-0.5 px-2 rounded-full text-[10px] font-extrabold ${RARITIES[cosmeticById(cosmeticProfile.equipped?.title).rarity].chip}`}>
+                  <span className="truncate">{cosmeticById(cosmeticProfile.equipped?.title).name}</span>
+                </span>
+              )}
+              <p className="text-slate-300 text-xs font-mono truncate mt-0.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{displaySub}</p>
+              {isRegistered && (
+                <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full bg-violet-500/30 text-violet-300 font-medium">
+                  {t.registeredAccount}
+                </span>
+              )}
+            </div>
           </div>
         </motion.div>
 
@@ -272,50 +283,6 @@ export default function ProfileSettings() {
           </a>
         </motion.div>
 
-        {/* Equipped cosmetics — what the player is currently wearing */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="glass-panel rounded-[20px] p-4"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <p className="font-semibold text-white">{t.equippedLabel}</p>
-            <Link to="/profile" className="text-xs font-bold text-violet-300 hover:text-violet-200 transition min-h-[44px] flex items-center">
-              {t.changeInProfile}
-            </Link>
-          </div>
-          <div className="space-y-2.5">
-            {[
-              ['emblem', c => c && <span className="relative w-8 h-8 rounded-full overflow-hidden flex shrink-0"><EmblemTile emblem={c} fontSize={15} /></span>],
-              ['border', c => c?.frame && (
-                <AvatarFrame frame={c.frame} size={32}>
-                  <span className="w-full h-full rounded-full" style={{ background: 'radial-gradient(120% 120% at 32% 18%, #2b3245, #0d1019)' }} />
-                </AvatarFrame>
-              )],
-              ['banner', c => c && <BannerArt banner={c} className="relative w-12 h-7 rounded-md shrink-0" motifScale={0.4} />],
-              ['title', null],
-              ['nameColor', null],
-            ].map(([slot, render]) => {
-              const item = cosmeticById(cosmeticProfile.equipped?.[slot]);
-              return (
-                <div key={slot} className="flex items-center gap-3">
-                  <span className="w-20 shrink-0 text-[10px] font-bold uppercase tracking-wide text-slate-500">{t.slotLabels[slot]}</span>
-                  {render && <span className="w-12 flex justify-center shrink-0">{render(item)}</span>}
-                  {slot === 'title' && item ? (
-                    <span className={`inline-flex items-center max-w-full h-5 px-2 rounded-full text-[10px] font-extrabold ${RARITIES[item.rarity].chip}`}>
-                      <span className="truncate">{item.name}</span>
-                    </span>
-                  ) : slot === 'nameColor' && item ? (
-                    <span className={`text-sm font-extrabold truncate ${item.cls}`}>{item.name}</span>
-                  ) : (
-                    <span className="text-sm font-semibold text-slate-200 truncate">{item?.name || '—'}</span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </motion.div>
 
         {/* Leave active game */}
         {activeGame && (
