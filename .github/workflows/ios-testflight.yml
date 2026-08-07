@@ -10,6 +10,8 @@
 #   IOS_DIST_CERT_P12      — base64 of the Apple Distribution .p12 (cert + private key)
 #   IOS_DIST_CERT_PASSWORD — the password the .p12 was exported with
 #   IOS_PROVISIONING_PROFILE — base64 of the downloaded .mobileprovision file
+#   VITE_SUPABASE_URL      — your Supabase project URL (Supabase → Settings → API)
+#   VITE_SUPABASE_ANON_KEY — the project's anon/public key (same page)
 #
 # Signing is fully MANUAL and explicit: a real Distribution certificate is
 # imported into a CI keychain and a real App Store provisioning profile is
@@ -46,6 +48,9 @@ jobs:
           cache: npm
 
       - name: Build web app and sync into the iOS project
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: |
           npm ci
           npm run ios
