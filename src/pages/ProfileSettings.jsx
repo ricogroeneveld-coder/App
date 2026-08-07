@@ -179,7 +179,9 @@ export default function ProfileSettings() {
                   <span className="truncate">{cosmeticById(cosmeticProfile.equipped?.title).name}</span>
                 </span>
               )}
-              <p className="text-slate-300 text-xs font-mono truncate mt-0.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{displaySub}</p>
+              {isRegistered && (
+                <p className="text-slate-300 text-xs font-mono truncate mt-0.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{displaySub}</p>
+              )}
               {isRegistered && (
                 <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full bg-violet-500/30 text-violet-300 font-medium">
                   {t.registeredAccount}
