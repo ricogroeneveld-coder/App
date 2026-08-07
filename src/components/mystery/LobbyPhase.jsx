@@ -75,13 +75,13 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
 
   const startGame = async () => {
     const cat = selectedCategory;
-    if (!cat) { toast({ title: 'Pick a category first', variant: 'destructive' }); return; }
-    if (players.length < 2) { toast({ title: 'Need at least 2 players', variant: 'destructive' }); return; }
+    if (!cat) { toast({ title: t.pickCategoryFirst, variant: 'destructive' }); return; }
+    if (players.length < 2) { toast({ title: t.needTwoPlayers, variant: 'destructive' }); return; }
     setLoading(true);
     try {
       await MysteryRoom.update(room.id, { status: 'word_entry', category: cat });
     } catch(e) {
-      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+      toast({ title: t.errorTitle, description: e.message, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -96,7 +96,7 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
 
       {/* Back button — identical to Home's header buttons */}
       <div className="absolute left-4 z-20" style={{ top: 'max(env(safe-area-inset-top), 0.75rem)' }}>
-        <button onClick={() => navigate('/')} className="header-btn" aria-label="Back">
+        <button onClick={leaveGame} className="header-btn" aria-label={t.backLabel}>
           <ArrowLeft className="w-5 h-5" />
         </button>
       </div>

@@ -7,7 +7,7 @@ import Notebook from '@/components/mystery/Notebook';
 import GuessModal from '@/components/mystery/GuessModal';
 import ChatPanel from '@/components/mystery/ChatPanel';
 import EmojiRain from '@/components/mystery/EmojiRain';
-import { BookOpen, MessageCircleQuestion, HelpCircle, Trophy, Mic, Users, MessageCircle, Zap, Timer, Lightbulb, CheckCircle2, LogOut } from 'lucide-react';
+import { BookOpen, MessageCircleQuestion, Trophy, Mic, Users, MessageCircle, Zap, Timer, Lightbulb, CheckCircle2, LogOut } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { toDisplayWord, shortCategory } from '@/lib/wordLists';
 import GameBackground from '@/components/GameBackground';
@@ -66,7 +66,6 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
     !myPlayer?.is_eliminated &&
     !myPlayer?.word_revealed; // word_revealed players skip answering
 
-  const isHost = room.host_id === me?.id;
 
   // Hint round: trigger after every 5 full rounds (each player asked once = askingPlayers.length questions per round)
   const normalQuestions = questions.filter(q => !q.question_text?.startsWith('[HINT]'));
@@ -154,7 +153,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
         current_questioner_index: nextIdx
       });
     } catch(e) {
-      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+      toast({ title: t.errorTitle, description: e.message, variant: 'destructive' });
     }
   };
 
@@ -187,7 +186,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
         status: allAnswered ? 'complete' : 'answering'
       });
     } catch(e) {
-      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+      toast({ title: t.errorTitle, description: e.message, variant: 'destructive' });
     } finally {
       setSubmittingAnswer(false);
     }
@@ -210,7 +209,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
       setHintText('');
       playHint();
     } catch(e) {
-      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+      toast({ title: t.errorTitle, description: e.message, variant: 'destructive' });
     } finally {
       setSubmittingHint(false);
     }
@@ -250,7 +249,6 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
   const timerColor = timeLeft !== null && timeLeft <= 30 ? 'text-rose-400' : 'text-amber-400';
 
   // My previous guesses
-  const myGuesses = guesses.filter(g => g.guesser_id === me?.id);
 
   // Guess cooldown — word_revealed players can also guess others
   const lastGuessAt = myPlayer?.last_guess_at_question_count || 0;

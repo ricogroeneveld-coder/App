@@ -93,7 +93,7 @@ export default function BrowseLobbies() {
       const existing = await MysteryPlayer.filter({ room_code: room.room_code, user_id: guest.id });
       if (!existing?.length) {
         const players = await MysteryPlayer.filter({ room_code: room.room_code });
-        if (players.length >= 12) { toast({ title: 'Room is full', variant: 'destructive' }); return; }
+        if (players.length >= 12) { toast({ title: t.roomFull, variant: 'destructive' }); return; }
         await MysteryPlayer.create({
           room_code: room.room_code, user_id: guest.id, display_name: guest.name,
           score: 0, word_submitted: false, word_revealed: false, is_eliminated: false,
@@ -102,7 +102,7 @@ export default function BrowseLobbies() {
       }
       navigate(`/mystery/${room.room_code}`);
     } catch (e) {
-      toast({ title: 'Failed to join', description: e.message, variant: 'destructive' });
+      toast({ title: t.failedToJoin, description: e.message, variant: 'destructive' });
     } finally {
       setLoading(null);
     }
@@ -121,7 +121,7 @@ export default function BrowseLobbies() {
       {/* Header — pinned, never scrolls */}
       <div className="relative z-10 w-full max-w-md mx-auto px-4 shrink-0">
         <div className="flex items-center gap-3 pt-2 pb-4">
-          <Link to="/" className="header-btn shrink-0" aria-label="Back">
+          <Link to="/" className="header-btn shrink-0" aria-label={t.backLabel}>
             <ChevronLeft className="w-5 h-5" />
           </Link>
           <div className="min-w-0">

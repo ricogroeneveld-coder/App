@@ -50,7 +50,7 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
         word_submitted: true
       });
     } catch(e) {
-      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+      toast({ title: t.errorTitle, description: e.message, variant: 'destructive' });
     } finally {
       setSubmitting(false);
     }
@@ -60,7 +60,7 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
     try {
       await MysteryRoom.update(room.id, { status: 'playing', current_questioner_index: 0, round_number: 1 });
     } catch(e) {
-      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+      toast({ title: t.errorTitle, description: e.message, variant: 'destructive' });
     }
   };
 
@@ -68,7 +68,7 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
   const goBack = async () => {
     if (isHost && !submitted) {
       try { await MysteryRoom.update(room.id, { status: 'lobby' }); }
-      catch(e) { toast({ title: 'Error', description: e.message, variant: 'destructive' }); }
+      catch(e) { toast({ title: t.errorTitle, description: e.message, variant: 'destructive' }); }
     } else {
       navigate('/');
     }

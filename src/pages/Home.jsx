@@ -46,7 +46,7 @@ export default function Home() {
   }, []);
 
   const confirmName = () => {
-    if (!nameInput.trim()) { toast({ title: 'Enter your name', variant: 'destructive' }); return; }
+    if (!nameInput.trim()) { toast({ title: t.enterYourName, variant: 'destructive' }); return; }
     setGuestName(nameInput.trim());
     setNameSet(true);
   };
@@ -85,7 +85,7 @@ export default function Home() {
       });
       navigate(`/mystery/${code}`);
     } catch (e) {
-      toast({ title: 'Failed to create game', description: e.message, variant: 'destructive' });
+      toast({ title: t.failedToCreate, description: e.message, variant: 'destructive' });
     } finally {
       setLoading(null);
     }
@@ -93,12 +93,12 @@ export default function Home() {
 
   const handleJoin = async () => {
     const code = joinCode.trim().toUpperCase();
-    if (!code) { toast({ title: 'Enter a room code', variant: 'destructive' }); return; }
+    if (!code) { toast({ title: t.enterRoomCode, variant: 'destructive' }); return; }
     setLoading('join');
     try {
       const guest = getGuestIdentity();
       const rooms = await MysteryRoom.filter({ room_code: code });
-      if (!rooms?.length) { toast({ title: 'Room not found', variant: 'destructive' }); return; }
+      if (!rooms?.length) { toast({ title: t.roomNotFound, variant: 'destructive' }); return; }
       const room = rooms[0];
       // Players who are still part of this game (left the app, lost
       // connection, phone died) can always come back in — only genuinely
@@ -106,10 +106,10 @@ export default function Home() {
       const existing = await MysteryPlayer.filter({ room_code: code, user_id: guest.id });
       if (existing?.length) { navigate(`/mystery/${code}`); return; }
       if (room.status !== 'lobby' && room.status !== 'word_entry') {
-        toast({ title: 'Game already started', variant: 'destructive' }); return;
+        toast({ title: t.gameAlreadyStarted, variant: 'destructive' }); return;
       }
       const players = await MysteryPlayer.filter({ room_code: code });
-      if (players.length >= 12) { toast({ title: 'Room is full (max 12)', variant: 'destructive' }); return; }
+      if (players.length >= 12) { toast({ title: t.roomFull, variant: 'destructive' }); return; }
       await MysteryPlayer.create({
         room_code: code,
         user_id: guest.id,
@@ -122,7 +122,7 @@ export default function Home() {
       });
       navigate(`/mystery/${code}`);
     } catch (e) {
-      toast({ title: 'Failed to join', description: e.message, variant: 'destructive' });
+      toast({ title: t.failedToJoin, description: e.message, variant: 'destructive' });
     } finally {
       setLoading(null);
     }

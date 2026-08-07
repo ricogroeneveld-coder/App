@@ -26,16 +26,6 @@ export default function GuessModal({ target, players, guesses, me, myPlayer, roo
     return !alreadyGuessedCorrectly;
   });
 
-  // Collect all unique words answered by the selected target (for quick-select)
-  const targetAnswerWords = selectedTarget ? (() => {
-    // Get the category word list from answers context — pull words from questions context if available
-    // Just show all players' guessed words so far as suggestions, plus common patterns
-    const allGuessWords = guesses
-      .filter(g => g.target_player_id === selectedTarget.user_id)
-      .map(g => g.guessed_word);
-    return [...new Set(allGuessWords)];
-  })() : [];
-
   const submitGuess = async () => {
     if (!selectedTarget || !guessWord.trim()) return;
     setSubmitting(true);
@@ -78,7 +68,7 @@ export default function GuessModal({ target, players, guesses, me, myPlayer, roo
       }
       await reload();
     } catch(e) {
-      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+      toast({ title: t.errorTitle, description: e.message, variant: 'destructive' });
     } finally {
       setSubmitting(false);
     }
@@ -141,7 +131,8 @@ export default function GuessModal({ target, players, guesses, me, myPlayer, roo
                     <p className="font-medium">{selectedTarget.display_name}</p>
                     <p className="text-xs text-slate-400">{t.categorie}: {room.category}</p>
                   </div>
-                  <button onClick={() => { setSelectedTarget(null); setGuessWord(''); }} className="ml-auto text-slate-500 hover:text-slate-300">
+                  <button onClick={() => { setSelectedTarget(null); setGuessWord(''); }} aria-label={t.close}
+                    className="ml-auto p-2 -m-1 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/5">
                     <X className="w-4 h-4" />
                   </button>
                 </div>

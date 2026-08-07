@@ -8,7 +8,6 @@ import PlayingPhase from '@/components/mystery/PlayingPhase';
 import FinishedPhase from '@/components/mystery/FinishedPhase';
 import { getGuestIdentity } from '@/lib/guestIdentity';
 import GameBackground from '@/components/GameBackground';
-import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { useLang } from '@/lib/LanguageContext';
 

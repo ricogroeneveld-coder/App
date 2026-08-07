@@ -458,7 +458,7 @@ export default function Profile() {
 
       {/* Header */}
       <div className="shrink-0 w-full max-w-md mx-auto px-4 flex items-center gap-3 pb-2.5">
-        <button onClick={() => navigate(-1)} className="header-btn shrink-0" aria-label="Back">
+        <button onClick={() => navigate(-1)} className="header-btn shrink-0" aria-label={t.backLabel}>
           <ArrowLeft className="w-5 h-5" />
         </button>
         <h1 className="text-lg font-extrabold tracking-tight flex-1">{t.profileTitle}</h1>

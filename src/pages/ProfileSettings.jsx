@@ -85,10 +85,10 @@ export default function ProfileSettings() {
         await MysteryPlayer.delete(p.id);
       }
       clearGuestIdentity();
-      toast({ title: 'Profile deleted', description: 'Your local profile and game data have been removed.' });
+      toast({ title: t.profileDeleted, description: t.profileDeletedDesc });
       navigate('/');
     } catch (e) {
-      toast({ title: 'Failed to delete profile', description: e.message, variant: 'destructive' });
+      toast({ title: t.deleteFailed, description: e.message, variant: 'destructive' });
     } finally {
       setDeleting(false);
     }
@@ -108,10 +108,10 @@ export default function ProfileSettings() {
       }
       clearGuestIdentity();
       await logout();
-      toast({ title: 'Account deleted', description: 'Your account and game records have been removed.' });
+      toast({ title: t.accountDeleted, description: t.accountDeletedDesc });
       navigate('/');
     } catch (e) {
-      toast({ title: 'Failed to delete account', description: e.message, variant: 'destructive' });
+      toast({ title: t.deleteFailed, description: e.message, variant: 'destructive' });
     } finally {
       setDeleting(false);
     }
@@ -125,7 +125,7 @@ export default function ProfileSettings() {
       setActiveGame(null);
       toast({ title: t.leaveGame, description: activeGame.room.room_code });
     } catch (e) {
-      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+      toast({ title: t.errorTitle, description: e.message, variant: 'destructive' });
     } finally {
       setLeavingGame(false);
     }
@@ -152,7 +152,7 @@ export default function ProfileSettings() {
         <button
           onClick={() => navigate('/')}
           className="header-btn"
-          aria-label="Back"
+          aria-label={t.backLabel}
         >
           <ArrowLeft className="w-5 h-5" />
         </button>

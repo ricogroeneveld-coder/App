@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { MysteryPlayer, MysteryQuestion, MysteryGuess, MysteryRoom } from '@/api/db';
 import { Trophy, Home, RotateCcw } from 'lucide-react';
-import { getGuestIdentity } from '@/lib/guestIdentity';
 import { useLang } from '@/lib/LanguageContext';
 import { toDisplayWord } from '@/lib/wordLists';
 import GameBackground from '@/components/GameBackground';
@@ -27,7 +26,7 @@ export default function FinishedPhase({ players, guesses, room, me, roomCode }) 
     grantMatchRewards({ room, players, guesses, me }).then(b => { if (live && b) setBreakdown(b); });
     return () => { live = false; };
     // Grant exactly once per results screen — the store is idempotent per room anyway.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [room?.id]);
   const sorted = [...players].sort((a, b) => (b.score || 0) - (a.score || 0));
   const topScore = sorted[0]?.score || 0;

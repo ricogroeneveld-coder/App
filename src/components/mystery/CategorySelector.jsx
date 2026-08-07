@@ -81,7 +81,7 @@ export default function CategorySelector({ selectedCategory, onSelect, onClose }
 
       {/* Back button — identical to Home's header buttons */}
       <div className="absolute left-4 z-20" style={{ top: 'max(env(safe-area-inset-top), 0.75rem)' }}>
-        <button onClick={handleBack} className="header-btn" aria-label="Back">
+        <button onClick={handleBack} className="header-btn" aria-label={t.backLabel}>
           <ArrowLeft className="w-5 h-5" />
         </button>
       </div>
