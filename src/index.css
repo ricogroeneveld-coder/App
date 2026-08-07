@@ -252,6 +252,23 @@
   }
   .fx-aurora { animation: fxAurora 10s ease-in-out infinite; }
 
+  /* Medallion idle breathing — the emblem feels alive on big surfaces. */
+  @keyframes medalBreathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.045); }
+  }
+  .medal-breathe { animation: medalBreathe 6s ease-in-out infinite; }
+
+  /* Rain streaks for neon/cyber scenes — a repeating diagonal pattern
+     scrolling slowly downwards. */
+  @keyframes fxRain { to { background-position: -70px 140px; } }
+  .fx-rain {
+    background-image: repeating-linear-gradient(115deg,
+      transparent 0 7px, rgba(170, 225, 255, 0.13) 7px 8px, transparent 8px 14px);
+    background-size: 70px 140px;
+    animation: fxRain 5s linear infinite;
+  }
+
   /* Fire-glow name — legendary heat with a soft flicker. */
   @keyframes nameFlicker {
     0%, 100% { filter: drop-shadow(0 0 6px rgba(255, 120, 40, 0.55)); }

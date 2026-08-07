@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lock } from 'lucide-react';
-import { RARITIES } from '@/lib/cosmetics';
-import { AvatarFrame, EmblemTile } from './PlayerAvatar';
+import { RARITIES, cosmeticById } from '@/lib/cosmetics';
+import PlayerAvatar, { AvatarFrame, EmblemTile } from './PlayerAvatar';
 import BannerArt from './BannerArt';
 import { useLang } from '@/lib/LanguageContext';
 import { playUnlock } from '@/lib/sounds';
@@ -26,26 +26,57 @@ function useTickDown(from, to, active, duration = 800, delay = 350) {
   return active ? value : from;
 }
 
-function Artwork({ c }) {
+// Preview the cosmetic AS EQUIPPED — composed with the player's current
+// loadout, never floating alone. Seeing it on your own profile sells it.
+function Artwork({ c, profile }) {
+  const myEmblem = profile ? cosmeticById(profile.equipped?.emblem) : null;
+  const myBorder = profile ? cosmeticById(profile.equipped?.border) : null;
+  const myName = profile?.display_name || 'You';
   if (c.type === 'emblem') {
+    const medal = <EmblemTile emblem={c} fontSize={42} breathe />;
+    return myBorder?.frame ? (
+      <span style={{ filter: 'drop-shadow(0 8px 14px rgba(0,0,0,0.55))' }}>
+        <AvatarFrame frame={myBorder.frame} size={96}>{medal}</AvatarFrame>
+      </span>
+    ) : (
+      <span className="relative w-24 h-24 rounded-full overflow-hidden flex shadow-[0_8px_16px_-4px_rgba(0,0,0,0.6)]">{medal}</span>
+    );
+  }
+  if (c.type === 'banner') {
     return (
-      <span className="relative w-24 h-24 rounded-full overflow-hidden flex shadow-[0_6px_16px_-4px_rgba(0,0,0,0.6)]">
-        <EmblemTile emblem={c} fontSize={48} />
+      <span className="relative w-full h-24 rounded-xl overflow-hidden block shadow-[0_8px_16px_-6px_rgba(0,0,0,0.6)]">
+        <BannerArt banner={c} animated className="absolute inset-0" />
+        <span className="absolute left-3 bottom-2 flex items-center gap-2">
+          {profile && (
+            <span style={{ filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.55))' }}>
+              <PlayerAvatar profile={profile} size={34} />
+            </span>
+          )}
+          <span className="text-sm font-extrabold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{myName}</span>
+        </span>
       </span>
     );
   }
-  if (c.type === 'banner') return <BannerArt banner={c} className="relative w-full h-24 rounded-xl" />;
   if (c.type === 'border') {
+    const inner = myEmblem
+      ? <EmblemTile emblem={myEmblem} fontSize={42} breathe />
+      : <span className="w-full h-full bg-black/50 flex items-center justify-center text-4xl">🙂</span>;
     return (
-      <AvatarFrame frame={c.frame} size={96}>
-        <span className="w-full h-full bg-black/50 flex items-center justify-center text-4xl">🙂</span>
-      </AvatarFrame>
+      <span style={{ filter: 'drop-shadow(0 8px 14px rgba(0,0,0,0.55))' }}>
+        <AvatarFrame frame={c.frame} size={96}>{inner}</AvatarFrame>
+      </span>
     );
   }
   if (c.type === 'title') {
-    return <span className={`text-xl font-extrabold text-center ${RARITIES[c.rarity].text}`}>“{c.name}”</span>;
+    const myNameCls = profile ? cosmeticById(profile.equipped?.nameColor)?.cls : null;
+    return (
+      <span className="flex flex-col items-center gap-1.5">
+        <span className={`text-xl font-extrabold ${myNameCls || 'text-white'}`}>{myName}</span>
+        <span className={`inline-flex items-center h-5 px-2 rounded-full text-[10px] font-extrabold ${RARITIES[c.rarity].chip}`}>{c.name}</span>
+      </span>
+    );
   }
-  return <span className={`text-2xl font-extrabold ${c.cls}`}>Name</span>;
+  return <span className={`text-2xl font-extrabold ${c.cls}`}>{myName}</span>;
 }
 
 const CONFETTI_COLORS = ['#ffcb45', '#ff8bd8', '#7db9ff', '#7dffa8', '#c98bff', '#ffd36b'];
@@ -55,7 +86,7 @@ const CONFETTI_COLORS = ['#ffcb45', '#ff8bd8', '#7db9ff', '#7dffa8', '#c98bff', 
  * then an unlock celebration — sound cue, glow burst, radiating sparkles,
  * confetti on legendary/mythic, Picks ticking down, and the auto-equip note.
  */
-export default function PurchaseModal({ cosmetic: c, balance, typeLabel, onConfirm, onClose }) {
+export default function PurchaseModal({ cosmetic: c, balance, typeLabel, profile, onConfirm, onClose }) {
   const { t } = useLang();
   const [phase, setPhase] = useState('confirm'); // confirm | celebrate
   const rar = RARITIES[c.rarity];
@@ -108,7 +139,7 @@ export default function PurchaseModal({ cosmetic: c, balance, typeLabel, onConfi
             animate={phase === 'celebrate' ? { scale: [1, 1.18, 1] } : {}}
             transition={{ duration: 0.55 }}
             className="relative flex items-center justify-center w-full">
-            <Artwork c={c} />
+            <Artwork c={c} profile={profile} />
           </motion.div>
           {phase === 'celebrate' && (
             <>

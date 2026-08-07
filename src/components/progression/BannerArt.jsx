@@ -30,6 +30,85 @@ const BANNER_FX = {
   bn_rainbow:  { kind: 'twinkle', tint: '#ffd36b', s: 11 },
 };
 
+// Scene layers turn a gradient into a miniature illustration: silhouette
+// midgrounds (mountains, skylines, trees), fog bands, light rays, glow orbs
+// (sun/planet), and rain. Painted between the base gradient and the motifs.
+const SIL = {
+  mountains: 'polygon(0% 100%, 0% 58%, 16% 34%, 30% 62%, 47% 26%, 63% 66%, 79% 42%, 100% 68%, 100% 100%)',
+  skyline: 'polygon(0% 100%, 0% 62%, 7% 62%, 7% 40%, 15% 40%, 15% 66%, 25% 66%, 25% 30%, 33% 30%, 33% 56%, 45% 56%, 45% 46%, 53% 46%, 53% 70%, 63% 70%, 63% 36%, 71% 36%, 71% 60%, 83% 60%, 83% 50%, 91% 50%, 91% 74%, 100% 74%, 100% 100%)',
+  trees: 'polygon(0% 100%, 0% 52%, 6% 76%, 11% 40%, 17% 78%, 23% 34%, 30% 80%, 36% 46%, 43% 82%, 100% 100%)',
+  temple: 'polygon(0% 100%, 22% 100%, 26% 74%, 34% 74%, 30% 56%, 40% 56%, 36% 40%, 50% 28%, 64% 40%, 60% 56%, 70% 56%, 66% 74%, 74% 74%, 78% 100%, 100% 100%)',
+};
+
+const BANNER_LAYERS = {
+  bn_sakura: [
+    { t: 'rays', from: '75% -10%', tint: 'rgba(255,235,200,0.2)' },
+    { t: 'sil', clip: SIL.mountains, color: 'rgba(90,25,60,0.5)', h: '46%' },
+    { t: 'fog', y: '58%', o: 0.2 },
+  ],
+  bn_dragon: [
+    { t: 'orb', x: '78%', y: '18%', s: 46, color: 'rgba(110,231,183,0.35)' },
+    { t: 'sil', clip: SIL.mountains, color: 'rgba(1,18,12,0.75)', h: '52%' },
+    { t: 'fog', y: '52%', o: 0.16 },
+  ],
+  bn_neon: [
+    { t: 'sil', clip: SIL.skyline, color: 'rgba(8,4,24,0.85)', h: '62%' },
+    { t: 'rain' },
+  ],
+  bn_cyber: [
+    { t: 'sil', clip: SIL.skyline, color: 'rgba(2,8,16,0.8)', h: '55%' },
+    { t: 'rain' },
+  ],
+  bn_galaxy: [
+    { t: 'orb', x: '20%', y: '30%', s: 52, color: 'rgba(157,92,255,0.4)' },
+  ],
+  bn_forest: [
+    { t: 'rays', from: '25% -10%', tint: 'rgba(220,255,180,0.14)' },
+    { t: 'sil', clip: SIL.trees, color: 'rgba(1,12,6,0.8)', h: '58%' },
+    { t: 'fog', y: '62%', o: 0.14 },
+  ],
+  bn_aurora: [
+    { t: 'sil', clip: SIL.mountains, color: 'rgba(3,2,14,0.85)', h: '42%' },
+  ],
+  bn_temple: [
+    { t: 'rays', from: '50% -20%', tint: 'rgba(255,203,69,0.16)' },
+    { t: 'sil', clip: SIL.temple, color: 'rgba(20,8,0,0.75)', h: '64%' },
+  ],
+  bn_ocean: [
+    { t: 'rays', from: '40% -20%', tint: 'rgba(150,220,255,0.16)' },
+  ],
+  bn_ember: [
+    { t: 'sil', clip: SIL.mountains, color: 'rgba(10,2,0,0.7)', h: '44%' },
+    { t: 'fog', y: '50%', o: 0.12 },
+  ],
+  bn_winter: [
+    { t: 'sil', clip: SIL.mountains, color: 'rgba(210,235,255,0.22)', h: '40%' },
+  ],
+  bn_gold: [
+    { t: 'rays', from: '50% -20%', tint: 'rgba(255,220,140,0.18)' },
+  ],
+};
+
+function SceneLayer({ l }) {
+  if (l.t === 'sil') {
+    return <span className="absolute inset-x-0 bottom-0 pointer-events-none" style={{ height: l.h, background: l.color, clipPath: l.clip }} />;
+  }
+  if (l.t === 'fog') {
+    return <span className="absolute inset-x-[-10%] pointer-events-none" style={{ top: l.y, height: '34%', background: `linear-gradient(180deg, transparent, rgba(255,255,255,${l.o}), transparent)`, filter: 'blur(5px)' }} />;
+  }
+  if (l.t === 'rays') {
+    return <span className="absolute inset-0 pointer-events-none" style={{ mixBlendMode: 'screen',
+      background: `conic-gradient(from 160deg at ${l.from}, transparent 0deg, ${l.tint} 10deg, transparent 22deg, ${l.tint} 32deg, transparent 46deg, ${l.tint} 58deg, transparent 70deg)` }} />;
+  }
+  if (l.t === 'orb') {
+    return <span className="absolute rounded-full pointer-events-none" style={{ left: l.x, top: l.y, width: l.s, height: l.s, transform: 'translate(-50%, -50%)', background: `radial-gradient(50% 50% at 50% 50%, ${l.color}, transparent 70%)` }} />;
+  }
+  if (l.t === 'rain') {
+    return <span className="fx-rain absolute inset-0 pointer-events-none" />;
+  }
+  return null;
+}
+
 const FX_SPOTS = [
   { x: '16%', delay: '0s', scale: 1 },
   { x: '54%', delay: '3.8s', scale: 0.72 },
@@ -76,6 +155,7 @@ export default function BannerArt({ banner, className = '', style = {}, motifSca
   return (
     <span aria-hidden className={`block overflow-hidden pointer-events-none ${className}`}
       style={{ background: b.css || 'linear-gradient(120deg, #1c0b3a 0%, #0d0620 100%)', ...style }}>
+      {(BANNER_LAYERS[b.id] || []).map((l, i) => <SceneLayer key={`l${i}`} l={l} />)}
       {(b.motifs || []).map((m, i) => (
         <span key={i} className="absolute select-none"
           style={{

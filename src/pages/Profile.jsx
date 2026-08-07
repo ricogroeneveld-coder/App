@@ -31,7 +31,7 @@ function sourceLabel(c, t) {
  * card in every grid is pixel-identical in size, padding, and rhythm.
  * Higher rarities feel alive: soft glow, a slow shine sweep, and twinkles.
  */
-function CosmeticCard({ c, owned, equipped, onTap, justUnlocked, footer, footerClass }) {
+function CosmeticCard({ c, owned, equipped, onTap, justUnlocked, footer, footerClass, previewEmblem, playerName }) {
   const rar = RARITIES[c.rarity];
   const fancy = c.rarity === 'legendary' || c.rarity === 'mythic';
   return (
@@ -73,14 +73,16 @@ function CosmeticCard({ c, owned, equipped, onTap, justUnlocked, footer, footerC
         )}
         {c.type === 'border' && (
           <AvatarFrame frame={c.frame} size={44}>
-            <span className="w-full h-full bg-black/50 flex items-center justify-center text-lg">🙂</span>
+            {previewEmblem
+              ? <EmblemTile emblem={previewEmblem} fontSize={19} />
+              : <span className="w-full h-full bg-black/50 flex items-center justify-center text-lg">🙂</span>}
           </AvatarFrame>
         )}
         {c.type === 'title' && (
           <span className={`w-full text-[11px] font-extrabold leading-tight ${rar.text}`}>“{c.name}”</span>
         )}
         {c.type === 'nameColor' && (
-          <span className={`text-sm font-extrabold ${c.cls}`}>Name</span>
+          <span className={`w-full text-sm font-extrabold truncate ${c.cls}`}>{playerName || 'Name'}</span>
         )}
       </span>
       {/* Name slot — one line, always 16px tall */}
@@ -92,6 +94,59 @@ function CosmeticCard({ c, owned, equipped, onTap, justUnlocked, footer, footerC
       {/* Footer slot — price or unlock source; always 16px tall */}
       <span className={`h-4 mt-1 flex items-center text-[10px] font-extrabold tabular-nums ${footerClass || 'text-amber-300'}`}>
         {footer || ' '}
+      </span>
+    </motion.button>
+  );
+}
+
+/**
+ * Large featured showcase — the day's headline item presented inside a live
+ * banner scene with its equipped-context preview, like a storefront window.
+ */
+function HeroFeatured({ c, profile, onTap, featuredLabel }) {
+  const rar = RARITIES[c.rarity];
+  const myEmblem = cosmeticById(profile.equipped?.emblem);
+  const bannerBg = c.type === 'banner' ? c : cosmeticById(profile.equipped?.banner);
+  const affordable = (profile.picks || 0) >= c.source.price;
+  return (
+    <motion.button onClick={() => onTap(c)} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+      className={`relative w-full h-28 mb-2 rounded-2xl overflow-hidden text-left ring-1 ${rar.ring} ${rar.cardGlow} transition-transform duration-150 active:scale-[0.98] hover:-translate-y-0.5`}>
+      <BannerArt banner={bannerBg} animated className="absolute inset-0" />
+      <span aria-hidden className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/35 to-black/55" />
+      <span aria-hidden className="fx-shine" />
+      <span className="relative h-full flex items-center gap-3.5 px-4">
+        {c.type === 'emblem' && (
+          <span className="relative w-16 h-16 rounded-full overflow-hidden flex shrink-0"
+            style={{ filter: 'drop-shadow(0 6px 10px rgba(0,0,0,0.55))' }}>
+            <EmblemTile emblem={c} fontSize={30} breathe />
+          </span>
+        )}
+        {c.type === 'border' && (
+          <span className="shrink-0" style={{ filter: 'drop-shadow(0 6px 10px rgba(0,0,0,0.55))' }}>
+            <AvatarFrame frame={c.frame} size={64}>
+              {myEmblem
+                ? <EmblemTile emblem={myEmblem} fontSize={28} />
+                : <span className="w-full h-full bg-black/50 flex items-center justify-center text-2xl">🙂</span>}
+            </AvatarFrame>
+          </span>
+        )}
+        {c.type === 'title' && (
+          <span className={`shrink-0 inline-flex items-center h-7 px-3 rounded-full text-xs font-extrabold ${rar.chip} shadow-[0_4px_10px_-4px_rgba(0,0,0,0.6)]`}>{c.name}</span>
+        )}
+        {c.type === 'nameColor' && (
+          <span className={`shrink-0 text-xl font-extrabold ${c.cls} drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]`}>{profile.display_name || 'Name'}</span>
+        )}
+        <span className="flex-1 min-w-0">
+          <span className={`block text-[10px] font-extrabold uppercase tracking-[0.14em] ${rar.text}`}>
+            {rar.label} · {featuredLabel}
+          </span>
+          <span className="block text-lg font-extrabold text-white leading-tight truncate drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)]">{c.name}</span>
+          <span className={`inline-flex items-center mt-1.5 px-2.5 py-1 rounded-full text-xs font-extrabold tabular-nums shadow-[0_2px_6px_-2px_rgba(0,0,0,0.6)] ${affordable
+            ? 'bg-gradient-to-b from-[#ffcb45] to-[#e08e05] text-[#2c1500]'
+            : 'bg-black/40 ring-1 ring-white/20 text-slate-300'}`}>
+            {c.source.price} Picks
+          </span>
+        </span>
       </span>
     </motion.button>
   );
@@ -290,7 +345,8 @@ export default function Profile() {
                           equipped={profile.equipped?.[c.type] === c.id}
                           onTap={onTapCosmetic} justUnlocked={justUnlocked === c.id}
                           footer={owned ? '' : sourceLabel(c, t)}
-                          footerClass={owned ? '' : 'text-slate-500'} />
+                          footerClass={owned ? '' : 'text-slate-500'}
+                          previewEmblem={cosmeticById(profile.equipped?.emblem)} playerName={profile.display_name} />
                       );
                     })}
                   </div>
@@ -309,16 +365,20 @@ export default function Profile() {
                     </p>
                     <p className="text-[10px] font-bold text-slate-500">{t.rotatesDaily}</p>
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {featured.map(c => (
-                      <div key={c.id} className="featured-float">
-                        <CosmeticCard c={c} owned={false} equipped={false}
-                          onTap={onTapCosmetic} justUnlocked={justUnlocked === c.id}
-                          footer={`${c.source.price} Picks`}
-                          footerClass={(profile.picks || 0) >= c.source.price ? 'text-amber-300' : 'text-slate-500'} />
-                      </div>
-                    ))}
-                  </div>
+                  <HeroFeatured c={featured[0]} profile={profile} onTap={onTapCosmetic} featuredLabel={t.featured} />
+                  {featured.length > 1 && (
+                    <div className="grid grid-cols-3 gap-2">
+                      {featured.slice(1).map(c => (
+                        <div key={c.id} className="featured-float">
+                          <CosmeticCard c={c} owned={false} equipped={false}
+                            onTap={onTapCosmetic} justUnlocked={justUnlocked === c.id}
+                            footer={`${c.source.price} Picks`}
+                            footerClass={(profile.picks || 0) >= c.source.price ? 'text-amber-300' : 'text-slate-500'}
+                            previewEmblem={cosmeticById(profile.equipped?.emblem)} playerName={profile.display_name} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
               {TYPE_ORDER.map(type => {
@@ -332,7 +392,8 @@ export default function Profile() {
                         <CosmeticCard key={c.id} c={c} owned={false} equipped={false}
                           onTap={onTapCosmetic} justUnlocked={justUnlocked === c.id}
                           footer={`${c.source.price} Picks`}
-                          footerClass={(profile.picks || 0) >= c.source.price ? 'text-amber-300' : 'text-slate-500'} />
+                          footerClass={(profile.picks || 0) >= c.source.price ? 'text-amber-300' : 'text-slate-500'}
+                          previewEmblem={cosmeticById(profile.equipped?.emblem)} playerName={profile.display_name} />
                       ))}
                     </div>
                   </div>
@@ -390,7 +451,7 @@ export default function Profile() {
 
       {purchase && (
         <PurchaseModal cosmetic={purchase.c} balance={purchase.balance}
-          typeLabel={TYPE_LABELS[purchase.c.type].replace(/s$/, '')}
+          typeLabel={TYPE_LABELS[purchase.c.type].replace(/s$/, '')} profile={profile}
           onConfirm={confirmPurchase} onClose={() => setPurchase(null)} />
       )}
     </div>
