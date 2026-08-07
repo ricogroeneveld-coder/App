@@ -572,7 +572,7 @@ export default function Profile() {
                     <motion.div initial={false}
                       animate={{ height: isCollapsed ? 0 : 'auto', opacity: isCollapsed ? 0 : 1 }}
                       transition={{ duration: 0.25, ease: 'easeInOut' }}
-                      className="overflow-hidden">
+                      className="overflow-hidden -mx-3 px-3">
                       <div className="grid grid-cols-3 gap-2 pt-1 pb-1">
                         {items.map(c => {
                           const owned = profile.owned.includes(c.id);
@@ -638,7 +638,7 @@ export default function Profile() {
                     <motion.div initial={false}
                       animate={{ height: isCollapsed ? 0 : 'auto', opacity: isCollapsed ? 0 : 1 }}
                       transition={{ duration: 0.25, ease: 'easeInOut' }}
-                      className="overflow-hidden">
+                      className="overflow-hidden -mx-3 px-3">
                       <div className="grid grid-cols-3 gap-2 pt-1 pb-1">
                         {items.map(c => (
                           <CosmeticCard key={c.id} c={c} owned={profile.owned.includes(c.id)}
