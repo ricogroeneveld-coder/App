@@ -292,10 +292,7 @@ export default function Home() {
                   )}
                 </span>
               </span>
-              <button onClick={e => { e.stopPropagation(); localStorage.removeItem('mystery_guest_name'); setNameSet(false); setNameInput(''); }}
-                className="ml-auto shrink-0 px-3 py-1.5 rounded-lg bg-gradient-to-b from-white/[0.06] to-black/10 ring-1 ring-violet-500/50 shadow-[0_1px_2px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.12)] text-xs font-bold text-white hover:bg-violet-500/15 hover:ring-violet-400/70 transition-all duration-150 active:scale-[0.98] select-none">
-                {t.change}
-              </button>
+              <ChevronRight className="ml-auto shrink-0 w-5 h-5 text-slate-500" />
             </div>
 
             {/* Create Game */}

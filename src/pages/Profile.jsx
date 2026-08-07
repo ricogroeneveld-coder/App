@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Settings, Lock, Check, Sparkles } from 'lucide-react';
+import { ArrowLeft, Settings, Lock, Check, Sparkles, Pencil, ChevronDown } from 'lucide-react';
 import GameBackground from '@/components/GameBackground';
 import PlayerAvatar, { AvatarFrame, EmblemTile } from '@/components/progression/PlayerAvatar';
 import BannerArt from '@/components/progression/BannerArt';
@@ -14,6 +14,7 @@ import {
 } from '@/lib/playerProfile';
 import { ALL_COSMETICS, cosmeticById, RARITIES, TYPE_LABELS, topEquippedRarity, COLLECTIONS, collectionItems, collectionProgress } from '@/lib/cosmetics';
 import { shortCategory } from '@/lib/wordLists';
+import { setGuestName, normalizeName, MAX_NAME_LENGTH } from '@/lib/guestIdentity';
 import { SEASON_NAME, todayKey, levelFromXp } from '@/lib/progression';
 
 const TYPE_ORDER = ['emblem', 'banner', 'border', 'title', 'nameColor'];
@@ -338,6 +339,26 @@ export default function Profile() {
   const [justUnlocked, setJustUnlocked] = useState(null);
   const [purchase, setPurchase] = useState(null); // { c, balance } captured at tap
   const [openCollection, setOpenCollection] = useState(null); // collection id
+  const [renaming, setRenaming] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
+  // Collapsed shop sections, remembered across visits
+  const [collapsed, setCollapsed] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('wmp_shop_collapsed') || '{}'); } catch { return {}; }
+  });
+  const toggleSection = (type) => setCollapsed(prev => {
+    const next = { ...prev, [type]: !prev[type] };
+    try { localStorage.setItem('wmp_shop_collapsed', JSON.stringify(next)); } catch { /* ignore */ }
+    return next;
+  });
+
+  const saveRename = async () => {
+    const clean = normalizeName(nameDraft);
+    if (!clean) return;
+    setGuestName(clean);
+    await loadProfile(); // syncs display_name from the guest identity
+    setRenaming(false);
+    toast({ title: t.nameSaved });
+  };
 
   useEffect(() => {
     loadProfile().then(setProfile);
@@ -428,9 +449,6 @@ export default function Profile() {
             <BannerArt banner={banner} animated className="absolute inset-0" />
             <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-12"
               style={{ background: 'linear-gradient(180deg, transparent 0%, #10141f 100%)' }} />
-            <span className="absolute right-3 top-2.5 px-2.5 py-1 rounded-full bg-gradient-to-b from-[#ffcb45] to-[#e08e05] text-[#2c1500] text-xs font-extrabold shadow-[0_2px_6px_-2px_rgba(0,0,0,0.5)] tabular-nums">
-              {profile.picks || 0} Picks
-            </span>
           </div>
           <div className="relative px-4 -mt-9">
             <span aria-hidden className="absolute left-4 top-10 w-18 h-4 rounded-full"
@@ -446,12 +464,26 @@ export default function Profile() {
           <div className="relative px-4 pt-1.5 pb-3">
             <span aria-hidden className="pointer-events-none absolute inset-x-0 -top-6 h-36"
               style={{ background: 'radial-gradient(70% 70% at 50% 0%, rgba(157,92,255,0.09), transparent 70%)' }} />
-            <p className={`relative text-lg font-extrabold leading-tight truncate ${nameColor?.cls || 'text-white'}`}>{profile.display_name || '—'}</p>
-            {title && (
-              <span className={`relative inline-flex items-center max-w-full h-5 mt-1 px-2 rounded-full text-[10px] font-extrabold ${RARITIES[title.rarity].chip}`}>
-                <span className="truncate">{title.name}</span>
+            <div className="relative flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <p className={`text-lg font-extrabold leading-tight truncate ${nameColor?.cls || 'text-white'}`}>{profile.display_name || '—'}</p>
+                  <button onClick={() => { setNameDraft(profile.display_name || ''); setRenaming(true); }}
+                    aria-label={t.editName}
+                    className="shrink-0 w-8 h-8 -my-1 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all duration-150 active:scale-[0.95]">
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                {title && (
+                  <span className={`inline-flex items-center max-w-full h-5 mt-1 px-2 rounded-full text-[10px] font-extrabold ${RARITIES[title.rarity].chip}`}>
+                    <span className="truncate">{title.name}</span>
+                  </span>
+                )}
+              </div>
+              <span className="shrink-0 mt-0.5 px-2.5 py-1 rounded-full bg-gradient-to-b from-[#ffcb45] to-[#e08e05] text-[#2c1500] text-xs font-extrabold shadow-[0_2px_6px_-2px_rgba(0,0,0,0.5)] tabular-nums">
+                {profile.picks || 0} Picks
               </span>
-            )}
+            </div>
             {/* XP bar */}
             <div className="relative flex items-center gap-2 mt-2.5">
               <span className="text-[11px] font-extrabold text-violet-300 shrink-0">Lv {lvl.level}</span>
@@ -526,18 +558,6 @@ export default function Profile() {
                     <p className="text-[10px] font-bold text-slate-500">{t.rotatesDaily}</p>
                   </div>
                   <HeroFeatured c={featured[0]} profile={profile} onTap={onTapCosmetic} featuredLabel={t.featured} />
-                  {featured.length > 1 && (
-                    <div className="grid grid-cols-3 gap-2">
-                      {featured.slice(1).map(c => (
-                        <div key={c.id} className="featured-float">
-                          <CosmeticCard c={c} owned={false} equipped={false}
-                            onTap={onTapCosmetic} justUnlocked={justUnlocked === c.id}
-                            price={c.source.price} affordable={(profile.picks || 0) >= c.source.price}
-                            playerName={profile.display_name} />
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
               )}
               {/* Collections — matching sets with exclusive completion rewards */}
@@ -553,17 +573,30 @@ export default function Profile() {
               {TYPE_ORDER.map(type => {
                 const items = shopItems.filter(c => c.type === type && !profile.owned.includes(c.id));
                 if (!items.length) return null;
+                const isCollapsed = !!collapsed[type];
                 return (
-                  <div key={type} className="mb-4">
-                    <p className="section-label mb-2">{TYPE_LABELS[type]}</p>
-                    <div className="grid grid-cols-3 gap-2">
-                      {items.map(c => (
-                        <CosmeticCard key={c.id} c={c} owned={false} equipped={false}
-                          onTap={onTapCosmetic} justUnlocked={justUnlocked === c.id}
-                          price={c.source.price} affordable={(profile.picks || 0) >= c.source.price}
-                          playerName={profile.display_name} />
-                      ))}
-                    </div>
+                  <div key={type} className="mb-3">
+                    <button onClick={() => toggleSection(type)} aria-expanded={!isCollapsed}
+                      className="w-full min-h-[44px] flex items-center justify-between px-1 rounded-xl transition-colors hover:bg-white/5 active:scale-[0.99]">
+                      <span className="section-label">{TYPE_LABELS[type]}</span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-bold text-slate-500 tabular-nums">{items.length}</span>
+                        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`} />
+                      </span>
+                    </button>
+                    <motion.div initial={false}
+                      animate={{ height: isCollapsed ? 0 : 'auto', opacity: isCollapsed ? 0 : 1 }}
+                      transition={{ duration: 0.25, ease: 'easeInOut' }}
+                      className="overflow-hidden">
+                      <div className="grid grid-cols-3 gap-2 pt-1 pb-1">
+                        {items.map(c => (
+                          <CosmeticCard key={c.id} c={c} owned={false} equipped={false}
+                            onTap={onTapCosmetic} justUnlocked={justUnlocked === c.id}
+                            price={c.source.price} affordable={(profile.picks || 0) >= c.source.price}
+                            playerName={profile.display_name} />
+                        ))}
+                      </div>
+                    </motion.div>
                   </div>
                 );
               })}
@@ -619,6 +652,32 @@ export default function Profile() {
         ) : null}
       </div>
 
+      {renaming && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-6"
+          onClick={() => setRenaming(false)}>
+          <motion.div initial={{ opacity: 0, scale: 0.9, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ type: 'spring', duration: 0.4 }}
+            onClick={e => e.stopPropagation()}
+            className="glass-card w-full max-w-xs bg-slate-900/95 p-5">
+            <p className="text-base font-extrabold text-white mb-3">{t.editName}</p>
+            <input value={nameDraft} onChange={e => setNameDraft(e.target.value.slice(0, MAX_NAME_LENGTH))}
+              onKeyDown={e => e.key === 'Enter' && saveRename()}
+              maxLength={MAX_NAME_LENGTH} enterKeyHint="done" autoFocus
+              placeholder={t.displayNamePlaceholder}
+              className="inset-input w-full h-12 px-4 text-base rounded-xl mb-4" />
+            <div className="flex gap-2">
+              <button onClick={() => setRenaming(false)}
+                className="flex-1 h-11 rounded-[14px] bg-white/5 ring-1 ring-white/15 text-sm font-bold text-slate-300 hover:bg-white/10 transition-all duration-150 active:scale-[0.97]">
+                {t.cancel}
+              </button>
+              <button onClick={saveRename} disabled={!normalizeName(nameDraft)}
+                className="gold-btn flex-1 h-11 rounded-[14px] flex items-center justify-center">
+                <span className="relative text-sm font-extrabold tracking-tight text-[#2c1500] drop-shadow-[0_1px_0_rgba(255,255,255,0.25)]">{t.saveBtn}</span>
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
       {openCollection && (
         <CollectionPanel col={COLLECTIONS.find(c => c.id === openCollection)} profile={profile}
           onTap={onTapCosmetic} justUnlocked={justUnlocked} onClose={() => setOpenCollection(null)} t={t} />

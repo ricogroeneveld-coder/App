@@ -12,7 +12,9 @@ import { useLang } from '@/lib/LanguageContext';
 import { Switch } from '@/components/ui/switch';
 import { isSoundEnabled, setSoundEnabled, playCorrect } from '@/lib/sounds';
 import GameBackground from '@/components/GameBackground';
-import PlayerAvatar from '@/components/progression/PlayerAvatar';
+import PlayerAvatar, { AvatarFrame, EmblemTile } from '@/components/progression/PlayerAvatar';
+import BannerArt from '@/components/progression/BannerArt';
+import { cosmeticById, RARITIES } from '@/lib/cosmetics';
 import { getProfile, loadProfile } from '@/lib/playerProfile';
 import { restorePurchases } from '@/lib/payments';
 
@@ -268,6 +270,51 @@ export default function ProfileSettings() {
             <Shield className="w-5 h-5 text-violet-400 flex-shrink-0" />
             {t.privacyPolicy}
           </a>
+        </motion.div>
+
+        {/* Equipped cosmetics — what the player is currently wearing */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="glass-panel rounded-[20px] p-4"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <p className="font-semibold text-white">{t.equippedLabel}</p>
+            <Link to="/profile" className="text-xs font-bold text-violet-300 hover:text-violet-200 transition min-h-[44px] flex items-center">
+              {t.changeInProfile}
+            </Link>
+          </div>
+          <div className="space-y-2.5">
+            {[
+              ['emblem', c => c && <span className="relative w-8 h-8 rounded-full overflow-hidden flex shrink-0"><EmblemTile emblem={c} fontSize={15} /></span>],
+              ['border', c => c?.frame && (
+                <AvatarFrame frame={c.frame} size={32}>
+                  <span className="w-full h-full rounded-full" style={{ background: 'radial-gradient(120% 120% at 32% 18%, #2b3245, #0d1019)' }} />
+                </AvatarFrame>
+              )],
+              ['banner', c => c && <BannerArt banner={c} className="relative w-12 h-7 rounded-md shrink-0" motifScale={0.4} />],
+              ['title', null],
+              ['nameColor', null],
+            ].map(([slot, render]) => {
+              const item = cosmeticById(cosmeticProfile.equipped?.[slot]);
+              return (
+                <div key={slot} className="flex items-center gap-3">
+                  <span className="w-20 shrink-0 text-[10px] font-bold uppercase tracking-wide text-slate-500">{t.slotLabels[slot]}</span>
+                  {render && <span className="w-12 flex justify-center shrink-0">{render(item)}</span>}
+                  {slot === 'title' && item ? (
+                    <span className={`inline-flex items-center max-w-full h-5 px-2 rounded-full text-[10px] font-extrabold ${RARITIES[item.rarity].chip}`}>
+                      <span className="truncate">{item.name}</span>
+                    </span>
+                  ) : slot === 'nameColor' && item ? (
+                    <span className={`text-sm font-extrabold truncate ${item.cls}`}>{item.name}</span>
+                  ) : (
+                    <span className="text-sm font-semibold text-slate-200 truncate">{item?.name || '—'}</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </motion.div>
 
         {/* Leave active game */}
