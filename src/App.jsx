@@ -59,12 +59,22 @@ function useForcedDarkTheme() {
 }
 
 // Dev/test switch usable from ANY route — static hosts often 404 on deep
-// links, so ?dev=unlock must also work from the root URL.
+// links, so ?dev=unlock must also work from the root URL. Any ?dev= visit
+// also marks this device as a dev device, which reveals the test-mode
+// toggle and sync diagnostics on the profile page (?dev=off hides them
+// again). Regular players never see developer UI.
 function useDevParam() {
+  // Flag the device synchronously during render, before any child screens
+  // read it — an effect would set it one render too late.
+  const dev = new URLSearchParams(window.location.search).get('dev');
+  try {
+    if (dev === 'off') localStorage.removeItem('wmp_dev');
+    else if (dev) localStorage.setItem('wmp_dev', '1');
+  } catch { /* ignore */ }
   useEffect(() => {
-    const dev = new URLSearchParams(window.location.search).get('dev');
     if (dev === 'unlock') devUnlockAll();
     else if (dev === 'reset') devResetProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 }
 

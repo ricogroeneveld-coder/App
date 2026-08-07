@@ -360,6 +360,8 @@ export default function Profile() {
   const winRate = games > 0 ? Math.round(((profile.wins || 0) / games) * 100) : 0;
   const fav = favoriteCategory();
   const lvl = levelFromXp(profile.xp || 0);
+  // Developer UI (test-mode toggle, sync diagnostics) only on flagged devices
+  const devMode = (() => { try { return localStorage.getItem('wmp_dev') === '1'; } catch { return false; } })();
 
   const onTapCosmetic = (c) => {
     const owned = profile.owned.includes(c.id);
@@ -480,7 +482,7 @@ export default function Profile() {
         <div className="flex gap-1.5 mb-3">
           {[['collection', t.collection], ['shop', t.shop], ['challenges', t.challenges]].map(([id, label]) => (
             <button key={id} onClick={() => setTab(id)}
-              className={`flex-1 h-9 rounded-xl text-xs font-extrabold transition-all active:scale-[0.98] ${tab === id
+              className={`flex-1 h-11 rounded-xl text-xs font-extrabold transition-all active:scale-[0.98] ${tab === id
                 ? 'bg-gradient-to-b from-violet-400 via-violet-500 to-violet-800 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_2px_6px_-2px_rgba(0,0,0,0.5)]'
                 : 'bg-white/5 ring-1 ring-white/10 text-slate-300 hover:bg-white/10'}`}>
               {label}
@@ -588,7 +590,8 @@ export default function Profile() {
           )}
         </AnimatePresence>
 
-        {/* TEMP: test-mode switch — remove before release */}
+        {/* Dev-only: test-mode switch (visible only after a ?dev= visit) */}
+        {devMode && (
         <div className="glass-tile flex items-center justify-between gap-3 px-3 py-2.5 mt-1 mb-2">
           <div className="min-w-0">
             <p className="text-xs font-bold text-white">Test mode</p>
@@ -601,10 +604,11 @@ export default function Profile() {
             <span className={`block w-5 h-5 rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.5)] transition-transform duration-200 ${testModeOn ? 'translate-x-5' : ''}`} />
           </button>
         </div>
+        )}
 
         {/* Sync health — tells players (and the developer) whether cosmetics
             actually reach other players. */}
-        {remoteStatus() === 'missing' ? (
+        {!devMode ? null : remoteStatus() === 'missing' ? (
           <p className="text-center text-[10px] font-semibold text-amber-400/90 leading-relaxed px-2 pb-2">
             ⚠ {t.syncMissing}
           </p>

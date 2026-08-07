@@ -102,6 +102,8 @@ export default function PurchaseModal({ cosmetic: c, balance, typeLabel, profile
     if (res?.ok) {
       setPhase('celebrate');
       playUnlock();
+      // Soft haptic tick where supported (Android; silently ignored on iOS)
+      try { navigator.vibrate?.(35); } catch { /* ignore */ }
     }
   };
 

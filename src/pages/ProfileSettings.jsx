@@ -5,13 +5,15 @@ import { MysteryPlayer, MysteryRoom } from '@/api/db';
 import { supabase } from '@/lib/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { ArrowLeft, Trash2, AlertTriangle, User, Globe, DoorOpen, Volume2, LogOut, LogIn } from 'lucide-react';
+import { ArrowLeft, Trash2, AlertTriangle, Globe, DoorOpen, Volume2, LogOut, LogIn } from 'lucide-react';
 import { getGuestIdentity, clearGuestIdentity } from '@/lib/guestIdentity';
 import { useAuth } from '@/lib/AuthContext';
 import { useLang } from '@/lib/LanguageContext';
 import { Switch } from '@/components/ui/switch';
 import { isSoundEnabled, setSoundEnabled, playCorrect } from '@/lib/sounds';
 import GameBackground from '@/components/GameBackground';
+import PlayerAvatar from '@/components/progression/PlayerAvatar';
+import { getProfile, loadProfile } from '@/lib/playerProfile';
 
 export default function ProfileSettings() {
   const navigate = useNavigate();
@@ -23,6 +25,8 @@ export default function ProfileSettings() {
   const [activeGame, setActiveGame] = useState(null);
   const [leavingGame, setLeavingGame] = useState(false);
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
+  const [cosmeticProfile, setCosmeticProfile] = useState(getProfile());
+  useEffect(() => { let live = true; loadProfile().then(p => { if (live) setCosmeticProfile(p); }); return () => { live = false; }; }, []);
   const isRegistered = !!currentUser;
 
   const toggleSound = (next) => {
@@ -145,10 +149,7 @@ export default function ProfileSettings() {
           animate={{ opacity: 1, y: 0 }}
           className="glass-card p-4 flex items-center gap-3.5"
         >
-          <div className="relative w-[52px] h-[52px] rounded-full bg-gradient-to-br from-[#9d5cff] to-[#3b0f8f] ring-2 ring-[#9d5cff]/50 shadow-[0_3px_6px_-1px_rgba(0,0,0,0.55),0_1px_2px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.3)] flex items-center justify-center flex-shrink-0 overflow-hidden">
-            <span className="pointer-events-none absolute -top-2 -left-2 w-7 h-7 rounded-full bg-white/35 blur-[5px]" />
-            <User className="relative w-6 h-6 text-white" />
-          </div>
+          <PlayerAvatar profile={cosmeticProfile} name={displayName} size={52} />
           <div className="min-w-0">
             <p className="font-semibold text-white text-lg truncate">{displayName}</p>
             <p className="text-slate-400 text-sm font-mono truncate">{displaySub}</p>
