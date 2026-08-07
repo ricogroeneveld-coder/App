@@ -11,6 +11,8 @@ import GameBackground from '@/components/GameBackground';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import { loadProfile, getProfile, subscribeProfile, ensureDailyLogin } from '@/lib/playerProfile';
 import { ALL_COSMETICS, cosmeticById } from '@/lib/cosmetics';
+import { isNativeApp } from '@/lib/platform';
+import { Keyboard, KeyboardResize } from '@capacitor/keyboard';
 import heroImage from '../../home-hero.webp';
 
 const PLAYER_COLORS = ['#6366f1','#ec4899','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ef4444','#14b8a6','#f97316','#06b6d4','#84cc16','#a855f7'];
@@ -44,6 +46,17 @@ export default function Home() {
   useEffect(() => {
     setNameSet(hasGuestName());
   }, []);
+
+  // Name gate: keep the layout perfectly still while typing. By default the
+  // iOS keyboard shrinks the webview, which re-centers this screen's
+  // vertically-centered content (visible as the whole page jumping up).
+  // While the name gate is showing, let the keyboard overlay instead —
+  // the input sits in the top half, so nothing important is covered.
+  useEffect(() => {
+    if (!isNativeApp() || nameSet) return;
+    Keyboard.setResizeMode({ mode: KeyboardResize.None }).catch(() => {});
+    return () => { Keyboard.setResizeMode({ mode: KeyboardResize.Native }).catch(() => {}); };
+  }, [nameSet]);
 
   const confirmName = () => {
     if (!nameInput.trim()) { toast({ title: t.enterYourName, variant: 'destructive' }); return; }
@@ -292,7 +305,9 @@ export default function Home() {
                   )}
                 </span>
               </span>
-              <ChevronRight className="ml-auto shrink-0 w-5 h-5 text-slate-500" />
+              <span className="ml-auto w-10 h-10 rounded-full bg-gradient-to-b from-[#2a1150] to-[#0d0620] ring-1 ring-violet-400/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0">
+                <ChevronRight className="w-6 h-6 text-violet-300 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />
+              </span>
             </div>
 
             {/* Create Game */}
