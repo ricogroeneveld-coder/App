@@ -63,7 +63,6 @@ jobs:
             -destination 'generic/platform=iOS' \
             -archivePath "$RUNNER_TEMP/App.xcarchive" \
             -allowProvisioningUpdates \
-            -allowProvisioningDeviceRegistration \
             -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey_$APPSTORE_KEY_ID.p8" \
             -authenticationKeyID "$APPSTORE_KEY_ID" \
             -authenticationKeyIssuerID "$APPSTORE_ISSUER_ID" \
