@@ -16,7 +16,30 @@ Manager — **no CocoaPods needed**). Already configured:
 - `ITSAppUsesNonExemptEncryption=false` (skips the TestFlight export
   compliance question — the app only uses HTTPS)
 
-On your Mac (needs Xcode 16+):
+### Option A — No Mac: build in the cloud (recommended)
+
+`.github/workflows/ios-testflight.yml` builds and uploads to TestFlight
+from GitHub's cloud Macs. One-time browser setup:
+
+1. **Register the bundle ID** — developer.apple.com → Certificates,
+   Identifiers & Profiles → Identifiers → "+" → App ID →
+   `com.whatsmypick.app`, and tick the **Sign in with Apple** capability.
+2. **Create the app record** — App Store Connect → Apps → "+" →
+   New App → iOS, pick the bundle ID.
+3. **Create an API key** — App Store Connect → Users and Access →
+   Integrations → App Store Connect API → "+". Role must be **Admin**
+   (cloud signing creates the certificate/profile for you). Download the
+   `.p8` file — it can only be downloaded once.
+4. **Add four GitHub secrets** — repo → Settings → Secrets and
+   variables → Actions:
+   - `APPLE_TEAM_ID` — 10-char Team ID (developer.apple.com → Membership)
+   - `APPSTORE_ISSUER_ID` — shown above the key list
+   - `APPSTORE_KEY_ID` — the key's ID
+   - `APPSTORE_P8` — paste the entire contents of the `.p8` file
+5. GitHub → **Actions → "iOS · TestFlight" → Run workflow**. When it
+   finishes, the build appears in App Store Connect → TestFlight.
+
+### Option B — On a Mac (needs Xcode 16+)
 
 ```bash
 npm install
