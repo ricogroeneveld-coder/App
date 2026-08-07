@@ -435,10 +435,20 @@ export default function Profile() {
   const notOwnedShop = shopItems.filter(c => !profile.owned.includes(c.id));
   const featured = [...new Set([0, 1, 2].map(i => notOwnedShop[(seed + i * 3) % Math.max(notOwnedShop.length, 1)]))].filter(Boolean);
   const featuredIds = new Set(featured.map(c => c.id));
-  const dailyStock = Object.fromEntries(TYPE_ORDER.map((type, i) => [
-    type,
-    sortByRarity(seededPick(notOwnedShop.filter(c => c.type === type && !featuredIds.has(c.id)), 3, seed + i * 7919)),
-  ]));
+  // Rows stay 3 wide even late-game: when fewer than 3 unowned items remain
+  // in a type, owned ones (shown with their check) pad out the row. A type
+  // with nothing left to buy disappears entirely.
+  const dailyStock = Object.fromEntries(TYPE_ORDER.map((type, i) => {
+    const pool = shopItems.filter(c => c.type === type && !featuredIds.has(c.id));
+    const unowned = pool.filter(c => !profile.owned.includes(c.id));
+    if (!unowned.length) return [type, []];
+    const picks = seededPick(unowned, 3, seed + i * 7919);
+    if (picks.length < 3) {
+      const ownedPool = pool.filter(c => profile.owned.includes(c.id));
+      picks.push(...seededPick(ownedPool, 3 - picks.length, seed + i * 104729));
+    }
+    return [type, sortByRarity(picks)];
+  }));
   const ch = challengeState();
 
   return (
@@ -631,7 +641,8 @@ export default function Profile() {
                       className="overflow-hidden">
                       <div className="grid grid-cols-3 gap-2 pt-1 pb-1">
                         {items.map(c => (
-                          <CosmeticCard key={c.id} c={c} owned={false} equipped={false}
+                          <CosmeticCard key={c.id} c={c} owned={profile.owned.includes(c.id)}
+                            equipped={profile.equipped?.[c.type] === c.id}
                             onTap={onTapCosmetic} justUnlocked={justUnlocked === c.id}
                             price={c.source.price} affordable={(profile.picks || 0) >= c.source.price}
                             playerName={profile.display_name} />
@@ -641,7 +652,6 @@ export default function Profile() {
                   </div>
                 );
               })}
-              <p className="text-center text-[11px] text-slate-500 font-medium pb-2">{t.shopFootnote}</p>
             </motion.div>
           )}
 
