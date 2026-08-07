@@ -175,7 +175,7 @@ export default function BannerArt({ banner, className = '', style = {}, motifSca
           being cropped off), and the faint inner ring makes the boundary
           look like a picture frame rather than a cut. */}
       <span className="absolute inset-0"
-        style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.09), inset 0 10px 16px -8px rgba(0,0,0,0.6), inset 0 -8px 14px -8px rgba(0,0,0,0.45), inset 10px 0 14px -10px rgba(0,0,0,0.45), inset -10px 0 14px -10px rgba(0,0,0,0.45)' }} />
+        style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.09), inset 0 16px 22px -9px rgba(0,0,0,0.68), inset 0 -8px 14px -8px rgba(0,0,0,0.45), inset 10px 0 14px -10px rgba(0,0,0,0.45), inset -10px 0 14px -10px rgba(0,0,0,0.45)' }} />
       {b.shine && <span className="fx-shine" />}
     </span>
   );

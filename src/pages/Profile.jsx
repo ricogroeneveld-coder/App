@@ -122,10 +122,14 @@ function CosmeticCard({ c, owned, equipped, onTap, justUnlocked, sourceText, pri
           </span>
         )}
       </span>
-      {/* Artwork slot on its rarity-lit backdrop — always 44px tall */}
+      {/* Artwork slot — object artwork (emblems, banners, borders) sits on a
+          soft rarity-lit backdrop; text artwork (titles, name styles) gets no
+          backdrop — a glow blob behind text reads as a smudge. */}
       <span className="relative h-11 w-full flex items-center justify-center mt-1">
-        <span aria-hidden className="absolute w-14 h-11 rounded-full pointer-events-none"
-          style={{ background: `radial-gradient(50% 60% at 50% 50%, ${ART_GLOW[c.rarity]}, transparent 75%)` }} />
+        {c.type !== 'title' && c.type !== 'nameColor' && (
+          <span aria-hidden className="absolute w-14 h-11 rounded-full pointer-events-none"
+            style={{ background: `radial-gradient(50% 60% at 50% 50%, ${ART_GLOW[c.rarity]}, transparent 75%)` }} />
+        )}
         {c.type === 'emblem' && (
           <span className="relative w-11 h-11 rounded-full overflow-hidden flex shadow-[0_2px_6px_-1px_rgba(0,0,0,0.5)]">
             <EmblemTile emblem={c} fontSize={22} />
