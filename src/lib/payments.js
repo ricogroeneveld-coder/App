@@ -28,7 +28,7 @@ export const PRODUCTS = {
   // was only briefly created with the wrong type — this one had to move
   // to .popculture2 for that reason.
   pop_culture: { productId: 'com.whatsmypick.pack.popculture2', price: '$2.99' },
-  animals:     { productId: 'com.whatsmypick.pack.animals',    price: '$2.99' },
+  animals:     { productId: 'com.whatsmypick.pack.animals2',   price: '$2.99' },
   world:       { productId: 'com.whatsmypick.pack.world',      price: '$2.99' },
   brands:      { productId: 'com.whatsmypick.pack.brands',     price: '$2.99' },
   fantasy:     { productId: 'com.whatsmypick.pack.fantasy',    price: '$2.99' },

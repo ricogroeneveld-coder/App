@@ -73,7 +73,7 @@ Remaining setup is all in the browser — no code changes needed:
    | Product ID | Pack | Price |
    |---|---|---|
    | `com.whatsmypick.pack.popculture2` | Pop Culture Pack | $2.99 |
-   | `com.whatsmypick.pack.animals` | Animal Pack | $2.99 |
+   | `com.whatsmypick.pack.animals2` | Animal Pack | $2.99 |
    | `com.whatsmypick.pack.world` | World Pack | $2.99 |
    | `com.whatsmypick.pack.brands` | Brands Pack | $2.99 |
    | `com.whatsmypick.pack.fantasy` | Fantasy Pack | $2.99 |
