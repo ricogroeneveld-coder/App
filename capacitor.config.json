@@ -1,0 +1,11 @@
+{
+  "appId": "com.whatsmypick.app",
+  "appName": "What's My Pick!",
+  "webDir": "dist",
+  "backgroundColor": "#07040f",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#07040f",
+    "preferredContentMode": "mobile"
+  }
+}

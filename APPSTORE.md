@@ -3,18 +3,30 @@
 The web app is compliance-ready. This checklist covers the native wrapper and
 App Store Connect setup that must happen outside this repository.
 
-## 1. Wrap with Capacitor (required — Apple needs a binary)
+## 1. Wrap with Capacitor — ✅ DONE (checked into the repo)
+
+The `ios/` folder is a ready Xcode project (Capacitor 8, Swift Package
+Manager — **no CocoaPods needed**). Already configured:
+
+- Bundle ID `com.whatsmypick.app`, display name "What's My Pick!"
+- Portrait-only, forced dark UI, dark launch screen (`#07040f`)
+- App icon generated from `logo.webp` (replace
+  `ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png`
+  with final art anytime — 1024×1024, no transparency)
+- `ITSAppUsesNonExemptEncryption=false` (skips the TestFlight export
+  compliance question — the app only uses HTTPS)
+
+On your Mac (needs Xcode 16+):
 
 ```bash
-npm install @capacitor/core @capacitor/ios
-npm install -D @capacitor/cli
-npx cap init "What's My Pick!" com.whatsmypick.app --web-dir=dist
-npm run build && npx cap add ios && npx cap sync
-npx cap open ios   # opens Xcode
+npm install
+npm run ios          # builds the web app + syncs it into ios/
+npx cap open ios     # opens Xcode
 ```
 
-In Xcode: set app icons + launch screen (dark background `#0d0620`),
-portrait-only orientation, and a real bundle identifier.
+In Xcode, the only remaining setup is **Signing & Capabilities**: pick
+your Apple Developer team, then archive/upload as usual. Xcode resolves
+the Capacitor Swift packages automatically on first open.
 
 ## 2. In-App Purchases (packs are real-money → Apple IAP only)
 
