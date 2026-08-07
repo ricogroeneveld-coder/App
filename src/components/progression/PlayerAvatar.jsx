@@ -4,9 +4,8 @@ import { cosmeticById } from '@/lib/cosmetics';
 /**
  * Rarity frame around an avatar (or any circular content). Renders the
  * border cosmetic's ring (solid, gradient, or conic "crystal" facets), an
- * optional breathing glow, slow rotation on animated frames, tiny twinkling
- * stars on legendary/mythic, and an optional themed accent charm pinned to
- * the top of the ring (seasonal frames). Content fills the inside.
+ * optional breathing glow, slow rotation on animated frames, and tiny
+ * twinkling stars on legendary/mythic. Content fills the inside.
  */
 export function AvatarFrame({ frame, size, className = '', children }) {
   const w = Math.max(1.5, size * 0.055);
@@ -29,12 +28,6 @@ export function AvatarFrame({ frame, size, className = '', children }) {
           <span aria-hidden className="fx-twinkle absolute leading-none" style={{ top: -3, right: -1, fontSize: Math.max(8, size * 0.18) }}>✦</span>
           <span aria-hidden className="fx-twinkle absolute leading-none" style={{ bottom: -2, left: -3, fontSize: Math.max(7, size * 0.14), animationDelay: '2.8s' }}>✦</span>
         </>
-      )}
-      {frame.accent && size >= 36 && (
-        <span aria-hidden className="absolute left-1/2 leading-none pointer-events-none"
-          style={{ top: -size * 0.12, transform: 'translateX(-50%)', fontSize: size * 0.26, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.55))' }}>
-          {frame.accent}
-        </span>
       )}
     </span>
   );

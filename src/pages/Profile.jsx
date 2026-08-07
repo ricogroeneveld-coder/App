@@ -57,20 +57,30 @@ function CollectionCover({ col, owned, onOpen }) {
   );
 }
 
+// Soft rarity light behind the artwork — sells the piece as an exhibit.
+const ART_GLOW = {
+  common: 'rgba(148,163,184,0.12)',
+  rare: 'rgba(56,189,248,0.16)',
+  epic: 'rgba(157,92,255,0.2)',
+  legendary: 'rgba(255,180,60,0.2)',
+  mythic: 'rgba(232,121,249,0.2)',
+};
+
 /**
- * The one cosmetic card. Fixed vertical slots — status (lock/equipped),
- * artwork, name, rarity badge, footer (price or unlock source) — so every
- * card in every grid is pixel-identical in size, padding, and rhythm.
- * Higher rarities feel alive: soft glow, a slow shine sweep, and twinkles.
+ * The one cosmetic card. Fixed vertical slots — ownership status, artwork on
+ * a rarity-lit backdrop, name, rarity badge, price/source — pixel-identical
+ * in every grid. Ownership is always explicit: gold check = equipped, muted
+ * check = owned, lock = locked. Prices render as pills (gold when
+ * affordable). Border previews show the ring itself around a neutral disc.
  */
-function CosmeticCard({ c, owned, equipped, onTap, justUnlocked, footer, footerClass, previewEmblem, playerName }) {
+function CosmeticCard({ c, owned, equipped, onTap, justUnlocked, sourceText, price, affordable, playerName }) {
   const rar = RARITIES[c.rarity];
   const fancy = c.rarity === 'legendary' || c.rarity === 'mythic';
   return (
     <motion.button onClick={() => onTap(c)}
       animate={justUnlocked ? { scale: [0.7, 1.12, 1] } : {}}
       transition={{ duration: 0.45 }}
-      className={`glass-panel relative overflow-hidden w-full rounded-2xl p-2 flex flex-col items-center text-center transition-all duration-150 active:scale-[0.97] hover:-translate-y-0.5 ring-1 ${equipped ? 'ring-[#ffcf7a]/70' : rar.ring} ${rar.cardGlow} ${!owned && !footer ? 'opacity-80' : ''}`}>
+      className={`glass-panel relative overflow-hidden w-full rounded-2xl p-2 flex flex-col items-center text-center transition-all duration-150 active:scale-[0.97] hover:-translate-y-0.5 ring-1 ${equipped ? 'ring-[#ffcf7a]/70' : rar.ring} ${rar.cardGlow}`}>
       {fancy && <span aria-hidden className="fx-shine" />}
       {c.rarity === 'mythic' && (
         <span aria-hidden className="fx-twinkle absolute top-1.5 right-2 text-[9px] leading-none">✦</span>
@@ -82,19 +92,25 @@ function CosmeticCard({ c, owned, equipped, onTap, justUnlocked, footer, footerC
           animate={{ x: Math.cos(i * Math.PI / 3) * 44 - 4, y: Math.sin(i * Math.PI / 3) * 44 - 8, opacity: 0, scale: 1.3 }}
           transition={{ duration: 0.75, ease: 'easeOut' }}>✦</motion.span>
       ))}
-      {/* Status slot — equipped check, lock, or empty; always 16px tall */}
+      {/* Ownership slot — always explicit; always 16px tall */}
       <span className="h-4 flex items-center justify-center">
         {equipped ? (
           <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', duration: 0.4 }}
             className="w-4 h-4 rounded-full bg-gradient-to-b from-[#ffcb45] to-[#e08e05] flex items-center justify-center shadow-[0_1px_3px_rgba(0,0,0,0.5)]">
             <Check className="w-2.5 h-2.5 text-[#2c1500]" strokeWidth={3.5} />
           </motion.span>
-        ) : !owned ? (
+        ) : owned ? (
+          <span className="w-4 h-4 rounded-full bg-white/10 ring-1 ring-white/20 flex items-center justify-center">
+            <Check className="w-2.5 h-2.5 text-slate-300" strokeWidth={3} />
+          </span>
+        ) : (
           <Lock className="w-3 h-3 text-slate-400" />
-        ) : null}
+        )}
       </span>
-      {/* Artwork slot — always 44px tall */}
-      <span className="h-11 w-full flex items-center justify-center mt-1">
+      {/* Artwork slot on its rarity-lit backdrop — always 44px tall */}
+      <span className="relative h-11 w-full flex items-center justify-center mt-1">
+        <span aria-hidden className="absolute w-14 h-11 rounded-full pointer-events-none"
+          style={{ background: `radial-gradient(50% 60% at 50% 50%, ${ART_GLOW[c.rarity]}, transparent 75%)` }} />
         {c.type === 'emblem' && (
           <span className="relative w-11 h-11 rounded-full overflow-hidden flex shadow-[0_2px_6px_-1px_rgba(0,0,0,0.5)]">
             <EmblemTile emblem={c} fontSize={22} />
@@ -105,16 +121,15 @@ function CosmeticCard({ c, owned, equipped, onTap, justUnlocked, footer, footerC
         )}
         {c.type === 'border' && (
           <AvatarFrame frame={c.frame} size={44}>
-            {previewEmblem
-              ? <EmblemTile emblem={previewEmblem} fontSize={19} />
-              : <span className="w-full h-full bg-black/50 flex items-center justify-center text-lg">🙂</span>}
+            <span className="w-full h-full rounded-full"
+              style={{ background: 'radial-gradient(120% 120% at 32% 18%, #2b3245 0%, #171c2b 55%, #0d1019 100%)', boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.12), inset 0 -2px 4px rgba(0,0,0,0.5)' }} />
           </AvatarFrame>
         )}
         {c.type === 'title' && (
-          <span className={`w-full text-[11px] font-extrabold leading-tight ${rar.text}`}>“{c.name}”</span>
+          <span className={`relative inline-flex items-center h-5 px-2 rounded-full text-[10px] font-extrabold ${rar.chip} shadow-[0_2px_5px_-2px_rgba(0,0,0,0.6)]`}>{c.name}</span>
         )}
         {c.type === 'nameColor' && (
-          <span className={`w-full text-sm font-extrabold truncate ${c.cls}`}>{playerName || 'Name'}</span>
+          <span className={`relative w-full text-sm font-extrabold truncate ${c.cls}`}>{playerName || 'Name'}</span>
         )}
       </span>
       {/* Name slot — one line, always 16px tall */}
@@ -123,9 +138,20 @@ function CosmeticCard({ c, owned, equipped, onTap, justUnlocked, footer, footerC
       <span className={`h-4 mt-1 px-2 flex items-center rounded-full text-[8px] font-extrabold ${rar.chip}`}>
         {rar.label}
       </span>
-      {/* Footer slot — price or unlock source; always 16px tall */}
-      <span className={`h-4 mt-1 flex items-center text-[10px] font-extrabold tabular-nums ${footerClass || 'text-amber-300'}`}>
-        {footer || ' '}
+      {/* Price / source slot — always 18px tall */}
+      <span className="h-[18px] mt-1 flex items-center justify-center">
+        {owned ? null : price != null ? (
+          <span className={`inline-flex items-center gap-0.5 h-[18px] px-2 rounded-full text-[9px] font-extrabold tabular-nums ${affordable
+            ? 'bg-gradient-to-b from-[#ffcb45] to-[#e08e05] text-[#2c1500] shadow-[0_2px_4px_-2px_rgba(0,0,0,0.6)]'
+            : 'bg-black/40 ring-1 ring-white/15 text-slate-400'}`}>
+            {!affordable && <Lock className="w-2 h-2" />}
+            {price} Picks
+          </span>
+        ) : sourceText ? (
+          <span className="inline-flex items-center h-[18px] max-w-full px-2 rounded-full bg-white/5 ring-1 ring-white/10 text-[9px] font-bold text-slate-400 whitespace-nowrap truncate">
+            {sourceText}
+          </span>
+        ) : null}
       </span>
     </motion.button>
   );
@@ -231,9 +257,10 @@ function CollectionPanel({ col, profile, onTap, justUnlocked, onClose, t }) {
               <CosmeticCard key={c.id} c={c} owned={profile.owned.includes(c.id)}
                 equipped={profile.equipped?.[c.type] === c.id}
                 onTap={onTap} justUnlocked={justUnlocked === c.id}
-                footer={profile.owned.includes(c.id) ? '' : sourceLabel(c, t)}
-                footerClass={profile.owned.includes(c.id) ? '' : ((profile.picks || 0) >= (c.source.price || Infinity) ? 'text-amber-300' : 'text-slate-500')}
-                previewEmblem={cosmeticById(profile.equipped?.emblem)} playerName={profile.display_name} />
+                sourceText={c.source.type !== 'shop' ? sourceLabel(c, t) : undefined}
+                price={c.source.type === 'shop' ? c.source.price : undefined}
+                affordable={(profile.picks || 0) >= (c.source.price || 0)}
+                playerName={profile.display_name} />
             ))}
           </div>
           {/* Completion reward */}
@@ -454,9 +481,10 @@ export default function Profile() {
                         <CosmeticCard key={c.id} c={c} owned={owned}
                           equipped={profile.equipped?.[c.type] === c.id}
                           onTap={onTapCosmetic} justUnlocked={justUnlocked === c.id}
-                          footer={owned ? '' : sourceLabel(c, t)}
-                          footerClass={owned ? '' : 'text-slate-500'}
-                          previewEmblem={cosmeticById(profile.equipped?.emblem)} playerName={profile.display_name} />
+                          sourceText={c.source.type !== 'shop' ? sourceLabel(c, t) : undefined}
+                          price={c.source.type === 'shop' ? c.source.price : undefined}
+                          affordable={(profile.picks || 0) >= (c.source.price || 0)}
+                          playerName={profile.display_name} />
                       );
                     })}
                   </div>
@@ -482,9 +510,8 @@ export default function Profile() {
                         <div key={c.id} className="featured-float">
                           <CosmeticCard c={c} owned={false} equipped={false}
                             onTap={onTapCosmetic} justUnlocked={justUnlocked === c.id}
-                            footer={`${c.source.price} Picks`}
-                            footerClass={(profile.picks || 0) >= c.source.price ? 'text-amber-300' : 'text-slate-500'}
-                            previewEmblem={cosmeticById(profile.equipped?.emblem)} playerName={profile.display_name} />
+                            price={c.source.price} affordable={(profile.picks || 0) >= c.source.price}
+                            playerName={profile.display_name} />
                         </div>
                       ))}
                     </div>
@@ -511,9 +538,8 @@ export default function Profile() {
                       {items.map(c => (
                         <CosmeticCard key={c.id} c={c} owned={false} equipped={false}
                           onTap={onTapCosmetic} justUnlocked={justUnlocked === c.id}
-                          footer={`${c.source.price} Picks`}
-                          footerClass={(profile.picks || 0) >= c.source.price ? 'text-amber-300' : 'text-slate-500'}
-                          previewEmblem={cosmeticById(profile.equipped?.emblem)} playerName={profile.display_name} />
+                          price={c.source.price} affordable={(profile.picks || 0) >= c.source.price}
+                          playerName={profile.display_name} />
                       ))}
                     </div>
                   </div>
