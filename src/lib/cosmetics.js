@@ -185,10 +185,14 @@ export const TITLES = [
   { id: 't_rookie',    type: 'title', name: 'Rookie',           rarity: 'common',    source: { type: 'starter' } },
   { id: 't_guesser',   type: 'title', name: 'Quick Guesser',    rarity: 'common',    source: { type: 'shop', price: 100 } },
   { id: 't_bluffer',   type: 'title', name: 'Master Bluffer',   rarity: 'rare',      source: { type: 'shop', price: 300 } },
+  { id: 't_lucky',     type: 'title', name: 'Lucky Guesser',    rarity: 'rare',      source: { type: 'shop', price: 300 } },
   { id: 't_sleuth',    type: 'title', name: 'Sharp Sleuth',     rarity: 'rare',      source: { type: 'level', level: 4 } },
   { id: 't_mind',      type: 'title', name: 'Mind Reader',      rarity: 'epic',      source: { type: 'shop', price: 800 } },
   { id: 't_untouch',   type: 'title', name: 'The Untouchable',  rarity: 'epic',      source: { type: 'level', level: 15 } },
+  { id: 't_elite',     type: 'title', name: 'Elite',            rarity: 'epic',      source: { type: 'level', level: 22 } },
   { id: 't_legend',    type: 'title', name: 'Living Legend',    rarity: 'legendary', source: { type: 'shop', price: 2000 } },
+  { id: 't_guessmstr', type: 'title', name: 'Guess Master',     rarity: 'legendary', source: { type: 'level', level: 28 } },
+  { id: 't_myth',      type: 'title', name: 'Myth Hunter',      rarity: 'mythic',    source: { type: 'shop', price: 5000 } },
   { id: 't_founder',   type: 'title', name: 'Founder',          rarity: 'mythic',    source: { type: 'challenge' } },
 ];
 
@@ -197,8 +201,10 @@ export const NAME_COLORS = [
   { id: 'nc_default',  type: 'nameColor', name: 'Classic',       rarity: 'common',    source: { type: 'starter' },           cls: 'text-white' },
   { id: 'nc_violet',   type: 'nameColor', name: 'Violet',        rarity: 'common',    source: { type: 'shop', price: 100 },  cls: 'text-violet-300' },
   { id: 'nc_sky',      type: 'nameColor', name: 'Ice',           rarity: 'rare',      source: { type: 'shop', price: 300 },  cls: 'text-sky-300' },
+  { id: 'nc_emerald',  type: 'nameColor', name: 'Emerald',       rarity: 'rare',      source: { type: 'shop', price: 300 },  cls: 'text-emerald-300' },
   { id: 'nc_neon',     type: 'nameColor', name: 'Neon',          rarity: 'epic',      source: { type: 'shop', price: 800 },  cls: 'name-neon' },
   { id: 'nc_gold',     type: 'nameColor', name: 'Gold',          rarity: 'legendary', source: { type: 'level', level: 12 },  cls: 'name-gold' },
+  { id: 'nc_fire',     type: 'nameColor', name: 'Fire Glow',     rarity: 'legendary', source: { type: 'shop', price: 2000 }, cls: 'name-fire' },
   { id: 'nc_champion', type: 'nameColor', name: 'Champion Glow', rarity: 'legendary', source: { type: 'shop', price: 2000 }, cls: 'name-champion' },
   { id: 'nc_mythic',   type: 'nameColor', name: 'Rainbow',       rarity: 'mythic',    source: { type: 'shop', price: 5000 }, cls: 'name-rainbow' },
 ];
@@ -207,6 +213,19 @@ export const ALL_COSMETICS = [...EMBLEMS, ...BANNERS, ...BORDERS, ...TITLES, ...
 
 const byId = Object.fromEntries(ALL_COSMETICS.map(c => [c.id, c]));
 export function cosmeticById(id) { return byId[id] || null; }
+
+// Highest rarity among a player's equipped cosmetics — drives the overall
+// presentation of their profile card (ring, glow), so a Legendary loadout
+// reads as Legendary before you read a single word.
+const RARITY_ORDER = ['common', 'rare', 'epic', 'legendary', 'mythic'];
+export function topEquippedRarity(equipped) {
+  let best = 'common';
+  for (const id of Object.values(equipped || {})) {
+    const c = byId[id];
+    if (c && RARITY_ORDER.indexOf(c.rarity) > RARITY_ORDER.indexOf(best)) best = c.rarity;
+  }
+  return best;
+}
 
 export const STARTER_OWNED = ALL_COSMETICS.filter(c => c.source.type === 'starter').map(c => c.id);
 

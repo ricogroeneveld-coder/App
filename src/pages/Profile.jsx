@@ -12,7 +12,7 @@ import {
   loadProfile, getProfile, subscribeProfile, purchaseCosmetic, equipCosmetic,
   challengeState, favoriteCategory, devUnlockAll, devResetProfile, remoteStatus,
 } from '@/lib/playerProfile';
-import { ALL_COSMETICS, cosmeticById, RARITIES, TYPE_LABELS } from '@/lib/cosmetics';
+import { ALL_COSMETICS, cosmeticById, RARITIES, TYPE_LABELS, topEquippedRarity } from '@/lib/cosmetics';
 import { shortCategory } from '@/lib/wordLists';
 import { SEASON_NAME, todayKey, levelFromXp } from '@/lib/progression';
 
@@ -205,43 +205,59 @@ export default function Profile() {
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar w-full max-w-md mx-auto px-4 pb-2" style={{ overscrollBehaviorY: 'contain' }}>
-        {/* Identity card */}
-        <div className="glass-card mb-3">
-          <div className="relative h-20">
-            <BannerArt banner={banner} className="absolute inset-0" />
-            <div className="absolute -bottom-7 left-4">
-              <PlayerAvatar profile={profile} name={profile.display_name} size={56} />
-            </div>
-            <span className="absolute -bottom-3 left-[52px] px-1.5 py-0.5 rounded-full bg-gradient-to-b from-violet-400 to-violet-700 ring-2 ring-[#12081f] text-[10px] font-extrabold leading-none">
-              {lvl.level}
-            </span>
-            <span className="absolute right-3 bottom-2 px-2.5 py-1 rounded-full bg-gradient-to-b from-[#ffcb45] to-[#e08e05] text-[#2c1500] text-xs font-extrabold shadow-[0_2px_6px_-2px_rgba(0,0,0,0.5)] tabular-nums">
+        {/* Identity card — the player's collectible self. Ring and glow follow
+            the highest equipped rarity; the banner is a live scene the avatar
+            sits in, blended into the card body. */}
+        <div className={`relative mb-3 rounded-[24px] overflow-hidden ring-1 ${RARITIES[topEquippedRarity(profile.equipped)].ring} ${RARITIES[topEquippedRarity(profile.equipped)].cardGlow} shadow-[0_16px_32px_-14px_rgba(0,0,0,0.7)]`}
+          style={{ background: '#10141f' }}>
+          <div className="relative h-24">
+            <BannerArt banner={banner} animated className="absolute inset-0" />
+            <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-12"
+              style={{ background: 'linear-gradient(180deg, transparent 0%, #10141f 100%)' }} />
+            <span className="absolute right-3 top-2.5 px-2.5 py-1 rounded-full bg-gradient-to-b from-[#ffcb45] to-[#e08e05] text-[#2c1500] text-xs font-extrabold shadow-[0_2px_6px_-2px_rgba(0,0,0,0.5)] tabular-nums">
               {profile.picks || 0} Picks
             </span>
           </div>
-          <div className="px-4 pt-8 pb-3">
-            <p className={`text-lg font-extrabold leading-tight truncate ${nameColor?.cls || 'text-white'}`}>{profile.display_name || '—'}</p>
-            {title && <p className={`text-xs font-bold ${RARITIES[title.rarity]?.text}`}>{title.name}</p>}
+          <div className="relative px-4 -mt-9">
+            <span aria-hidden className="absolute left-4 top-10 w-18 h-4 rounded-full"
+              style={{ width: 72, background: 'radial-gradient(50% 50% at 50% 50%, rgba(0,0,0,0.55), transparent 70%)', filter: 'blur(3px)' }} />
+            <div className="relative inline-block" style={{ filter: 'drop-shadow(0 10px 14px rgba(0,0,0,0.55))' }}>
+              <PlayerAvatar profile={profile} name={profile.display_name} size={64} />
+              <span className="absolute -bottom-1 -right-1.5 min-w-[22px] h-[22px] px-1 rounded-full bg-gradient-to-b from-violet-400 to-violet-700 flex items-center justify-center text-[11px] font-extrabold text-white leading-none"
+                style={{ boxShadow: '0 0 0 3px #10141f, 0 2px 5px rgba(0,0,0,0.6)' }}>
+                {lvl.level}
+              </span>
+            </div>
+          </div>
+          <div className="relative px-4 pt-1.5 pb-3">
+            <span aria-hidden className="pointer-events-none absolute inset-x-0 -top-6 h-36"
+              style={{ background: 'radial-gradient(70% 70% at 50% 0%, rgba(157,92,255,0.09), transparent 70%)' }} />
+            <p className={`relative text-lg font-extrabold leading-tight truncate ${nameColor?.cls || 'text-white'}`}>{profile.display_name || '—'}</p>
+            {title && (
+              <span className={`relative inline-flex items-center h-5 mt-1 px-2 rounded-full text-[10px] font-extrabold ${RARITIES[title.rarity].chip}`}>
+                {title.name}
+              </span>
+            )}
             {/* XP bar */}
-            <div className="flex items-center gap-2 mt-2.5">
+            <div className="relative flex items-center gap-2 mt-2.5">
               <span className="text-[11px] font-extrabold text-violet-300 shrink-0">Lv {lvl.level}</span>
               <div className="flex-1 h-2 rounded-full bg-black/40 ring-1 ring-white/10 overflow-hidden">
-                <div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500"
+                <div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 shadow-[0_0_8px_rgba(157,92,255,0.5)]"
                   style={{ width: `${(lvl.into / lvl.need) * 100}%` }} />
               </div>
               <span className="text-[10px] font-bold text-slate-400 shrink-0 tabular-nums">{lvl.into}/{lvl.need} XP</span>
             </div>
             {/* Stats */}
-            <div className="grid grid-cols-4 gap-1.5 mt-3">
+            <div className="relative grid grid-cols-4 gap-1.5 mt-3">
               {[[t.statGames, games], [t.statWins, profile.wins || 0], [t.statWinRate, `${winRate}%`], [t.statGuesses, profile.correct_guesses || 0]].map(([label, value]) => (
-                <div key={label} className="glass-tile px-1 py-1.5 text-center">
+                <div key={label} className="rounded-xl px-1 py-1.5 text-center bg-gradient-to-b from-white/[0.07] to-black/25 ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_2px_6px_-3px_rgba(0,0,0,0.5)]">
                   <p className="text-sm font-extrabold leading-tight tabular-nums">{value}</p>
                   <p className="text-[9px] font-bold uppercase tracking-wide text-slate-400 truncate">{label}</p>
                 </div>
               ))}
             </div>
             {fav && (
-              <p className="text-[11px] font-semibold text-slate-400 mt-2">
+              <p className="relative text-[11px] font-semibold text-slate-400 mt-2">
                 {t.statFavorite}: <span className="text-violet-300 font-bold">{shortCategory(fav)}</span>
               </p>
             )}
