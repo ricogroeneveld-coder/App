@@ -3,13 +3,18 @@
 # Run it manually from GitHub → Actions → "iOS · TestFlight" → Run workflow.
 #
 # Required repository secrets (Settings → Secrets and variables → Actions):
-#   APPLE_TEAM_ID        — your 10-character Team ID (developer.apple.com → Membership)
-#   APPSTORE_ISSUER_ID   — App Store Connect → Users and Access → Integrations → App Store Connect API
-#   APPSTORE_KEY_ID      — the key's ID from that same page
-#   APPSTORE_P8          — the full contents of the downloaded AuthKey_XXXX.p8 file
+#   APPLE_TEAM_ID          — your 10-character Team ID (developer.apple.com → Membership)
+#   APPSTORE_ISSUER_ID     — App Store Connect → Users and Access → Integrations → App Store Connect API
+#   APPSTORE_KEY_ID        — the key's ID from that same page
+#   APPSTORE_P8            — the full contents of the downloaded AuthKey_XXXX.p8 file
+#   IOS_DIST_CERT_P12      — base64 of the Apple Distribution .p12 (cert + private key)
+#   IOS_DIST_CERT_PASSWORD — the password the .p12 was exported with
 #
-# The API key must have the ADMIN role — cloud-managed signing needs it to
-# create the distribution certificate and provisioning profile automatically.
+# The API key must have the ADMIN role — it's used to create/match the App
+# Store provisioning profile. The Distribution certificate itself is
+# imported directly (IOS_DIST_CERT_P12) rather than left for the API key to
+# create on its own — headless certificate *creation* via API key alone is
+# unreliable; certificate *use* (once one already exists) is not.
 #
 # Before the first run, in the browser:
 #   1. developer.apple.com → Identifiers → register bundle ID com.whatsmypick.app
@@ -49,6 +54,22 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/keys"
           printf '%s' "$APPSTORE_P8" > "$RUNNER_TEMP/keys/AuthKey_$APPSTORE_KEY_ID.p8"
+
+      - name: Import Distribution certificate
+        env:
+          IOS_DIST_CERT_P12: ${{ secrets.IOS_DIST_CERT_P12 }}
+          IOS_DIST_CERT_PASSWORD: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 24)
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          echo "$IOS_DIST_CERT_P12" | base64 --decode > "$RUNNER_TEMP/dist.p12"
+          security import "$RUNNER_TEMP/dist.p12" -P "$IOS_DIST_CERT_PASSWORD" -A \
+            -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | sed 's/"//g')
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
       - name: Archive (cloud-managed signing)
         env:
