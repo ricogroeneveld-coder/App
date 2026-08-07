@@ -12,7 +12,7 @@ import {
   loadProfile, getProfile, subscribeProfile, purchaseCosmetic, equipCosmetic,
   challengeState, favoriteCategory, devUnlockAll, devResetProfile, remoteStatus,
 } from '@/lib/playerProfile';
-import { ALL_COSMETICS, cosmeticById, RARITIES, TYPE_LABELS, topEquippedRarity, COLLECTIONS, collectionItems, collectionProgress } from '@/lib/cosmetics';
+import { ALL_COSMETICS, cosmeticById, RARITIES, TYPE_LABELS, topEquippedRarity, COLLECTIONS, collectionItems, collectionProgress, sortByRarity } from '@/lib/cosmetics';
 import { shortCategory } from '@/lib/wordLists';
 import { setGuestName, normalizeName, MAX_NAME_LENGTH } from '@/lib/guestIdentity';
 import { SEASON_NAME, todayKey, levelFromXp } from '@/lib/progression';
@@ -236,7 +236,7 @@ function HeroFeatured({ c, profile, onTap, featuredLabel }) {
  * set in equipped-context cards, and the exclusive completion reward.
  */
 function CollectionPanel({ col, profile, onTap, justUnlocked, onClose, t }) {
-  const items = collectionItems(col.id);
+  const items = sortByRarity(collectionItems(col.id));
   const { have, total } = collectionProgress(col.id, profile.owned);
   const done = have >= total && total > 0;
   const reward = cosmeticById(col.reward);
@@ -437,7 +437,7 @@ export default function Profile() {
   const featuredIds = new Set(featured.map(c => c.id));
   const dailyStock = Object.fromEntries(TYPE_ORDER.map((type, i) => [
     type,
-    seededPick(notOwnedShop.filter(c => c.type === type && !featuredIds.has(c.id)), 3, seed + i * 7919),
+    sortByRarity(seededPick(notOwnedShop.filter(c => c.type === type && !featuredIds.has(c.id)), 3, seed + i * 7919)),
   ]));
   const ch = challengeState();
 
@@ -544,7 +544,7 @@ export default function Profile() {
           {tab === 'collection' && (
             <motion.div key="collection" initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} transition={{ duration: 0.15 }}>
               {TYPE_ORDER.map(type => {
-                const items = ALL_COSMETICS.filter(c => c.type === type);
+                const items = sortByRarity(ALL_COSMETICS.filter(c => c.type === type));
                 const key = `col_${type}`;
                 const isCollapsed = !!collapsed[key];
                 return (

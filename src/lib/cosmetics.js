@@ -303,6 +303,12 @@ export function levelUnlocks(level) {
   return ALL_COSMETICS.filter(c => c.source.type === 'level' && c.source.level === level);
 }
 
+// Grids always list common → rare → epic → legendary → mythic.
+const RARITY_RANK = Object.fromEntries(Object.keys(RARITIES).map((r, i) => [r, i]));
+export function sortByRarity(items) {
+  return [...items].sort((a, b) => (RARITY_RANK[a.rarity] ?? 9) - (RARITY_RANK[b.rarity] ?? 9));
+}
+
 export const TYPE_LABELS = {
   emblem: 'Emblems', banner: 'Banners', border: 'Borders',
   title: 'Titles', nameColor: 'Name Colors',
