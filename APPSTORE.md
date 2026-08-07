@@ -23,7 +23,8 @@ from GitHub's cloud Macs. One-time browser setup:
 
 1. **Register the bundle ID** — developer.apple.com → Certificates,
    Identifiers & Profiles → Identifiers → "+" → App ID →
-   `com.whatsmypick.app`, and tick the **Sign in with Apple** capability.
+   `com.whatsmypick.app`. (The Sign in with Apple capability on the App ID
+   is harmless if already ticked — the native v1 ships without accounts.)
 2. **Create the app record** — App Store Connect → Apps → "+" →
    New App → iOS, pick the bundle ID.
 3. **Create an API key** — App Store Connect → Users and Access →
@@ -111,16 +112,28 @@ Picks/cosmetics need NO IAP setup — they are earned by playing only.
   chat, and custom words (`src/lib/cleanText.js`).
 - Mention these three in the App Review notes to preempt questions.
 
-## 5. Sign in with Apple
+## 5. Accounts — native v1 ships WITHOUT sign-in
 
-Login already shows "Continue with Apple" alongside Google (guideline 4.8
-satisfied). Enable the Apple provider in Supabase Auth and the
-"Sign in with Apple" capability in Xcode. Account deletion exists in
-Settings (guideline 5.1.1(v)).
+The native app hides the whole sign-in flow (`src/lib/platform.js`):
+players are guests, which is the real experience anyway — gameplay and
+progression always run on the guest identity, and pack purchases belong
+to the player's Apple ID (restorable via Settings → Restore Purchases),
+so nothing of value depends on an account.
+
+This deliberately takes guideline 4.8 (Sign in with Apple) out of scope:
+it only applies to apps that OFFER third-party login, and the native
+build offers none. Guests can still delete their local profile + game
+data in Settings. The web build keeps the optional email/Google/Apple
+sign-in as before.
+
+If accounts come back in a future native version, that's when to do:
+native Apple sign-in plugin, Google via system browser + deep links,
+Supabase provider setup, and linking guest progression to accounts.
 
 ## 6. Review notes to include with the submission
 
-> Multiplayer party game. No account required (guest play). All real-money
+> Multiplayer party game. No accounts — guest play only, no login of any
+> kind is offered in this app. All real-money
 > purchases use Apple IAP (category packs, non-consumable, restorable via
 > Settings → Restore Purchases). The in-game "Picks" currency is earned by
 > playing only and buys cosmetics only. UGC (chat/names/custom words) is

@@ -17,6 +17,7 @@ import BannerArt from '@/components/progression/BannerArt';
 import { cosmeticById, RARITIES } from '@/lib/cosmetics';
 import { getProfile, loadProfile } from '@/lib/playerProfile';
 import { restorePurchases } from '@/lib/payments';
+import { isNativeApp } from '@/lib/platform';
 
 export default function ProfileSettings() {
   const navigate = useNavigate();
@@ -191,10 +192,10 @@ export default function ProfileSettings() {
           </div>
         </motion.div>
 
-        {/* Sign in prompt — guests only. Purely optional: gameplay already
-            works fully without an account, this is just for anyone who wants
-            one (e.g. to sign in on another device). */}
-        {!isRegistered && (
+        {/* Sign in prompt — guests only, web only. Purely optional: gameplay
+            already works fully without an account. Hidden in the native app:
+            v1 ships account-less there (see src/lib/platform.js). */}
+        {!isRegistered && !isNativeApp() && (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}

@@ -21,6 +21,7 @@
 
 import { Purchases } from '@revenuecat/purchases-capacitor';
 import { unlockPack, isPackUnlocked } from './premiumPacks';
+import { isNativeApp } from './platform';
 
 export const PRODUCTS = {
   // Apple permanently blocks reuse of a deleted product ID, even after it
@@ -34,9 +35,7 @@ export const PRODUCTS = {
   food:        { productId: 'com.whatsmypick.pack.food',       price: '$2.99' },
 };
 
-function isNative() {
-  return typeof window !== 'undefined' && !!window.Capacitor?.isNativePlatform?.();
-}
+const isNative = isNativeApp;
 
 function isDevDevice() {
   try { return localStorage.getItem('wmp_dev') === '1'; } catch { return false; }
