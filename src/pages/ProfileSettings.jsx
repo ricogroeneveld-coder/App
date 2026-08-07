@@ -160,7 +160,7 @@ export default function ProfileSettings() {
         <h1 className="text-lg font-extrabold tracking-tight">{t.profileSettings}</h1>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar px-4 pb-6 max-w-md mx-auto w-full space-y-3">
+      <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar px-4 pt-1 pb-6 max-w-md mx-auto w-full space-y-3">
         {/* Profile card */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}

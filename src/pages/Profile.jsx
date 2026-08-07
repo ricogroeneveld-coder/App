@@ -268,7 +268,7 @@ function CollectionPanel({ col, profile, onTap, justUnlocked, onClose, t }) {
             )}
           </span>
         </div>
-        <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar px-4 pb-4">
+        <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar px-4 pt-1 pb-4">
           <p className="text-[11px] font-semibold text-slate-400 italic mt-1 mb-2">“{col.lore}”</p>
           <div className="flex items-center gap-2 mb-3">
             <div className="flex-1 h-1.5 rounded-full bg-black/40 ring-1 ring-white/10 overflow-hidden">
@@ -471,7 +471,7 @@ export default function Profile() {
         </Link>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar w-full max-w-md mx-auto px-4 pb-2" style={{ overscrollBehaviorY: 'contain' }}>
+      <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar w-full max-w-md mx-auto px-4 pt-1 pb-2" style={{ overscrollBehaviorY: 'contain' }}>
         {/* Identity card — the player's collectible self. Ring and glow follow
             the highest equipped rarity; the banner is a live scene the avatar
             sits in, blended into the card body. */}
