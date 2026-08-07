@@ -141,7 +141,7 @@ function CosmeticCard({ c, owned, equipped, onTap, justUnlocked, sourceText, pri
           </AvatarFrame>
         )}
         {c.type === 'title' && (
-          <span className={`relative w-full text-[11px] font-extrabold leading-tight ${rar.text}`}
+          <span className={`relative w-full text-xs font-extrabold leading-tight ${rar.text}`}
             style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
             {c.name}
           </span>
@@ -150,9 +150,13 @@ function CosmeticCard({ c, owned, equipped, onTap, justUnlocked, sourceText, pri
           <span className={`relative w-full text-sm font-extrabold truncate ${c.cls}`}>{playerName || 'Name'}</span>
         )}
       </span>
-      {/* Name slot — one line, always 16px tall (titles already show their
-          name as the artwork, so it isn't repeated) */}
-      <span className="h-4 w-full mt-1.5 text-[10px] font-bold text-white leading-4 truncate">{c.type === 'title' ? '' : c.name}</span>
+      {/* Name slot — one line, 16px tall. Titles skip it entirely: their name
+          IS the artwork above, and an empty reserved slot reads as a dead gap
+          in the middle of the card (every card in a grid section shares a
+          type, so per-section uniformity is preserved). */}
+      {c.type !== 'title' && (
+        <span className="h-4 w-full mt-1 text-[10px] font-bold text-white leading-4 truncate">{c.name}</span>
+      )}
       {/* Rarity slot — always 16px tall */}
       <span className={`h-4 mt-1 px-2 flex items-center rounded-full text-[8px] font-extrabold ${rar.chip}`}>
         {rar.label}
