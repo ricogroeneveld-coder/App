@@ -417,10 +417,28 @@ export default function Profile() {
   };
 
   const shopItems = ALL_COSMETICS.filter(c => c.source.type === 'shop');
-  // Two featured items rotate daily
+  // The whole shop rotates every 24h: a deterministic date-seeded shuffle
+  // picks one row (3 items) per section, so every visit after midnight shows
+  // a fresh stock. Anything not in today's stock stays buyable from the
+  // Collection tab.
   const seed = Number(todayKey().replaceAll('-', ''));
+  const seededPick = (arr, n, s) => {
+    const a = [...arr];
+    let x = s || 1;
+    const rand = () => { x = (x * 1664525 + 1013904223) % 4294967296; return x / 4294967296; };
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(rand() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a.slice(0, n);
+  };
   const notOwnedShop = shopItems.filter(c => !profile.owned.includes(c.id));
   const featured = [...new Set([0, 1, 2].map(i => notOwnedShop[(seed + i * 3) % Math.max(notOwnedShop.length, 1)]))].filter(Boolean);
+  const featuredIds = new Set(featured.map(c => c.id));
+  const dailyStock = Object.fromEntries(TYPE_ORDER.map((type, i) => [
+    type,
+    seededPick(notOwnedShop.filter(c => c.type === type && !featuredIds.has(c.id)), 3, seed + i * 7919),
+  ]));
   const ch = challengeState();
 
   return (
@@ -525,25 +543,44 @@ export default function Profile() {
         <AnimatePresence mode="wait">
           {tab === 'collection' && (
             <motion.div key="collection" initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} transition={{ duration: 0.15 }}>
-              {TYPE_ORDER.map(type => (
-                <div key={type} className="mb-4">
-                  <p className="section-label mb-2">{TYPE_LABELS[type]}</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {ALL_COSMETICS.filter(c => c.type === type).map(c => {
-                      const owned = profile.owned.includes(c.id);
-                      return (
-                        <CosmeticCard key={c.id} c={c} owned={owned}
-                          equipped={profile.equipped?.[c.type] === c.id}
-                          onTap={onTapCosmetic} justUnlocked={justUnlocked === c.id}
-                          sourceText={c.source.type !== 'shop' ? sourceLabel(c, t) : undefined}
-                          price={c.source.type === 'shop' ? c.source.price : undefined}
-                          affordable={(profile.picks || 0) >= (c.source.price || 0)}
-                          playerName={profile.display_name} />
-                      );
-                    })}
+              {TYPE_ORDER.map(type => {
+                const items = ALL_COSMETICS.filter(c => c.type === type);
+                const key = `col_${type}`;
+                const isCollapsed = !!collapsed[key];
+                return (
+                  <div key={type} className="mb-3">
+                    <button onClick={() => toggleSection(key)} aria-expanded={!isCollapsed}
+                      className="w-full min-h-[44px] flex items-center justify-between px-1 rounded-xl transition-colors hover:bg-white/5 active:scale-[0.99]">
+                      <span className="section-label">{TYPE_LABELS[type]}</span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-bold text-slate-500 tabular-nums">
+                          {items.filter(c => profile.owned.includes(c.id)).length}/{items.length}
+                        </span>
+                        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`} />
+                      </span>
+                    </button>
+                    <motion.div initial={false}
+                      animate={{ height: isCollapsed ? 0 : 'auto', opacity: isCollapsed ? 0 : 1 }}
+                      transition={{ duration: 0.25, ease: 'easeInOut' }}
+                      className="overflow-hidden">
+                      <div className="grid grid-cols-3 gap-2 pt-1 pb-1">
+                        {items.map(c => {
+                          const owned = profile.owned.includes(c.id);
+                          return (
+                            <CosmeticCard key={c.id} c={c} owned={owned}
+                              equipped={profile.equipped?.[c.type] === c.id}
+                              onTap={onTapCosmetic} justUnlocked={justUnlocked === c.id}
+                              sourceText={c.source.type !== 'shop' ? sourceLabel(c, t) : undefined}
+                              price={c.source.type === 'shop' ? c.source.price : undefined}
+                              affordable={(profile.picks || 0) >= (c.source.price || 0)}
+                              playerName={profile.display_name} />
+                          );
+                        })}
+                      </div>
+                    </motion.div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </motion.div>
           )}
 
@@ -570,8 +607,12 @@ export default function Profile() {
                   ))}
                 </div>
               </div>
+              <div className="flex items-end justify-between mb-1 px-1">
+                <p className="section-label">{t.todaysShop}</p>
+                <p className="text-[10px] font-bold text-slate-500">{t.rotatesDaily}</p>
+              </div>
               {TYPE_ORDER.map(type => {
-                const items = shopItems.filter(c => c.type === type && !profile.owned.includes(c.id));
+                const items = dailyStock[type];
                 if (!items.length) return null;
                 const isCollapsed = !!collapsed[type];
                 return (
