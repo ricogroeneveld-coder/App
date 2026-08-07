@@ -51,18 +51,23 @@ In Xcode, the only remaining setup is **Signing & Capabilities**: pick
 your Apple Developer team, then archive/upload as usual. Xcode resolves
 the Capacitor Swift packages automatically on first open.
 
-## 2. In-App Purchases (packs are real-money → Apple IAP only)
+## 2. In-App Purchases (packs are real-money → Apple IAP only) — ✅ CODE DONE
 
-The app's purchase layer lives in `src/lib/payments.js`. It already:
+The app's purchase layer lives in `src/lib/payments.js`, wired to
+**RevenueCat** (`@revenuecat/purchases-capacitor`, already installed and
+synced into `ios/`). It:
 - defines one **non-consumable** product per pack,
-- routes all purchase buttons through `purchasePack()`,
+- calls `configurePurchases()` once at app startup (native only),
+- routes all purchase buttons through `purchasePack()` (real StoreKit
+  purchase via RevenueCat, checks the matching entitlement),
 - exposes `restorePurchases()` (Settings → Restore Purchases — Apple
   requires this for non-consumables),
 - refuses to fake purchases on the web build.
 
-To go live:
-1. In **App Store Connect → In-App Purchases**, create non-consumables with
-   EXACTLY these product IDs (prices are suggestions):
+Remaining setup is all in the browser — no code changes needed:
+
+1. **App Store Connect → your app → In-App Purchases**, create 6
+   non-consumables with EXACTLY these product IDs (prices are suggestions):
 
    | Product ID | Pack | Price |
    |---|---|---|
@@ -73,12 +78,20 @@ To go live:
    | `com.whatsmypick.pack.fantasy` | Fantasy Pack | $2.99 |
    | `com.whatsmypick.pack.food` | Food Pack | $2.99 |
 
-2. Install a StoreKit bridge — **RevenueCat is recommended**
-   (`npm install @revenuecat/purchases-capacitor`), create one entitlement
-   per pack, then fill in the two `TODO(StoreKit)` blocks in
-   `src/lib/payments.js` (purchase + restore). Each is 3–5 lines; the
-   comments show the exact calls.
-3. Test with a Sandbox tester account before submitting.
+2. **Create a free RevenueCat account** (revenuecat.com) → new Project →
+   add an **iOS app** with bundle ID `com.whatsmypick.app`, connected via
+   an App Store Connect API key (Users and Access → Integrations — the
+   same kind of key used for `APPSTORE_P8`, minimum role **App Manager**).
+3. In RevenueCat, create **6 Products** matching the product IDs above,
+   then **6 Entitlements** with these EXACT identifiers (the code checks
+   these names): `pop_culture`, `animals`, `world`, `brands`, `fantasy`,
+   `food`. Attach each Product to its matching Entitlement.
+4. RevenueCat → Project → **API Keys** → copy the **Apple App Store**
+   public app key (starts with `appl_`) → add it as the GitHub secret
+   `VITE_REVENUECAT_IOS_KEY` (same place as the other build secrets) so
+   the CI build embeds it.
+5. Test with a Sandbox tester account (App Store Connect → Users and
+   Access → Sandbox Testers) before submitting for review.
 
 Picks/cosmetics need NO IAP setup — they are earned by playing only.
 

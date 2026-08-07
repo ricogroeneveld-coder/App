@@ -2,14 +2,16 @@
 //
 // App Store rule 3.1.1: digital content sold for real money MUST go through
 // Apple IAP — never a web checkout. This module is the single integration
-// point:
+// point, backed by RevenueCat (StoreKit under the hood):
 //
 //  - Product catalog: one non-consumable per pack, IDs below must be created
-//    identically in App Store Connect.
-//  - Native (Capacitor iOS build): wire the marked TODOs to a StoreKit
-//    bridge (RevenueCat or @capacitor-community/in-app-purchases). Purchases
-//    and restores resolve entitlements, which unlock packs locally via
-//    premiumPacks.unlockPack.
+//    identically in App Store Connect, and mirrored as Products +
+//    Entitlements (same key, e.g. "pop_culture") in the RevenueCat
+//    dashboard.
+//  - Native (Capacitor iOS build): configure() runs once at app startup
+//    (see App.jsx) and purchasePack/restorePurchases call the real
+//    RevenueCat SDK, which resolves entitlements and unlocks packs locally
+//    via premiumPacks.unlockPack.
 //  - Web build: purchasing is unavailable (never fake a charge) — the UI
 //    tells players packs unlock in the iOS app. Dev-flagged devices
 //    (?dev= URL) can simulate a purchase to keep testing possible.
@@ -17,6 +19,7 @@
 // Restoring purchases is REQUIRED by App Store review for non-consumables;
 // ProfileSettings exposes it.
 
+import { Purchases } from '@revenuecat/purchases-capacitor';
 import { unlockPack, isPackUnlocked } from './premiumPacks';
 
 export const PRODUCTS = {
@@ -41,6 +44,18 @@ export function purchasesAvailable() {
   return isNative() || isDevDevice();
 }
 
+let configured = false;
+
+// Call once at app startup (see App.jsx). No-op on web — RevenueCat only
+// matters on the native iOS build.
+export async function configurePurchases() {
+  if (configured || !isNative()) return;
+  const apiKey = import.meta.env.VITE_REVENUECAT_IOS_KEY;
+  if (!apiKey) return; // build without the key still runs; purchases just stay unavailable
+  configured = true;
+  await Purchases.configure({ apiKey });
+}
+
 /**
  * Buy a pack. Resolves { ok } on success, { ok: false, reason } otherwise.
  * reason: 'unavailable' (web build) | 'cancelled' | 'error'
@@ -48,11 +63,21 @@ export function purchasesAvailable() {
 export async function purchasePack(packId) {
   if (isPackUnlocked(packId)) return { ok: true };
   if (isNative()) {
-    // TODO(StoreKit): replace with the real bridge once the iOS project
-    // exists, e.g. RevenueCat:
-    //   const { customerInfo } = await Purchases.purchaseProduct(PRODUCTS[packId].productId);
-    //   if (customerInfo.entitlements.active[packId]) { unlockPack(packId); return { ok: true }; }
-    return { ok: false, reason: 'error' };
+    try {
+      const productId = PRODUCTS[packId].productId;
+      const { products } = await Purchases.getProducts({ productIdentifiers: [productId] });
+      const product = products?.[0];
+      if (!product) return { ok: false, reason: 'error' };
+      const { customerInfo } = await Purchases.purchaseStoreProduct({ product });
+      if (customerInfo.entitlements.active[packId]) {
+        unlockPack(packId);
+        return { ok: true };
+      }
+      return { ok: false, reason: 'error' };
+    } catch (e) {
+      if (e?.userCancelled) return { ok: false, reason: 'cancelled' };
+      return { ok: false, reason: 'error' };
+    }
   }
   if (isDevDevice()) {
     // Simulated purchase for testing on dev-flagged web devices.
@@ -68,11 +93,19 @@ export async function purchasePack(packId) {
  */
 export async function restorePurchases() {
   if (isNative()) {
-    // TODO(StoreKit): e.g. RevenueCat:
-    //   const { customerInfo } = await Purchases.restorePurchases();
-    //   for (const packId of Object.keys(PRODUCTS))
-    //     if (customerInfo.entitlements.active[packId]) unlockPack(packId);
-    return { ok: false, reason: 'error' };
+    try {
+      const { customerInfo } = await Purchases.restorePurchases();
+      let restored = 0;
+      for (const packId of Object.keys(PRODUCTS)) {
+        if (customerInfo.entitlements.active[packId] && !isPackUnlocked(packId)) {
+          unlockPack(packId);
+          restored++;
+        }
+      }
+      return { ok: true, restored };
+    } catch {
+      return { ok: false, reason: 'error' };
+    }
   }
   return { ok: false, reason: 'unavailable' };
 }

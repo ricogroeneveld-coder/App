@@ -12,6 +12,8 @@
 #   IOS_PROVISIONING_PROFILE — base64 of the downloaded .mobileprovision file
 #   VITE_SUPABASE_URL      — your Supabase project URL (Supabase → Settings → API)
 #   VITE_SUPABASE_ANON_KEY — the project's anon/public key (same page)
+#   VITE_REVENUECAT_IOS_KEY — RevenueCat → Project → API Keys → the "Apple App
+#                             Store" public app key (starts with "appl_")
 #
 # Signing is fully MANUAL and explicit: a real Distribution certificate is
 # imported into a CI keychain and a real App Store provisioning profile is
@@ -51,6 +53,7 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_REVENUECAT_IOS_KEY: ${{ secrets.VITE_REVENUECAT_IOS_KEY }}
         run: |
           npm ci
           npm run ios

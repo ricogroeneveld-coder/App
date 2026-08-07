@@ -7,6 +7,7 @@ import { AuthProvider } from '@/lib/AuthContext';
 import ScrollToTop from './components/ScrollToTop';
 import { useEffect } from 'react';
 import { devUnlockAll, devResetProfile } from '@/lib/playerProfile';
+import { configurePurchases } from '@/lib/payments';
 // Add page imports here
 import Home from '@/pages/Home';
 import BrowseLobbies from '@/pages/BrowseLobbies';
@@ -81,6 +82,7 @@ function useDevParam() {
 function App() {
   useForcedDarkTheme();
   useDevParam();
+  useEffect(() => { configurePurchases(); }, []);
 
   return (
     <LanguageProvider>
