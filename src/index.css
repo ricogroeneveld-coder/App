@@ -282,6 +282,22 @@
     animation: nameFlicker 5s ease-in-out infinite;
   }
 
+  /* Animated rainbow border for mythic cards — a slow-flowing gradient
+     confined to a 1.5px edge via mask compositing. Pure CSS, GPU-cheap. */
+  .rainbow-border {
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    padding: 1.5px;
+    pointer-events: none;
+    background: linear-gradient(90deg, #ff8bd8, #ffd36b, #7dffa8, #7db9ff, #c98bff, #ff8bd8);
+    background-size: 300% 100%;
+    animation: nameRainbow 8s linear infinite;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+
   /* Collection name styles — rose gold, celestial, and the founder's
      slow gold↔violet pulse (never sold, only earned). */
   .name-rosegold {

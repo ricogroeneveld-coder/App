@@ -80,7 +80,19 @@ function CosmeticCard({ c, owned, equipped, onTap, justUnlocked, sourceText, pri
     <motion.button onClick={() => onTap(c)}
       animate={justUnlocked ? { scale: [0.7, 1.12, 1] } : {}}
       transition={{ duration: 0.45 }}
-      className={`glass-panel relative overflow-hidden w-full rounded-2xl p-2 flex flex-col items-center text-center transition-all duration-150 active:scale-[0.97] hover:-translate-y-0.5 ring-1 ${equipped ? 'ring-[#ffcf7a]/70' : rar.ring} ${rar.cardGlow}`}>
+      className={`glass-panel relative overflow-hidden w-full rounded-2xl p-2.5 flex flex-col items-center text-center transition-all duration-150 active:scale-[0.97] hover:-translate-y-0.5 ${equipped ? 'ring-[1.5px] ring-[#ffcf7a]/80' : c.rarity === 'mythic' ? '' : `ring-[1.5px] ${rar.ring}`} ${rar.cardGlow}`}>
+      {/* Glass relief — top highlight, soft base shadow */}
+      <span aria-hidden className="absolute inset-0 rounded-2xl pointer-events-none"
+        style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.09), inset 0 -8px 14px -10px rgba(0,0,0,0.55)' }} />
+      {c.rarity === 'mythic' && !equipped && <span aria-hidden className="rainbow-border" />}
+      {c.rarity === 'epic' && !equipped && (
+        <span aria-hidden className="frame-breathe absolute inset-0 rounded-2xl pointer-events-none"
+          style={{ boxShadow: '0 0 16px -7px rgba(157,92,255,0.5), inset 0 0 12px -8px rgba(157,92,255,0.4)' }} />
+      )}
+      {equipped && (
+        <span aria-hidden className="frame-breathe absolute inset-0 rounded-2xl pointer-events-none"
+          style={{ boxShadow: '0 0 14px -5px rgba(255,203,69,0.5), inset 0 0 10px -7px rgba(255,203,69,0.35)' }} />
+      )}
       {fancy && <span aria-hidden className="fx-shine" />}
       {c.rarity === 'mythic' && (
         <span aria-hidden className="fx-twinkle absolute top-1.5 right-2 text-[9px] leading-none">✦</span>
@@ -104,7 +116,9 @@ function CosmeticCard({ c, owned, equipped, onTap, justUnlocked, sourceText, pri
             <Check className="w-2.5 h-2.5 text-slate-300" strokeWidth={3} />
           </span>
         ) : (
-          <Lock className="w-3 h-3 text-slate-400" />
+          <span className="w-4 h-4 rounded-full bg-black/40 ring-1 ring-white/15 flex items-center justify-center shadow-[0_1px_3px_rgba(0,0,0,0.4)]">
+            <Lock className="w-2.5 h-2.5 text-slate-300" />
+          </span>
         )}
       </span>
       {/* Artwork slot on its rarity-lit backdrop — always 44px tall */}
@@ -135,8 +149,9 @@ function CosmeticCard({ c, owned, equipped, onTap, justUnlocked, sourceText, pri
           <span className={`relative w-full text-sm font-extrabold truncate ${c.cls}`}>{playerName || 'Name'}</span>
         )}
       </span>
-      {/* Name slot — one line, always 16px tall */}
-      <span className="h-4 w-full mt-1.5 text-[10px] font-bold text-slate-100 leading-4 truncate">{c.name}</span>
+      {/* Name slot — one line, always 16px tall (titles already show their
+          name as the artwork, so it isn't repeated) */}
+      <span className="h-4 w-full mt-1.5 text-[10px] font-bold text-white leading-4 truncate">{c.type === 'title' ? '' : c.name}</span>
       {/* Rarity slot — always 16px tall */}
       <span className={`h-4 mt-1 px-2 flex items-center rounded-full text-[8px] font-extrabold ${rar.chip}`}>
         {rar.label}
