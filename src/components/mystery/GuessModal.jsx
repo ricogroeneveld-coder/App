@@ -182,9 +182,12 @@ function WordSelector({ category, value, onChange, wrongGuesses }) {
     ? Object.fromEntries((WORD_LISTS_NL[category] || []).map((w, i) => [w, wordListEn[i] || w]))
     : null;
 
+  const toStored = (w) => (nlToEn ? (nlToEn[w] || w) : w);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return wordList.filter(w => !wrongGuesses.includes(w) && w.toLowerCase().includes(q));
+    return wordList.filter(w => !wrongGuesses.includes(toStored(w)) && w.toLowerCase().includes(q));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wordList, search, wrongGuesses]);
 
   const showList = wordList.length > 0;
@@ -196,7 +199,16 @@ function WordSelector({ category, value, onChange, wrongGuesses }) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
           <input
             value={search}
-            onChange={e => { setSearch(e.target.value); onChange(e.target.value); }}
+            onChange={e => {
+              const q = e.target.value;
+              setSearch(q);
+              // Typing only FILTERS the list — it never becomes the guess
+              // itself. The guess is set by tapping a word below (or typing
+              // one out exactly), so a half-typed search can never be
+              // submitted as a guaranteed-wrong guess.
+              const exact = wordList.find(w => !wrongGuesses.includes(toStored(w)) && w.toLowerCase() === q.trim().toLowerCase());
+              onChange(exact ? toStored(exact) : '');
+            }}
             placeholder={t.searchOrType} enterKeyHint="done"
             className="inset-input w-full h-10 pl-9 pr-4 text-base md:text-sm"
           />
@@ -211,12 +223,15 @@ function WordSelector({ category, value, onChange, wrongGuesses }) {
       {showList && filtered.length > 0 && (
         <div className="max-h-40 overflow-y-auto rounded-xl bg-white/5 ring-1 ring-white/10 p-2 grid grid-cols-2 gap-1">
           {filtered.map(w => (
-            <button key={w} onClick={() => { const en = nlToEn ? (nlToEn[w] || w) : w; onChange(en); setSearch(w); }}
-              className={`text-left px-2.5 py-2 rounded-lg text-sm transition ${value === (nlToEn ? (nlToEn[w] || w) : w) ? 'bg-violet-500 text-white font-medium' : 'text-slate-300 hover:bg-white/10'}`}>
+            <button key={w} onClick={() => { onChange(toStored(w)); setSearch(w); }}
+              className={`text-left px-2.5 py-2 rounded-lg text-sm transition ${value === toStored(w) ? 'bg-violet-500 text-white font-medium' : 'text-slate-300 hover:bg-white/10'}`}>
               {w}
             </button>
           ))}
         </div>
+      )}
+      {showList && !value && filtered.length > 0 && (
+        <p className="text-xs text-slate-500 text-center">{t.tapWordToGuess}</p>
       )}
       {showList && search && filtered.length === 0 && (
         <p className="text-xs text-slate-500 text-center py-2">{t.noMatch(search)}</p>
