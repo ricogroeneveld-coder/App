@@ -282,6 +282,35 @@
     animation: nameFlicker 5s ease-in-out infinite;
   }
 
+  /* Collection name styles — rose gold, celestial, and the founder's
+     slow gold↔violet pulse (never sold, only earned). */
+  .name-rosegold {
+    background-image: linear-gradient(180deg, #ffe4ec 0%, #f9a8c9 45%, #c0748f 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 6px rgba(249, 168, 201, 0.35));
+  }
+  .name-celestial {
+    background-image: linear-gradient(180deg, #dbeafe 0%, #93b4fd 50%, #8b5cf6 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 7px rgba(139, 92, 246, 0.45));
+  }
+  @keyframes founderPulse {
+    0%, 100% { filter: drop-shadow(0 0 6px rgba(255, 203, 69, 0.55)); }
+    50% { filter: drop-shadow(0 0 10px rgba(157, 92, 255, 0.65)); }
+  }
+  .name-founder {
+    background-image: linear-gradient(90deg, #ffe9a8, #ffcb45 35%, #c98bff 65%, #ffe9a8);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: founderPulse 6s ease-in-out infinite;
+  }
+
   /* Featured shop cards float gently so the section feels alive. */
   @keyframes featuredFloat {
     0%, 100% { transform: translateY(0); }

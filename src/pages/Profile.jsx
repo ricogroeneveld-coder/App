@@ -12,7 +12,7 @@ import {
   loadProfile, getProfile, subscribeProfile, purchaseCosmetic, equipCosmetic,
   challengeState, favoriteCategory, devUnlockAll, devResetProfile, remoteStatus,
 } from '@/lib/playerProfile';
-import { ALL_COSMETICS, cosmeticById, RARITIES, TYPE_LABELS, topEquippedRarity } from '@/lib/cosmetics';
+import { ALL_COSMETICS, cosmeticById, RARITIES, TYPE_LABELS, topEquippedRarity, COLLECTIONS, collectionItems, collectionProgress } from '@/lib/cosmetics';
 import { shortCategory } from '@/lib/wordLists';
 import { SEASON_NAME, todayKey, levelFromXp } from '@/lib/progression';
 
@@ -22,7 +22,39 @@ function sourceLabel(c, t) {
   if (c.source.type === 'shop') return `${c.source.price} Picks`;
   if (c.source.type === 'level') return `${t.level} ${c.source.level}`;
   if (c.source.type === 'challenge') return SEASON_NAME;
+  if (c.source.type === 'reward') return t.collectionReward;
   return '';
+}
+
+/** Album cover for one collection — live scene, progress, limited tag. */
+function CollectionCover({ col, owned, onOpen }) {
+  const { have, total } = collectionProgress(col.id, owned);
+  const done = have >= total && total > 0;
+  return (
+    <motion.button onClick={onOpen} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+      className={`relative h-24 rounded-2xl overflow-hidden text-left ring-1 transition-transform duration-150 active:scale-[0.97] hover:-translate-y-0.5 ${done ? 'ring-[#ffcf7a]/70 shadow-[0_0_18px_-8px_rgba(255,203,69,0.6)]' : 'ring-white/15'}`}>
+      <BannerArt banner={cosmeticById(col.cover)} className="absolute inset-0" motifScale={0.8} />
+      <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/20" />
+      {col.limited && (
+        <span className="absolute right-1.5 top-1.5 px-1.5 py-0.5 rounded bg-gradient-to-b from-rose-400 to-rose-700 text-[8px] font-extrabold text-white uppercase tracking-wide shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+          Limited
+        </span>
+      )}
+      <span className="absolute inset-x-2.5 bottom-2">
+        <span className="flex items-center gap-1.5">
+          <span className="text-base leading-none drop-shadow-[0_2px_3px_rgba(0,0,0,0.6)]">{col.emoji}</span>
+          <span className="text-sm font-extrabold text-white truncate drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{col.name}</span>
+          <span className={`ml-auto text-[10px] font-extrabold tabular-nums ${done ? 'text-amber-300' : 'text-slate-300'}`}>
+            {done ? '✓' : `${have}/${total}`}
+          </span>
+        </span>
+        <span className="mt-1 block h-1 rounded-full bg-black/50 overflow-hidden">
+          <span className={`block h-full rounded-full ${done ? 'bg-gradient-to-r from-[#ffcb45] to-[#e08e05]' : 'bg-gradient-to-r from-violet-500 to-fuchsia-500'}`}
+            style={{ width: `${total ? (have / total) * 100 : 0}%` }} />
+        </span>
+      </span>
+    </motion.button>
+  );
 }
 
 /**
@@ -152,6 +184,77 @@ function HeroFeatured({ c, profile, onTap, featuredLabel }) {
   );
 }
 
+/**
+ * Collection album page — themed hero art, lore, progress, the full matching
+ * set in equipped-context cards, and the exclusive completion reward.
+ */
+function CollectionPanel({ col, profile, onTap, justUnlocked, onClose, t }) {
+  const items = collectionItems(col.id);
+  const { have, total } = collectionProgress(col.id, profile.owned);
+  const done = have >= total && total > 0;
+  const reward = cosmeticById(col.reward);
+  const rewardOwned = profile.owned.includes(col.reward);
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-end sm:items-center justify-center p-4" onClick={onClose}>
+      <motion.div initial={{ opacity: 0, y: 40, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ type: 'spring', duration: 0.45 }}
+        onClick={e => e.stopPropagation()}
+        className="relative w-full max-w-sm max-h-[85dvh] rounded-[24px] overflow-hidden ring-1 ring-white/15 shadow-[0_24px_48px_-16px_rgba(0,0,0,0.8)] flex flex-col"
+        style={{ background: '#10141f' }}>
+        <div className="relative h-24 shrink-0">
+          <BannerArt banner={cosmeticById(col.cover)} animated className="absolute inset-0" />
+          <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-12"
+            style={{ background: 'linear-gradient(180deg, transparent, #10141f)' }} />
+          <button onClick={onClose} aria-label="Close"
+            className="absolute right-2 top-2 p-2.5 rounded-xl bg-black/25 backdrop-blur-sm hover:bg-black/40 text-white/80 transition">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <span className="absolute left-4 bottom-2 flex items-center gap-2">
+            <span className="text-2xl leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">{col.emoji}</span>
+            <span className="text-lg font-extrabold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{col.name}</span>
+            {col.limited && (
+              <span className="px-1.5 py-0.5 rounded bg-gradient-to-b from-rose-400 to-rose-700 text-[8px] font-extrabold text-white uppercase tracking-wide">Limited</span>
+            )}
+          </span>
+        </div>
+        <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar px-4 pb-4">
+          <p className="text-[11px] font-semibold text-slate-400 italic mt-1 mb-2">“{col.lore}”</p>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="flex-1 h-1.5 rounded-full bg-black/40 ring-1 ring-white/10 overflow-hidden">
+              <div className={`h-full rounded-full ${done ? 'bg-gradient-to-r from-[#ffcb45] to-[#e08e05]' : 'bg-gradient-to-r from-violet-500 to-fuchsia-500'}`}
+                style={{ width: `${total ? (have / total) * 100 : 0}%`, transition: 'width 500ms ease' }} />
+            </div>
+            <span className="text-[10px] font-extrabold text-slate-300 tabular-nums">{have}/{total}</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {items.map(c => (
+              <CosmeticCard key={c.id} c={c} owned={profile.owned.includes(c.id)}
+                equipped={profile.equipped?.[c.type] === c.id}
+                onTap={onTap} justUnlocked={justUnlocked === c.id}
+                footer={profile.owned.includes(c.id) ? '' : sourceLabel(c, t)}
+                footerClass={profile.owned.includes(c.id) ? '' : ((profile.picks || 0) >= (c.source.price || Infinity) ? 'text-amber-300' : 'text-slate-500')}
+                previewEmblem={cosmeticById(profile.equipped?.emblem)} playerName={profile.display_name} />
+            ))}
+          </div>
+          {/* Completion reward */}
+          {reward && (
+            <div className={`mt-3 rounded-2xl p-3 flex items-center gap-3 ring-1 ${rewardOwned
+              ? 'bg-gradient-to-b from-[#3a2400]/70 to-[#1a0f00]/70 ring-[#ffcf7a]/50'
+              : 'bg-white/5 ring-white/10'}`}>
+              <span className="text-xl">{rewardOwned ? '🏆' : '🔒'}</span>
+              <span className="flex-1 min-w-0">
+                <span className="block text-[10px] font-extrabold uppercase tracking-wide text-slate-400">{t.completionReward}</span>
+                <span className={`block text-sm font-extrabold truncate ${reward.cls || RARITIES[reward.rarity].text}`}>{reward.name}</span>
+              </span>
+              <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${RARITIES[reward.rarity].chip}`}>{RARITIES[reward.rarity].label}</span>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 function ChallengeRow({ def, bucket }) {
   const progress = Math.min(bucket.progress[def.id] || 0, def.target);
   const done = !!bucket.claimed[def.id];
@@ -187,6 +290,7 @@ export default function Profile() {
   });
   const [justUnlocked, setJustUnlocked] = useState(null);
   const [purchase, setPurchase] = useState(null); // { c, balance } captured at tap
+  const [openCollection, setOpenCollection] = useState(null); // collection id
 
   useEffect(() => {
     loadProfile().then(setProfile);
@@ -220,6 +324,8 @@ export default function Profile() {
       setPurchase({ c, balance: profile.picks || 0 });
     } else if (c.source.type === 'level') {
       toast({ title: `${t.unlockAtLevel} ${c.source.level}` });
+    } else if (c.source.type === 'reward') {
+      toast({ title: t.completeCollectionHint });
     } else {
       toast({ title: `${SEASON_NAME} — ${t.challenges}` });
     }
@@ -230,6 +336,10 @@ export default function Profile() {
     if (res.ok) {
       setJustUnlocked(c.id);
       setTimeout(() => setJustUnlocked(null), 900);
+      for (const col of res.completed || []) {
+        const reward = cosmeticById(col.reward);
+        toast({ title: `🏆 ${col.emoji} ${col.name} — ${t.collectionComplete}`, description: reward ? `${t.unlocked}: ${reward.name}` : undefined });
+      }
     } else if (res.reason === 'picks') {
       toast({ title: t.notEnoughPicks, variant: 'destructive' });
     }
@@ -381,6 +491,16 @@ export default function Profile() {
                   )}
                 </div>
               )}
+              {/* Collections — matching sets with exclusive completion rewards */}
+              <div className="mb-4">
+                <p className="section-label mb-2">{t.collectionsLabel}</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {COLLECTIONS.map(col => (
+                    <CollectionCover key={col.id} col={col} owned={profile.owned}
+                      onOpen={() => setOpenCollection(col.id)} />
+                  ))}
+                </div>
+              </div>
               {TYPE_ORDER.map(type => {
                 const items = shopItems.filter(c => c.type === type && !profile.owned.includes(c.id));
                 if (!items.length) return null;
@@ -449,6 +569,10 @@ export default function Profile() {
         ) : null}
       </div>
 
+      {openCollection && (
+        <CollectionPanel col={COLLECTIONS.find(c => c.id === openCollection)} profile={profile}
+          onTap={onTapCosmetic} justUnlocked={justUnlocked} onClose={() => setOpenCollection(null)} t={t} />
+      )}
       {purchase && (
         <PurchaseModal cosmetic={purchase.c} balance={purchase.balance}
           typeLabel={TYPE_LABELS[purchase.c.type].replace(/s$/, '')} profile={profile}

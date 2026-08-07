@@ -8,7 +8,7 @@ import {
   ECONOMY, levelFromXp, dailyChallenges, WEEKLY, SEASON, SEASON_ID,
   todayKey, weekKey, loginReward,
 } from './progression';
-import { STARTER_OWNED, DEFAULT_EQUIPPED, cosmeticById, levelUnlocks, ALL_COSMETICS } from './cosmetics';
+import { STARTER_OWNED, DEFAULT_EQUIPPED, cosmeticById, levelUnlocks, ALL_COSMETICS, COLLECTIONS, collectionItems } from './cosmetics';
 
 const LS_KEY = 'wmp_profile_v1';
 let cache = null;
@@ -167,6 +167,22 @@ function addXp(amount, breakdown) {
   }
 }
 
+// Completing a collection grants its exclusive reward (never purchasable).
+// Returns the newly granted collections for celebration UI.
+function grantCollectionRewards(breakdown) {
+  const completed = [];
+  for (const col of COLLECTIONS) {
+    if (cache.owned.includes(col.reward)) continue;
+    const items = collectionItems(col.id);
+    if (items.length && items.every(i => cache.owned.includes(i.id))) {
+      cache.owned.push(col.reward);
+      completed.push(col);
+      if (breakdown) breakdown.unlocks.push(col.reward);
+    }
+  }
+  return completed;
+}
+
 // ── Daily login ────────────────────────────────────────────────────────────
 
 export async function ensureDailyLogin() {
@@ -285,6 +301,8 @@ export async function grantMatchRewards({ room, players, guesses, me }) {
   }, breakdown);
   for (const c of breakdown.challenges) { breakdown.totalPicks += c.picks; }
 
+  grantCollectionRewards(breakdown);
+
   const after = levelFromXp(cache.xp);
   breakdown.after = { level: after.level, into: after.into, need: after.need };
   breakdown.picksBalance = cache.picks;
@@ -311,8 +329,9 @@ export function purchaseCosmetic(id) {
   cache.picks -= c.source.price;
   cache.owned.push(id);
   cache.equipped = { ...cache.equipped, [c.type]: id }; // auto-equip on unlock
+  const completed = grantCollectionRewards(null);
   save();
-  return { ok: true };
+  return { ok: true, completed };
 }
 
 export function equipCosmetic(id) {
