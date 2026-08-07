@@ -126,7 +126,9 @@ function CosmeticCard({ c, owned, equipped, onTap, justUnlocked, sourceText, pri
           </AvatarFrame>
         )}
         {c.type === 'title' && (
-          <span className={`relative inline-flex items-center h-5 px-2 rounded-full text-[10px] font-extrabold ${rar.chip} shadow-[0_2px_5px_-2px_rgba(0,0,0,0.6)]`}>{c.name}</span>
+          <span className={`relative inline-flex items-center max-w-full h-5 px-2 rounded-full text-[10px] font-extrabold ${rar.chip} shadow-[0_2px_5px_-2px_rgba(0,0,0,0.6)]`}>
+            <span className="truncate">{c.name}</span>
+          </span>
         )}
         {c.type === 'nameColor' && (
           <span className={`relative w-full text-sm font-extrabold truncate ${c.cls}`}>{playerName || 'Name'}</span>
@@ -189,7 +191,9 @@ function HeroFeatured({ c, profile, onTap, featuredLabel }) {
           </span>
         )}
         {c.type === 'title' && (
-          <span className={`shrink-0 inline-flex items-center h-7 px-3 rounded-full text-xs font-extrabold ${rar.chip} shadow-[0_4px_10px_-4px_rgba(0,0,0,0.6)]`}>{c.name}</span>
+          <span className={`inline-flex items-center max-w-[45%] h-7 px-3 rounded-full text-xs font-extrabold ${rar.chip} shadow-[0_4px_10px_-4px_rgba(0,0,0,0.6)]`}>
+            <span className="truncate">{c.name}</span>
+          </span>
         )}
         {c.type === 'nameColor' && (
           <span className={`shrink-0 text-xl font-extrabold ${c.cls} drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]`}>{profile.display_name || 'Name'}</span>
@@ -426,8 +430,8 @@ export default function Profile() {
               style={{ background: 'radial-gradient(70% 70% at 50% 0%, rgba(157,92,255,0.09), transparent 70%)' }} />
             <p className={`relative text-lg font-extrabold leading-tight truncate ${nameColor?.cls || 'text-white'}`}>{profile.display_name || '—'}</p>
             {title && (
-              <span className={`relative inline-flex items-center h-5 mt-1 px-2 rounded-full text-[10px] font-extrabold ${RARITIES[title.rarity].chip}`}>
-                {title.name}
+              <span className={`relative inline-flex items-center max-w-full h-5 mt-1 px-2 rounded-full text-[10px] font-extrabold ${RARITIES[title.rarity].chip}`}>
+                <span className="truncate">{title.name}</span>
               </span>
             )}
             {/* XP bar */}

@@ -73,8 +73,8 @@ export default function PlayerCardModal({ player, profile, onClose, onKick }) {
             {player.display_name}
           </p>
           {title && (
-            <span className={`relative inline-flex items-center h-5 mt-1 px-2 rounded-full text-[10px] font-extrabold ${RARITIES[title.rarity].chip}`}>
-              {title.name}
+            <span className={`relative inline-flex items-center max-w-full h-5 mt-1 px-2 rounded-full text-[10px] font-extrabold ${RARITIES[title.rarity].chip}`}>
+              <span className="truncate">{title.name}</span>
             </span>
           )}
 

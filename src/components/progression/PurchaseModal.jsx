@@ -72,7 +72,9 @@ function Artwork({ c, profile }) {
     return (
       <span className="flex flex-col items-center gap-1.5">
         <span className={`text-xl font-extrabold ${myNameCls || 'text-white'}`}>{myName}</span>
-        <span className={`inline-flex items-center h-5 px-2 rounded-full text-[10px] font-extrabold ${RARITIES[c.rarity].chip}`}>{c.name}</span>
+        <span className={`inline-flex items-center max-w-full h-5 px-2 rounded-full text-[10px] font-extrabold ${RARITIES[c.rarity].chip}`}>
+          <span className="truncate">{c.name}</span>
+        </span>
       </span>
     );
   }
