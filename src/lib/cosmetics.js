@@ -200,7 +200,7 @@ export const TITLES = [
   { id: 't_lucky',     type: 'title', name: 'Lucky Guesser',    rarity: 'rare',      source: { type: 'shop', price: 300 } },
   { id: 't_sleuth',    type: 'title', name: 'Sharp Sleuth',     rarity: 'rare',      source: { type: 'level', level: 4 } },
   { id: 't_mind',      type: 'title', name: 'Mind Reader',      rarity: 'epic',      source: { type: 'shop', price: 800 } },
-  { id: 't_untouch',   type: 'title', name: 'Untouchable',      rarity: 'epic',      source: { type: 'level', level: 15 } },
+  { id: 't_untouch',   type: 'title', name: 'The Untouchable',  rarity: 'epic',      source: { type: 'level', level: 15 } },
   { id: 't_elite',     type: 'title', name: 'Elite',            rarity: 'epic',      source: { type: 'level', level: 22 } },
   { id: 't_legend',    type: 'title', name: 'Living Legend',    rarity: 'legendary', source: { type: 'shop', price: 2000 } },
   { id: 't_guessmstr', type: 'title', name: 'Guess Master',     rarity: 'legendary', source: { type: 'level', level: 28 } },

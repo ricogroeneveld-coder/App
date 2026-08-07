@@ -126,8 +126,9 @@ function CosmeticCard({ c, owned, equipped, onTap, justUnlocked, sourceText, pri
           </AvatarFrame>
         )}
         {c.type === 'title' && (
-          <span className={`relative inline-flex items-center max-w-full h-5 px-2 rounded-full text-[10px] font-extrabold ${rar.chip} shadow-[0_2px_5px_-2px_rgba(0,0,0,0.6)]`}>
-            <span className="truncate">{c.name}</span>
+          <span className={`relative w-full text-[11px] font-extrabold leading-tight ${rar.text}`}
+            style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            {c.name}
           </span>
         )}
         {c.type === 'nameColor' && (
