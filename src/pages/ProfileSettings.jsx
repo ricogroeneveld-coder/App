@@ -5,7 +5,7 @@ import { MysteryPlayer, MysteryRoom } from '@/api/db';
 import { supabase } from '@/lib/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { ArrowLeft, Trash2, AlertTriangle, Globe, DoorOpen, Volume2, LogOut, LogIn } from 'lucide-react';
+import { ArrowLeft, Trash2, AlertTriangle, Globe, DoorOpen, Volume2, LogOut, LogIn, RotateCcw, Shield } from 'lucide-react';
 import { getGuestIdentity, clearGuestIdentity } from '@/lib/guestIdentity';
 import { useAuth } from '@/lib/AuthContext';
 import { useLang } from '@/lib/LanguageContext';
@@ -14,6 +14,7 @@ import { isSoundEnabled, setSoundEnabled, playCorrect } from '@/lib/sounds';
 import GameBackground from '@/components/GameBackground';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import { getProfile, loadProfile } from '@/lib/playerProfile';
+import { restorePurchases } from '@/lib/payments';
 
 export default function ProfileSettings() {
   const navigate = useNavigate();
@@ -26,8 +27,22 @@ export default function ProfileSettings() {
   const [leavingGame, setLeavingGame] = useState(false);
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
   const [cosmeticProfile, setCosmeticProfile] = useState(getProfile());
+  const [restoring, setRestoring] = useState(false);
   useEffect(() => { let live = true; loadProfile().then(p => { if (live) setCosmeticProfile(p); }); return () => { live = false; }; }, []);
   const isRegistered = !!currentUser;
+
+  // Apple requires a visible "restore purchases" for non-consumable IAP.
+  const handleRestore = async () => {
+    if (restoring) return;
+    setRestoring(true);
+    try {
+      const res = await restorePurchases();
+      if (res.ok) toast({ title: t.restoreDone });
+      else toast({ title: t.purchaseUnavailable });
+    } finally {
+      setRestoring(false);
+    }
+  };
 
   const toggleSound = (next) => {
     setSoundOn(next);
@@ -228,6 +243,31 @@ export default function ProfileSettings() {
             onCheckedChange={toggleSound}
             className="select-none-interactive"
           />
+        </motion.div>
+
+        {/* Purchases & privacy */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="glass-panel rounded-[20px] p-4 space-y-3"
+        >
+          <div className="flex items-center gap-3">
+            <RotateCcw className="w-5 h-5 text-violet-400 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-white">{t.restorePurchases}</p>
+              <p className="text-slate-400 text-sm">{t.restorePurchasesDesc}</p>
+            </div>
+            <button onClick={handleRestore} disabled={restoring}
+              className="shrink-0 h-11 px-4 rounded-xl bg-white/5 ring-1 ring-white/15 text-sm font-bold text-slate-200 hover:bg-white/10 transition-all duration-150 active:scale-[0.98]">
+              {restoring ? '…' : t.restoreBtn}
+            </button>
+          </div>
+          <a href="/privacy.html" target="_blank" rel="noopener"
+            className="flex items-center gap-3 pt-3 border-t border-white/10 text-sm font-semibold text-slate-300 hover:text-white transition min-h-[44px]">
+            <Shield className="w-5 h-5 text-violet-400 flex-shrink-0" />
+            {t.privacyPolicy}
+          </a>
         </motion.div>
 
         {/* Leave active game */}

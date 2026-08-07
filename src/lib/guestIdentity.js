@@ -5,9 +5,11 @@ const KEY_NAME = 'mystery_guest_name';
 // Hard cap so names always fit player tiles, scoreboards, and player cards.
 export const MAX_NAME_LENGTH = 14;
 
-// Trim, collapse inner whitespace runs, and cap the length.
+import { cleanText } from './cleanText';
+
+// Trim, collapse inner whitespace runs, filter profanity, cap the length.
 export function normalizeName(name) {
-  return (name || '').replace(/\s+/g, ' ').trim().slice(0, MAX_NAME_LENGTH).trim();
+  return cleanText((name || '').replace(/\s+/g, ' ').trim()).slice(0, MAX_NAME_LENGTH).trim();
 }
 
 function generateId() {

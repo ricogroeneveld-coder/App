@@ -6,6 +6,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Lock, Check, Clock, Search, Pencil, ChevronsDown, ArrowLeft } from 'lucide-react';
 import { WORD_LISTS, WORD_LISTS_NL, PREMIUM_WORD_LISTS, shortCategory } from '@/lib/wordLists';
 import { useLang } from '@/lib/LanguageContext';
+import { cleanText } from '@/lib/cleanText';
 import GameBackground from '@/components/GameBackground';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import BannerArt from '@/components/progression/BannerArt';
@@ -38,7 +39,7 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
   );
 
   const submitWord = async () => {
-    const displayWord = isCustom ? customInput.trim() : selected;
+    const displayWord = isCustom ? cleanText(customInput.trim()) : selected;
     if (!displayWord) { toast({ title: isCustom ? 'Enter your word first' : 'Pick a word first', variant: 'destructive' }); return; }
     setSubmitting(true);
     try {

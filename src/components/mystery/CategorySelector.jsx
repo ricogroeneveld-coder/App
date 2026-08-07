@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Check, ChevronRight, Lock, Sparkles } from 'lucide-react';
 import { CATEGORIES, CATEGORY_EMOJIS, PACKS, shortCategory } from '@/lib/wordLists';
-import { isPackUnlocked, unlockPack } from '@/lib/premiumPacks';
+import { isPackUnlocked } from '@/lib/premiumPacks';
+import { purchasePack, purchasesAvailable } from '@/lib/payments';
+import { useToast } from '@/components/ui/use-toast';
 import { useLang } from '@/lib/LanguageContext';
 import GameBackground from '@/components/GameBackground';
 
@@ -31,8 +33,10 @@ function SelectionCard({ emoji, label, selected, onClick }) {
 
 export default function CategorySelector({ selectedCategory, onSelect, onClose }) {
   const { t } = useLang();
+  const { toast } = useToast();
   const [view, setView] = useState('categories'); // 'categories' | 'packPreview' | 'packCategories'
   const [activePack, setActivePack] = useState(null);
+  const [buying, setBuying] = useState(false);
   const [, forceRerender] = useState(0);
 
   const openPack = (pack) => {
@@ -46,10 +50,25 @@ export default function CategorySelector({ selectedCategory, onSelect, onClose }
     setActivePack(null);
   };
 
-  const handlePurchase = () => {
-    unlockPack(activePack.id);
-    forceRerender(n => n + 1);
-    setView('packCategories');
+  // Real-money packs go through Apple In-App Purchase (App Store rule
+  // 3.1.1). On builds without a store (plain web), the button explains that
+  // packs unlock in the iOS app instead of faking a charge.
+  const handlePurchase = async () => {
+    if (buying) return;
+    setBuying(true);
+    try {
+      const res = await purchasePack(activePack.id);
+      if (res.ok) {
+        forceRerender(n => n + 1);
+        setView('packCategories');
+      } else if (res.reason === 'unavailable') {
+        toast({ title: t.purchaseUnavailable });
+      } else if (res.reason !== 'cancelled') {
+        toast({ title: t.purchaseFailed, variant: 'destructive' });
+      }
+    } finally {
+      setBuying(false);
+    }
   };
 
   return (
@@ -144,11 +163,16 @@ export default function CategorySelector({ selectedCategory, onSelect, onClose }
                 {t.unlockForever}
               </div>
 
-              <button onClick={handlePurchase}
+              <button onClick={handlePurchase} disabled={buying}
                 className="gold-btn w-full h-14 mb-2.5 rounded-[20px] flex items-center justify-center gap-2">
                 <Lock className="relative w-4 h-4 text-[#2c1500]" />
-                <span className="relative text-sm font-extrabold tracking-tight text-[#2c1500] drop-shadow-[0_1px_0_rgba(255,255,255,0.25)]">{t.unlockFor}</span>
+                <span className="relative text-sm font-extrabold tracking-tight text-[#2c1500] drop-shadow-[0_1px_0_rgba(255,255,255,0.25)]">
+                  {buying ? t.purchasing : t.unlockFor}
+                </span>
               </button>
+              {!purchasesAvailable() && (
+                <p className="text-center text-[11px] font-semibold text-slate-400 mb-2.5">{t.purchaseUnavailable}</p>
+              )}
               <button onClick={handleBack}
                 className="w-full h-11 rounded-2xl bg-gradient-to-b from-white/[0.06] to-black/10 ring-1 ring-white/10 shadow-[0_1px_2px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] text-sm font-bold text-slate-300 transition-all duration-150 active:scale-[0.98] hover:bg-white/10">
                 {t.cancel}

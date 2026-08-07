@@ -3,6 +3,7 @@ import { MysteryChat } from '@/api/db';
 import { Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLang } from '@/lib/LanguageContext';
+import { cleanText } from '@/lib/cleanText';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import usePeerProfiles from '@/components/progression/usePeerProfiles';
 
@@ -55,7 +56,7 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
   }, [messages]);
 
   const send = async () => {
-    const trimmed = text.trim();
+    const trimmed = cleanText(text.trim());
     if (!trimmed || sending) return;
     setSending(true);
     const emote = extractEmote(trimmed);

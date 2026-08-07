@@ -154,7 +154,7 @@ export default function FinishedPhase({ players, guesses, room, me, roomCode }) 
       </div>
 
       {cardPlayer && (
-        <PlayerCardModal player={cardPlayer} profile={profiles[cardPlayer.user_id]} onClose={() => setCardPlayer(null)} />
+        <PlayerCardModal player={cardPlayer} profile={profiles[cardPlayer.user_id]} meId={me?.id} roomCode={roomCode} onClose={() => setCardPlayer(null)} />
       )}
     </div>
   );
