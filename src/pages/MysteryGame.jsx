@@ -9,12 +9,16 @@ import FinishedPhase from '@/components/mystery/FinishedPhase';
 import { getGuestIdentity } from '@/lib/guestIdentity';
 import GameBackground from '@/components/GameBackground';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
+import { useLang } from '@/lib/LanguageContext';
 
 const PLAYER_COLORS = ['#6366f1','#ec4899','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ef4444','#14b8a6','#f97316','#06b6d4','#84cc16','#a855f7'];
 
 export default function MysteryGame() {
   const { code } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { t } = useLang();
   const [room, setRoom] = useState(null);
   const [players, setPlayers] = useState([]);
   const [questions, setQuestions] = useState([]);
@@ -26,6 +30,9 @@ export default function MysteryGame() {
   // realtime channels are replaced and state is re-fetched.
   const [sessionEpoch, setSessionEpoch] = useState(0);
   const rejoiningRef = useRef(false);
+  // Whether we've had a player row during THIS visit — distinguishes a kick
+  // (row existed, then vanished) from a refresh (arrived with no row).
+  const hadRowRef = useRef(false);
 
   const roomCode = code?.toUpperCase();
 
@@ -92,16 +99,28 @@ export default function MysteryGame() {
 
   useEffect(() => {
     if (me && players.length) {
-      setMyPlayer(players.find(p => p.user_id === me.id) || null);
+      const mine = players.find(p => p.user_id === me.id) || null;
+      setMyPlayer(mine);
+      if (mine) hadRowRef.current = true;
     }
   }, [me, players]);
 
   // Refresh self-healing: reloading the page runs the beforeunload cleanup
   // below, which deletes our player row — so a lobby member who refreshes
   // would land in a lobby they're no longer part of. Quietly rejoin.
+  // Exception: if our row existed during this visit and then vanished, the
+  // host removed us — leave instead of silently rejoining.
   useEffect(() => {
-    if (loading || !room || room.status !== 'lobby' || !me) return;
+    if (loading || !room || !me) return;
+    if (room.status !== 'lobby' && room.status !== 'word_entry') return;
     if (players.some(p => p.user_id === me.id)) return;
+    if (hadRowRef.current) {
+      toast({ title: t.removedByHost, variant: 'destructive' });
+      navigate('/');
+      return;
+    }
+    // Fresh visitors can auto-join during lobby AND word entry — the game
+    // hasn't really begun until everyone locks a word in.
     if (players.length >= 12 || rejoiningRef.current) return;
     rejoiningRef.current = true;
     MysteryPlayer.create({
@@ -170,8 +189,11 @@ export default function MysteryGame() {
 
   // Player left (eliminated but not word_revealed) during active game — can rejoin
   const isEliminated = myPlayer?.is_eliminated && !myPlayer?.word_revealed && room.status === 'playing';
-  // Player was never in this game (joined via link after game started)
-  const isNotInRoom = !myPlayer && (room.status === 'playing' || room.status === 'word_entry');
+  // Player was never in this game (joined via link after it truly started).
+  // During word_entry the auto-join above handles fresh visitors... except a
+  // full room, which falls through to here.
+  const isNotInRoom = !myPlayer && !hadRowRef.current &&
+    (room.status === 'playing' || (room.status === 'word_entry' && players.length >= 12));
 
   if (isNotInRoom) {
     return (

@@ -14,6 +14,18 @@ function ctx() {
   return _ctx;
 }
 
+// Browsers only allow starting (or resuming) audio inside a user gesture,
+// and iOS re-suspends the context after interruptions. Sounds triggered by
+// realtime events (another player guessing, alerts) are NOT gestures — so
+// prime/resume the context on every tap to keep it running. This is why
+// sounds sometimes played and sometimes didn't.
+if (typeof window !== 'undefined') {
+  const unlock = () => { try { ctx(); } catch { /* ignore */ } };
+  window.addEventListener('pointerdown', unlock, { passive: true });
+  window.addEventListener('touchend', unlock, { passive: true });
+  window.addEventListener('keydown', unlock);
+}
+
 export function isSoundEnabled() {
   try { return localStorage.getItem('sound_enabled') !== 'false'; } catch { return true; }
 }

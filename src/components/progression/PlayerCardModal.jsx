@@ -4,12 +4,15 @@ import { X } from 'lucide-react';
 import PlayerAvatar from './PlayerAvatar';
 import BannerArt from './BannerArt';
 import { cosmeticById, RARITIES } from '@/lib/cosmetics';
+import { useLang } from '@/lib/LanguageContext';
 
 /**
  * Premium player card — banner, emblem, level, title, and lifetime stats.
  * Works with a partial or missing profile (pre-migration players).
+ * Pass onKick to show a host-only "remove from game" action.
  */
-export default function PlayerCardModal({ player, profile, onClose }) {
+export default function PlayerCardModal({ player, profile, onClose, onKick }) {
+  const { t } = useLang();
   if (!player) return null;
   const banner = profile ? cosmeticById(profile.equipped?.banner) : null;
   const title = profile ? cosmeticById(profile.equipped?.title) : null;
@@ -60,6 +63,12 @@ export default function PlayerCardModal({ player, profile, onClose }) {
           </div>
           {!profile && (
             <p className="text-[11px] text-slate-500 font-medium mt-3 text-center">No profile stats yet.</p>
+          )}
+          {onKick && (
+            <button onClick={onKick}
+              className="w-full h-11 mt-3 rounded-xl bg-rose-500/15 ring-1 ring-rose-400/40 text-rose-300 text-sm font-bold hover:bg-rose-500/25 transition-all duration-150 active:scale-[0.98]">
+              {t.removeFromGame}
+            </button>
           )}
         </div>
       </motion.div>

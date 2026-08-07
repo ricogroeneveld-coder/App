@@ -450,7 +450,9 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
             {/* Question history — its own frame, scrolls internally */}
             <div className="glass-card flex-1 min-h-0 p-2.5 flex flex-col">
               <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar space-y-2" style={{ overscrollBehaviorY: 'contain' }}>
-                {[...questions].reverse().map(q => (
+                {/* Hints live in the notebook (per player), not in the
+                    question history — mixing them in here read as clutter. */}
+                {[...normalQuestions].reverse().map(q => (
                   <QuestionCard key={q.id} question={q} players={players} me={me} />
                 ))}
               </div>

@@ -299,7 +299,11 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
       </div>
 
       {cardPlayer && (
-        <PlayerCardModal player={cardPlayer} profile={profiles[cardPlayer.user_id]} onClose={() => setCardPlayer(null)} />
+        <PlayerCardModal player={cardPlayer} profile={profiles[cardPlayer.user_id]} onClose={() => setCardPlayer(null)}
+          onKick={isHost && cardPlayer.user_id !== me?.id ? async () => {
+            try { await MysteryPlayer.delete(cardPlayer.id); } catch (e) { console.error(e); }
+            setCardPlayer(null);
+          } : undefined} />
       )}
     </div>
   );

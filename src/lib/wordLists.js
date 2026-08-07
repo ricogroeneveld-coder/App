@@ -21,6 +21,8 @@ const CATEGORY_SHORT = {
   'World Capitals': 'Capitals',
   'Famous Landmarks': 'Landmarks',
   'Fast Food Chains': 'Fast Food',
+  'Snacks & Candy': 'Snacks',
+  'World Dishes': 'Dishes',
   'Marvel/DC Heroes': 'Superheroes',
   'Marvel/DC Villains': 'Villains',
   'Harry Potter Characters': 'Harry Potter',
@@ -96,6 +98,46 @@ export const WORD_LISTS_NL = {
     'Vaticaanstad', 'Golden Gate Bridge', 'Tower Bridge', 'Christusbeeld', 'Scheve Toren van Pisa',
     'Hagia Sophia', 'Trevi Fontein', 'Buckingham Palace', 'Kasteel Neuschwanstein', 'Noorderlicht'
   ],
+  Fruits: [
+    'Appel', 'Banaan', 'Sinaasappel', 'Aardbei', 'Ananas',
+    'Mango', 'Watermeloen', 'Druif', 'Kiwi', 'Perzik',
+    'Peer', 'Kers', 'Bosbes', 'Framboos', 'Citroen',
+    'Limoen', 'Kokosnoot', 'Papaja', 'Granaatappel', 'Vijg',
+    'Pruim', 'Abrikoos', 'Meloen', 'Drakenfruit', 'Passievrucht',
+    'Lychee', 'Grapefruit', 'Braam', 'Nectarine', 'Avocado'
+  ],
+  Vegetables: [
+    'Wortel', 'Aardappel', 'Tomaat', 'Komkommer', 'Broccoli',
+    'Bloemkool', 'Spinazie', 'Sla', 'Ui', 'Knoflook',
+    'Paprika', 'Courgette', 'Aubergine', 'Pompoen', 'Maïs',
+    'Doperwten', 'Sperzieboon', 'Champignon', 'Radijs', 'Rode biet',
+    'Kool', 'Boerenkool', 'Bleekselderij', 'Prei', 'Asperge',
+    'Zoete aardappel', 'Spruitjes', 'Artisjok', 'Bosui', 'Tuinkers'
+  ],
+  'Snacks & Candy': [
+    'Popcorn', 'Chips', 'Pretzel', 'Nachos', 'Chocoladereep',
+    'Gummybeertjes', 'Lolly', 'Suikerspin', 'Drop', 'Marshmallow',
+    'Jelly Beans', 'Zuurstok', 'Kauwgom', 'Karamel', 'Fudge',
+    'Toffee', 'M&M\'s', 'Skittles', 'Oreo', 'Doritos',
+    'Pringles', 'Cheetos', 'Studentenhaver', 'Mueslireep', 'Rijstwafel',
+    'Crackers', 'Waterijsje', 'Sour Patch Kids', 'Kinder Surprise', 'Haribo'
+  ],
+  Desserts: [
+    'IJs', 'Chocoladetaart', 'Cheesecake', 'Appeltaart', 'Brownie',
+    'Cupcake', 'Donut', 'Pannenkoeken', 'Wafels', 'Tiramisu',
+    'Crème Brûlée', 'Macaron', 'Éclair', 'Pudding', 'Chocolademousse',
+    'Koekje', 'Muffin', 'Bananensplit', 'Churros', 'Baklava',
+    'Gelato', 'Sorbet', 'Panna Cotta', 'Vla', 'Fruitsalade',
+    'Worteltaart', 'Red Velvet-taart', 'Citroentaart', 'Kaneelbroodje', 'Pavlova'
+  ],
+  Drinks: [
+    'Koffie', 'Thee', 'Warme chocolademelk', 'Sinaasappelsap', 'Appelsap',
+    'Limonade', 'IJsthee', 'Milkshake', 'Smoothie', 'Cola',
+    'Energiedrank', 'Bruiswater', 'Melk', 'Chocolademelk', 'Bubble Tea',
+    'Espresso', 'Cappuccino', 'Latte', 'Groene thee', 'Kokoswater',
+    'Root Beer', 'Ginger Ale', 'Bier', 'Wijn', 'Champagne',
+    'Cocktail', 'Vruchtenpunch', 'Slush', 'Kombucha', 'Matcha'
+  ],
 };
 
 export const PACKS = [
@@ -128,6 +170,12 @@ export const PACKS = [
     name: 'Fantasy Pack',
     emoji: '🦸',
     categories: ['Pokémon', 'Disney Characters', 'Marvel/DC Heroes', 'Marvel/DC Villains', 'Harry Potter Characters', 'Star Wars Characters']
+  },
+  {
+    id: 'food',
+    name: 'Food Pack',
+    emoji: '🍔',
+    categories: ['Fruits', 'Vegetables', 'Snacks & Candy', 'Desserts', 'Drinks', 'World Dishes']
   }
 ];
 
@@ -432,6 +480,56 @@ export const PREMIUM_WORD_LISTS = {
     'Kylo Ren', 'Rey', 'Finn', 'Poe Dameron', 'The Mandalorian',
     'Grogu', 'Ahsoka Tano', 'Count Dooku', 'Darth Maul', 'General Grievous',
     'Jabba the Hutt', 'Lando Calrissian', 'BB-8', 'Grand Admiral Thrawn', 'Jango Fett'
+  ],
+
+  // ── Food Pack ─────────────────────────────────────────────────────────────
+  Fruits: [
+    'Apple', 'Banana', 'Orange', 'Strawberry', 'Pineapple',
+    'Mango', 'Watermelon', 'Grape', 'Kiwi', 'Peach',
+    'Pear', 'Cherry', 'Blueberry', 'Raspberry', 'Lemon',
+    'Lime', 'Coconut', 'Papaya', 'Pomegranate', 'Fig',
+    'Plum', 'Apricot', 'Melon', 'Dragon Fruit', 'Passion Fruit',
+    'Lychee', 'Grapefruit', 'Blackberry', 'Nectarine', 'Avocado'
+  ],
+  Vegetables: [
+    'Carrot', 'Potato', 'Tomato', 'Cucumber', 'Broccoli',
+    'Cauliflower', 'Spinach', 'Lettuce', 'Onion', 'Garlic',
+    'Bell Pepper', 'Zucchini', 'Eggplant', 'Pumpkin', 'Corn',
+    'Peas', 'Green Bean', 'Mushroom', 'Radish', 'Beetroot',
+    'Cabbage', 'Kale', 'Celery', 'Leek', 'Asparagus',
+    'Sweet Potato', 'Brussels Sprouts', 'Artichoke', 'Spring Onion', 'Cress'
+  ],
+  'Snacks & Candy': [
+    'Popcorn', 'Chips', 'Pretzel', 'Nachos', 'Chocolate Bar',
+    'Gummy Bears', 'Lollipop', 'Cotton Candy', 'Licorice', 'Marshmallow',
+    'Jelly Beans', 'Candy Cane', 'Bubblegum', 'Caramel', 'Fudge',
+    'Toffee', 'M&M\'s', 'Skittles', 'Oreo', 'Doritos',
+    'Pringles', 'Cheetos', 'Trail Mix', 'Granola Bar', 'Rice Cake',
+    'Crackers', 'Popsicle', 'Sour Patch Kids', 'Kinder Surprise', 'Haribo'
+  ],
+  Desserts: [
+    'Ice Cream', 'Chocolate Cake', 'Cheesecake', 'Apple Pie', 'Brownie',
+    'Cupcake', 'Donut', 'Pancakes', 'Waffles', 'Tiramisu',
+    'Crème Brûlée', 'Macaron', 'Éclair', 'Pudding', 'Chocolate Mousse',
+    'Cookie', 'Muffin', 'Banana Split', 'Churros', 'Baklava',
+    'Gelato', 'Sorbet', 'Panna Cotta', 'Custard', 'Fruit Salad',
+    'Carrot Cake', 'Red Velvet Cake', 'Lemon Tart', 'Cinnamon Roll', 'Pavlova'
+  ],
+  Drinks: [
+    'Coffee', 'Tea', 'Hot Chocolate', 'Orange Juice', 'Apple Juice',
+    'Lemonade', 'Iced Tea', 'Milkshake', 'Smoothie', 'Cola',
+    'Energy Drink', 'Sparkling Water', 'Milk', 'Chocolate Milk', 'Bubble Tea',
+    'Espresso', 'Cappuccino', 'Latte', 'Green Tea', 'Coconut Water',
+    'Root Beer', 'Ginger Ale', 'Beer', 'Wine', 'Champagne',
+    'Cocktail', 'Fruit Punch', 'Slushy', 'Kombucha', 'Matcha'
+  ],
+  'World Dishes': [
+    'Pizza', 'Sushi', 'Tacos', 'Carbonara', 'Ramen',
+    'Pad Thai', 'Paella', 'Curry', 'Burrito', 'Lasagna',
+    'Falafel', 'Hummus', 'Dim Sum', 'Pho', 'Kebab',
+    'Poke Bowl', 'Fish and Chips', 'Croissant', 'Bibimbap', 'Butter Chicken',
+    'Couscous', 'Gyros', 'Schnitzel', 'Goulash', 'Dumplings',
+    'Spring Rolls', 'Risotto', 'Fondue', 'Nasi Goreng', 'Stamppot'
   ]
 };
 

@@ -100,22 +100,26 @@ export default function Home() {
       const rooms = await MysteryRoom.filter({ room_code: code });
       if (!rooms?.length) { toast({ title: 'Room not found', variant: 'destructive' }); return; }
       const room = rooms[0];
-      if (room.status !== 'lobby') { toast({ title: 'Game already started', variant: 'destructive' }); return; }
+      // Players who are still part of this game (left the app, lost
+      // connection, phone died) can always come back in — only genuinely
+      // new players are blocked once the game is underway.
       const existing = await MysteryPlayer.filter({ room_code: code, user_id: guest.id });
-      if (!existing?.length) {
-        const players = await MysteryPlayer.filter({ room_code: code });
-        if (players.length >= 12) { toast({ title: 'Room is full (max 12)', variant: 'destructive' }); return; }
-        await MysteryPlayer.create({
-          room_code: code,
-          user_id: guest.id,
-          display_name: guest.name,
-          score: 0,
-          word_submitted: false,
-          word_revealed: false,
-          is_eliminated: false,
-          color: PLAYER_COLORS[players.length % PLAYER_COLORS.length]
-        });
+      if (existing?.length) { navigate(`/mystery/${code}`); return; }
+      if (room.status !== 'lobby' && room.status !== 'word_entry') {
+        toast({ title: 'Game already started', variant: 'destructive' }); return;
       }
+      const players = await MysteryPlayer.filter({ room_code: code });
+      if (players.length >= 12) { toast({ title: 'Room is full (max 12)', variant: 'destructive' }); return; }
+      await MysteryPlayer.create({
+        room_code: code,
+        user_id: guest.id,
+        display_name: guest.name,
+        score: 0,
+        word_submitted: false,
+        word_revealed: false,
+        is_eliminated: false,
+        color: PLAYER_COLORS[players.length % PLAYER_COLORS.length]
+      });
       navigate(`/mystery/${code}`);
     } catch (e) {
       toast({ title: 'Failed to join', description: e.message, variant: 'destructive' });

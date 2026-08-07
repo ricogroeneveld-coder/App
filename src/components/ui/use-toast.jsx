@@ -2,7 +2,10 @@
 import { useState, useEffect } from "react";
 
 const TOAST_LIMIT = 20;
-const TOAST_REMOVE_DELAY = 5000;
+// How long a toast stays on screen before it dismisses itself.
+const TOAST_AUTO_DISMISS = 3500;
+// How long after dismissal (exit animation) before removal from the DOM.
+const TOAST_REMOVE_DELAY = 1000;
 
 const actionTypes = {
   ADD_TOAST: "ADD_TOAST",
@@ -133,6 +136,9 @@ function toast({ ...props }) {
       },
     },
   });
+
+  // Auto-dismiss — alerts should never require a manual close.
+  setTimeout(dismiss, TOAST_AUTO_DISMISS);
 
   return {
     id,
