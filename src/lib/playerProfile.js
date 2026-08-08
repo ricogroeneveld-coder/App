@@ -254,9 +254,15 @@ export async function grantMatchRewards({ room, players, guesses, me }) {
   const myPlayer = players.find(p => p.user_id === me.id);
   if (!myPlayer) return null;
 
-  const sorted = [...players].sort((a, b) => (b.score || 0) - (a.score || 0));
-  const topScore = sorted[0]?.score || 0;
-  const isWinner = (myPlayer.score || 0) === topScore && players.length > 1;
+  // Winner = best of THIS round only. p.score accumulates across "Play
+  // Again" rounds, but playAgain wipes the guesses table, so counting the
+  // correct guesses currently in it gives exactly this round's points
+  // (mirrors FinishedPhase's winner logic).
+  const roundScore = {};
+  players.forEach(p => { roundScore[p.user_id] = 0; });
+  guesses.forEach(g => { if (g.correct && g.guesser_id in roundScore) roundScore[g.guesser_id] += 1; });
+  const topScore = Math.max(0, ...Object.values(roundScore));
+  const isWinner = (roundScore[me.id] || 0) === topScore && players.length > 1;
   const myCorrect = guesses.filter(g => g.guesser_id === me.id && g.correct).length;
   const isHost = room.host_id === me.id;
   const perfect = isWinner && myCorrect >= players.length - 1 && players.length > 1;

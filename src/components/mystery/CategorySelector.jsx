@@ -188,7 +188,7 @@ export default function CategorySelector({ selectedCategory, onSelect, onClose }
               </div>
               <div className="grid grid-cols-2 gap-2">
                 {activePack.categories.map(cat => (
-                  <SelectionCard key={cat} emoji="⭐" label={cat}
+                  <SelectionCard key={cat} emoji={activePack.emoji} label={cat}
                     selected={selectedCategory === cat} onClick={() => onSelect(cat)} />
                 ))}
               </div>

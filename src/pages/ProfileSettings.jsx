@@ -279,7 +279,7 @@ export default function ProfileSettings() {
               {restoring ? '…' : t.restoreBtn}
             </button>
           </div>
-          <a href="/privacy.html" target="_blank" rel="noopener"
+          <a href="https://jinnieoclock.com/whatsmypick/" target="_blank" rel="noopener"
             className="flex items-center gap-3 pt-3 border-t border-white/10 text-sm font-semibold text-slate-300 hover:text-white transition min-h-[44px]">
             <Shield className="w-5 h-5 text-violet-400 flex-shrink-0" />
             {t.privacyPolicy}

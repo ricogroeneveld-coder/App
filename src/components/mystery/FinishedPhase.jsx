@@ -28,10 +28,20 @@ export default function FinishedPhase({ players, guesses, room, me, roomCode }) 
     // Grant exactly once per results screen — the store is idempotent per room anyway.
      
   }, [room?.id]);
-  const sorted = [...players].sort((a, b) => (b.score || 0) - (a.score || 0));
-  const topScore = sorted[0]?.score || 0;
-  const winners = sorted.filter(p => (p.score || 0) === topScore);
+  // p.score accumulates across "Play Again" rounds, but each round crowns its
+  // OWN winner. playAgain wipes the room's guesses, so this round's points are
+  // exactly the correct guesses currently in the table (+1 each, see
+  // GuessModal). Cumulative score only breaks sorting ties and shows as
+  // "Total" alongside.
+  const roundScore = {};
+  players.forEach(p => { roundScore[p.user_id] = 0; });
+  guesses.forEach(g => { if (g.correct && g.guesser_id in roundScore) roundScore[g.guesser_id] += 1; });
+  const sorted = [...players].sort((a, b) =>
+    (roundScore[b.user_id] - roundScore[a.user_id]) || ((b.score || 0) - (a.score || 0)));
+  const topScore = roundScore[sorted[0]?.user_id] || 0;
+  const winners = sorted.filter(p => roundScore[p.user_id] === topScore);
   const isWinner = winners.some(p => p.user_id === me?.id);
+  const multiRound = players.some(p => (p.score || 0) !== roundScore[p.user_id]);
   const isHost = room.host_id === me?.id;
 
   const playAgain = async () => {
@@ -106,8 +116,8 @@ export default function FinishedPhase({ players, guesses, room, me, roomCode }) 
 
         <div className="glass-card p-3 space-y-1.5 mb-4">
           {sorted.map((p, i) => {
-            const pScore = p.score || 0;
-            const rank = sorted.filter(o => (o.score || 0) > pScore).length + 1;
+            const pScore = roundScore[p.user_id] || 0;
+            const rank = sorted.filter(o => (roundScore[o.user_id] || 0) > pScore).length + 1;
             const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}`;
             const isTop = pScore === topScore;
             return (
@@ -123,7 +133,12 @@ export default function FinishedPhase({ players, guesses, room, me, roomCode }) 
                   <p className={`font-bold text-sm truncate leading-tight ${isTop ? 'text-amber-200' : ''}`}>{p.display_name}</p>
                   <p className="text-[11px] text-slate-400 truncate">{t.secret}: <span className="text-slate-200 font-medium">{toDisplayWord(p.secret_word, lang) || '—'}</span></p>
                 </div>
-                <p className={`text-lg font-extrabold shrink-0 ${isTop ? 'text-amber-300' : ''}`}>{p.score || 0} <span className="text-[10px] font-bold text-slate-400">{t.pts}</span></p>
+                <div className="text-right shrink-0">
+                  <p className={`text-lg font-extrabold ${isTop ? 'text-amber-300' : ''}`}>{pScore} <span className="text-[10px] font-bold text-slate-400">{t.pts}</span></p>
+                  {multiRound && (
+                    <p className="text-[10px] font-bold text-slate-400 leading-tight">{t.totalPts(p.score || 0)}</p>
+                  )}
+                </div>
               </motion.div>
             );
           })}
