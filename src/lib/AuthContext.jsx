@@ -10,18 +10,25 @@ import { supabase } from '@/lib/supabaseClient';
 // README for why that matters for App Store review.
 const AuthContext = createContext();
 
+// The profile-sync layer signs every device in ANONYMOUSLY (see
+// playerProfile.js ensureAuth) — that session is plumbing, not an account.
+// Only a real (email/OAuth) user counts as signed in here, otherwise the
+// Settings page would show "Registered Account"/"Sign Out" to every guest.
+const accountUser = (session) =>
+  session?.user && !session.user.is_anonymous ? session.user : null;
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+      setUser(accountUser(session));
       setIsLoadingAuth(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      setUser(accountUser(session));
     });
 
     return () => subscription.unsubscribe();
