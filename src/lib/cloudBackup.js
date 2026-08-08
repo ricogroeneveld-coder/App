@@ -18,6 +18,30 @@ const BACKUP_KEY = 'wmp_identity_backup_v1';
 const KEY_ID = 'mystery_guest_id';
 const KEY_NAME = 'mystery_guest_name';
 
+// A restored identity may only replace the local one while the player is
+// still PRISTINE: no display name set means they haven't passed the name
+// gate, and nothing meaningful (daily rewards, games, purchases) can have
+// happened yet — so adopting the iCloud profile loses nothing.
+function isPristine() {
+  return !localStorage.getItem(KEY_NAME);
+}
+
+async function tryRestore({ allowOverwrite = false } = {}) {
+  const { value } = await ICloudKV.get({ key: BACKUP_KEY });
+  if (!value) return false;
+  const backup = JSON.parse(value);
+  if (!backup?.guestId || !backup?.refreshToken || !backup?.accessToken) return false;
+  if (localStorage.getItem(KEY_ID) && !(allowOverwrite && isPristine())) return false;
+  const { error } = await supabase.auth.setSession({
+    access_token: backup.accessToken,
+    refresh_token: backup.refreshToken,
+  });
+  if (error) return false; // stale token → fresh start beats a read-only profile
+  localStorage.setItem(KEY_ID, backup.guestId);
+  if (backup.guestName) localStorage.setItem(KEY_NAME, backup.guestName);
+  return true;
+}
+
 // Call BEFORE anything reads the guest identity (see App.jsx boot gate):
 // getGuestIdentity() mints a fresh id on first read, which would orphan the
 // backup for good.
@@ -25,18 +49,29 @@ export async function restoreIdentityFromCloud() {
   if (!isNativeApp()) return;
   try {
     if (localStorage.getItem(KEY_ID)) return; // existing install — nothing to do
-    const { value } = await ICloudKV.get({ key: BACKUP_KEY });
-    if (!value) return;
-    const backup = JSON.parse(value);
-    if (!backup?.guestId || !backup?.refreshToken || !backup?.accessToken) return;
-    const { error } = await supabase.auth.setSession({
-      access_token: backup.accessToken,
-      refresh_token: backup.refreshToken,
-    });
-    if (error) return; // stale token → fresh start beats a read-only profile
-    localStorage.setItem(KEY_ID, backup.guestId);
-    if (backup.guestName) localStorage.setItem(KEY_NAME, backup.guestName);
+    await tryRestore();
   } catch { /* no iCloud, plugin missing, bad JSON — normal fresh start */ }
+}
+
+// Second chance for slow iCloud: after a reinstall the KV store may still be
+// pulling from Apple's servers when the boot-gate check runs. While the
+// player is still pristine (sitting at the name gate), keep listening for
+// the store's arrival plus a few timed re-checks; on success, reload — the
+// app boots straight into the restored profile.
+export function watchForLateBackup() {
+  if (!isNativeApp() || !isPristine()) return;
+  let done = false;
+  const attempt = async () => {
+    if (done || !isPristine()) return;
+    try {
+      if (await tryRestore({ allowOverwrite: true })) {
+        done = true;
+        window.location.reload();
+      }
+    } catch { /* keep waiting */ }
+  };
+  try { ICloudKV.addListener('changed', attempt); } catch { /* plugin missing */ }
+  [5000, 15000, 45000].forEach(ms => setTimeout(attempt, ms));
 }
 
 export async function backupIdentityNow() {

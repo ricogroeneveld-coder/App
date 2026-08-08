@@ -8,7 +8,7 @@ import ScrollToTop from './components/ScrollToTop';
 import { useEffect, useState } from 'react';
 import { devUnlockAll, devResetProfile } from '@/lib/playerProfile';
 import { configurePurchases } from '@/lib/payments';
-import { restoreIdentityFromCloud, startCloudBackup } from '@/lib/cloudBackup';
+import { restoreIdentityFromCloud, startCloudBackup, watchForLateBackup } from '@/lib/cloudBackup';
 import { isNativeApp } from '@/lib/platform';
 // Add page imports here
 import Home from '@/pages/Home';
@@ -102,7 +102,13 @@ function App() {
     Promise.race([
       restoreIdentityFromCloud(),
       new Promise(resolve => setTimeout(resolve, 3000)),
-    ]).finally(() => { if (live) setBooted(true); });
+    ]).finally(() => {
+      if (live) setBooted(true);
+      // iCloud may still be pulling the backup from Apple's servers — keep
+      // watching while the player sits at the name gate; a late arrival
+      // restores and reloads seamlessly.
+      watchForLateBackup();
+    });
     return () => { live = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

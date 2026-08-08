@@ -14,6 +14,23 @@ public class ICloudKVPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "set", returnType: CAPPluginReturnPromise),
     ]
 
+    // After a reinstall the local KV store starts EMPTY and iCloud pushes the
+    // real data asynchronously — often fast, but not always faster than app
+    // startup. Forward that arrival to JS so a missed restore can retry.
+    public override func load() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(kvChangedExternally(_:)),
+            name: NSUbiquitousKeyValueStore.didChangeExternallyNotification,
+            object: NSUbiquitousKeyValueStore.default
+        )
+        NSUbiquitousKeyValueStore.default.synchronize()
+    }
+
+    @objc private func kvChangedExternally(_ note: Notification) {
+        notifyListeners("changed", data: [:])
+    }
+
     @objc func get(_ call: CAPPluginCall) {
         guard let key = call.getString("key") else { call.reject("key required"); return }
         let store = NSUbiquitousKeyValueStore.default
