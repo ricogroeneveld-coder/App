@@ -308,13 +308,14 @@ function CollectionPanel({ col, profile, onTap, justUnlocked, onClose, t }) {
 }
 
 function ChallengeRow({ def, bucket }) {
+  const { t } = useLang();
   const progress = Math.min(bucket.progress[def.id] || 0, def.target);
   const done = !!bucket.claimed[def.id];
   return (
     <div className="glass-tile px-3 py-2">
       <div className="flex items-center justify-between mb-1">
         <span className={`text-xs font-bold ${done ? 'text-emerald-300' : 'text-white'}`}>
-          {done ? '✓ ' : ''}{def.name}
+          {done ? '✓ ' : ''}{t.challengeNames[def.id] || def.name}
         </span>
         <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-full bg-gradient-to-b from-[#ffcb45] to-[#e08e05] text-[#2c1500]">
           +{def.picks}

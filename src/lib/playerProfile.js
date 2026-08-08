@@ -221,7 +221,7 @@ function bumpChallenges(stats, breakdown) {
       if (!bucket.claimed[def.id] && (bucket.progress[def.id] || 0) >= def.target) {
         bucket.claimed[def.id] = true;
         cache.picks += def.picks;
-        breakdown.challenges.push({ name: def.name, picks: def.picks });
+        breakdown.challenges.push({ id: def.id, name: def.name, picks: def.picks });
         if (def.unlock && !cache.owned.includes(def.unlock)) {
           cache.owned.push(def.unlock);
           breakdown.unlocks.push(def.unlock);
@@ -241,15 +241,19 @@ export function challengeState() {
 }
 
 // ── Match rewards ──────────────────────────────────────────────────────────
-// Idempotent per room within a 30-minute window (covers refreshes on the
-// results screen; a genuine "Play Again" round later grants normally).
+// Idempotent per ROUND: "Play Again" reuses the same room, so the key
+// includes the round's last guess id (a game can only finish via a correct
+// guess, so it uniquely fingerprints the round). Refreshing the results
+// screen hits the same key and stays blocked; the next round has different
+// guesses and grants normally.
 
 export async function grantMatchRewards({ room, players, guesses, me }) {
   if (!room || !me?.id) return null;
   await loadProfile();
   const now = Date.now();
   const granted = cache.granted || (cache.granted = {});
-  if (granted[room.id] && now - granted[room.id] < 30 * 60 * 1000) return null;
+  const roundKey = `${room.id}:${guesses[guesses.length - 1]?.id || 'r0'}`;
+  if (granted[roundKey] && now - granted[roundKey] < 30 * 60 * 1000) return null;
 
   const myPlayer = players.find(p => p.user_id === me.id);
   if (!myPlayer) return null;
@@ -314,7 +318,7 @@ export async function grantMatchRewards({ room, players, guesses, me }) {
   breakdown.picksBalance = cache.picks;
 
   // Cap the granted map
-  granted[room.id] = now;
+  granted[roundKey] = now;
   const keys = Object.keys(granted);
   if (keys.length > 20) for (const k of keys.slice(0, keys.length - 20)) delete granted[k];
 

@@ -40,7 +40,7 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
 
   const submitWord = async () => {
     const displayWord = isCustom ? cleanText(customInput.trim()) : selected;
-    if (!displayWord) { toast({ title: isCustom ? 'Enter your word first' : 'Pick a word first', variant: 'destructive' }); return; }
+    if (!displayWord) { toast({ title: isCustom ? t.enterWordFirst : t.pickWordFirst, variant: 'destructive' }); return; }
     setSubmitting(true);
     try {
       // Always store the English word so AI/guessing logic works correctly

@@ -62,6 +62,11 @@ export default function Home() {
     if (!nameInput.trim()) { toast({ title: t.enterYourName, variant: 'destructive' }); return; }
     setGuestName(nameInput.trim());
     setNameSet(true);
+    // First session skips the mount-time daily check (no name yet) — grant
+    // the day-1 login reward now so the economy says hello right away.
+    ensureDailyLogin().then(res => {
+      if (res) toast({ title: `🎁 ${t.dailyReward}: +${res.picks} Picks` });
+    });
   };
 
   const generateCode = () => {

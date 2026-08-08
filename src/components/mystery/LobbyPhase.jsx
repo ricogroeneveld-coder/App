@@ -187,7 +187,7 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
             className="glass-card p-3">
             <div className="flex items-center gap-1.5 mb-1.5 px-1">
               <Users className="w-3.5 h-3.5 text-violet-300" />
-              <span className="text-xs font-bold text-slate-300">{players.length} / 12 players</span>
+              <span className="text-xs font-bold text-slate-300">{t.playersCount(players.length)}</span>
             </div>
             <div className="grid grid-cols-2 gap-1.5 max-h-[156px] overflow-y-auto hide-scrollbar" style={{ overscrollBehaviorY: 'none' }}>
               {players.map((p, i) => {

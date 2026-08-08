@@ -180,9 +180,9 @@ export default function MysteryGame() {
     >
       <GameBackground />
       <p className="text-5xl mb-4">🔍</p>
-      <p className="text-xl font-extrabold tracking-tight mb-1">Room not found</p>
-      <p className="text-slate-400 text-sm font-medium mb-6">Check the code and try again.</p>
-      <button onClick={() => navigate('/')} className="violet-btn h-11 px-6 text-sm font-bold">Back to Home</button>
+      <p className="text-xl font-extrabold tracking-tight mb-1">{t.roomNotFound}</p>
+      <p className="text-slate-400 text-sm font-medium mb-6">{t.checkCodeTryAgain}</p>
+      <button onClick={() => navigate('/')} className="violet-btn h-11 px-6 text-sm font-bold">{t.backToHome}</button>
     </div>
   );
 
@@ -199,9 +199,9 @@ export default function MysteryGame() {
       <div className="h-dvh overflow-hidden text-white flex flex-col items-center justify-center p-4 relative">
         <GameBackground />
         <p className="text-5xl mb-4">🔒</p>
-        <p className="text-xl font-extrabold tracking-tight mb-1">Game already started</p>
-        <p className="text-slate-400 text-sm font-medium mb-6 text-center">This game is in progress. You can join the next round!</p>
-        <button onClick={() => navigate('/')} className="violet-btn h-11 px-6 text-sm font-bold">Back to Home</button>
+        <p className="text-xl font-extrabold tracking-tight mb-1">{t.gameAlreadyStarted}</p>
+        <p className="text-slate-400 text-sm font-medium mb-6 text-center">{t.gameInProgressJoinNext}</p>
+        <button onClick={() => navigate('/')} className="violet-btn h-11 px-6 text-sm font-bold">{t.backToHome}</button>
       </div>
     );
   }
@@ -215,12 +215,12 @@ export default function MysteryGame() {
       <div className="h-dvh overflow-hidden text-white flex flex-col items-center justify-center p-4 relative">
         <GameBackground />
         <p className="text-5xl mb-4">👋</p>
-        <p className="text-xl font-extrabold tracking-tight mb-1">You left the game</p>
-        <p className="text-slate-400 text-sm font-medium mb-6">The game is still going. Want to rejoin?</p>
+        <p className="text-xl font-extrabold tracking-tight mb-1">{t.youLeftGame}</p>
+        <p className="text-slate-400 text-sm font-medium mb-6">{t.stillGoingRejoin}</p>
         <button onClick={handleRejoin} className="gold-btn h-12 px-8 rounded-2xl mb-3 flex items-center justify-center">
-          <span className="relative text-sm font-extrabold tracking-tight text-[#2c1500] drop-shadow-[0_1px_0_rgba(255,255,255,0.25)]">Rejoin Game</span>
+          <span className="relative text-sm font-extrabold tracking-tight text-[#2c1500] drop-shadow-[0_1px_0_rgba(255,255,255,0.25)]">{t.rejoinGame}</span>
         </button>
-        <button onClick={() => navigate('/')} className="text-slate-400 text-sm font-medium hover:text-white transition">Back to Home</button>
+        <button onClick={() => navigate('/')} className="text-slate-400 text-sm font-medium hover:text-white transition">{t.backToHome}</button>
       </div>
     );
   }

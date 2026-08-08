@@ -72,7 +72,7 @@ export default function RewardSummary({ breakdown }) {
         ))}
         {breakdown.challenges.map(c => (
           <div key={c.name} className="flex items-center justify-between text-xs">
-            <span className="text-emerald-300 font-medium">✓ {c.name}</span>
+            <span className="text-emerald-300 font-medium">✓ {(c.id && t.challengeNames[c.id]) || c.name}</span>
             <span className="text-amber-300 font-bold tabular-nums">+{c.picks}</span>
           </div>
         ))}

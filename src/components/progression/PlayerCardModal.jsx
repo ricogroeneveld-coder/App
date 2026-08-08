@@ -30,7 +30,7 @@ export default function PlayerCardModal({ player, profile, onClose, onKick, meId
   const winRate = games > 0 ? Math.round((wins / games) * 100) : 0;
   const stats = [
     [t.statGames, games], [t.statWins, wins], [t.statWinRate, `${winRate}%`],
-    [t.statGuesses, profile?.correct_guesses || 0], [t.statStreak, profile?.win_streak || 0], ['Picks', profile?.picks || 0],
+    [t.statGuesses, profile?.correct_guesses || 0], [t.statStreak, profile?.win_streak || 0], [t.statLevel, profile?.level || 1],
   ];
 
   return (
@@ -92,7 +92,7 @@ export default function PlayerCardModal({ player, profile, onClose, onKick, meId
             ))}
           </div>
           {!profile && (
-            <p className="relative text-[11px] text-slate-500 font-medium mt-3 text-center">No profile stats yet.</p>
+            <p className="relative text-[11px] text-slate-500 font-medium mt-3 text-center">{t.noStatsYet}</p>
           )}
           {onKick && (
             <button onClick={onKick}
