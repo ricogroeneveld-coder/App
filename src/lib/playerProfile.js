@@ -69,9 +69,32 @@ function writeLocal(p) {
   try { localStorage.setItem(LS_KEY, JSON.stringify(p)); } catch {}
 }
 
+// Profile writes require an authenticated session since migration 0004 —
+// an ANONYMOUS one is enough, created invisibly here (no account, no UI).
+// The session persists in localStorage and auto-refreshes. If anonymous
+// sign-ins are disabled or the device is offline, play continues local-only.
+let authReady = null;
+function ensureAuth() {
+  if (!authReady) {
+    authReady = (async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (!data?.session) await supabase.auth.signInAnonymously();
+      } catch { /* local-only */ }
+    })();
+  }
+  return authReady;
+}
+// A web logout (optional email accounts) drops the session — arrange for a
+// fresh anonymous one on the next write instead of writing unauthenticated.
+supabase.auth.onAuthStateChange((event) => {
+  if (event === 'SIGNED_OUT') authReady = null;
+});
+
 async function remoteUpsert(p) {
   if (!remoteOk) return;
   try {
+    await ensureAuth();
     const { error } = await supabase.from('player_profiles').upsert({
       ...p, updated_date: new Date().toISOString(),
     }, { onConflict: 'user_id' });
