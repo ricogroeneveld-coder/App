@@ -113,8 +113,10 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
       <div className="absolute inset-x-16 z-20 flex justify-center" style={{ top: 'max(env(safe-area-inset-top), 0.75rem)' }}>
         <button onClick={copyCode} aria-label={t.roomCode}
           className={`h-11 px-4 rounded-full bg-gradient-to-b from-white/[0.08] to-black/[0.18] backdrop-blur-md ring-1 shadow-[0_1px_2px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.1)] flex items-center gap-2.5 transition-all duration-150 active:scale-[0.97] select-none ${copied ? 'ring-emerald-400/50' : 'ring-white/15 hover:ring-violet-400/40'}`}>
-          <span className="text-[9px] uppercase tracking-[0.16em] text-slate-400 font-extrabold">{t.roomCode}</span>
-          <span className="text-lg font-extrabold tracking-[0.14em] text-white leading-none"
+          {/* All-caps text has no descenders — nudge down 1px so it sits on
+              the pill's optical center instead of floating high */}
+          <span className="text-[9px] uppercase tracking-[0.16em] text-slate-400 font-extrabold leading-none translate-y-[1px]">{t.roomCode}</span>
+          <span className="text-lg font-extrabold tracking-[0.14em] text-white leading-none translate-y-[1px]"
             style={{ textShadow: '0 0 16px rgba(157,92,255,0.5)' }}>
             {roomCode}
           </span>
@@ -212,10 +214,10 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
                       <PlayerAvatar profile={pProfile} name={p.display_name} color={p.color} size={40} />
                     </span>
                     <span className="relative flex-1 min-w-0 flex flex-col justify-center">
-                      <span className={`font-bold text-sm truncate leading-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)] ${pNameCls || 'text-white'}`}>{p.display_name}</span>
+                      <span className={`font-bold text-sm truncate leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)] ${pNameCls || 'text-white'}`}>{p.display_name}</span>
                       {pTitle && (
-                        <span className={`self-start inline-flex items-center max-w-full h-4 mt-0.5 px-1.5 rounded-full text-[9px] font-extrabold ${RARITIES[pTitle.rarity].chip}`}>
-                          <span className="truncate">{pTitle.name}</span>
+                        <span className={`self-start inline-flex items-center max-w-full h-4 mt-1 px-1.5 rounded-full text-[9px] font-extrabold ${RARITIES[pTitle.rarity].chip}`}>
+                          <span className="truncate leading-none">{pTitle.name}</span>
                         </span>
                       )}
                     </span>
