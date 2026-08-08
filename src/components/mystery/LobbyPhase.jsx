@@ -174,7 +174,6 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-2">
           <img src={lobbyTitleImage} alt="The Interactive Guessing Game" className="lobby-logo w-full mx-auto"
             style={{ filter: 'drop-shadow(0 0 18px rgba(168,109,255,0.35)) drop-shadow(0 6px 10px rgba(0,0,0,0.45))' }} />
-          <p className="text-xs font-semibold text-white/[0.7] tracking-wide">{t.waitingForPlayers}</p>
         </motion.div>
 
         <div className="flex-1 min-h-0 flex flex-col space-y-2">
@@ -187,6 +186,10 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
             <div className="flex items-center gap-1.5 mb-1.5 px-1 shrink-0">
               <Users className="w-3.5 h-3.5 text-violet-300" />
               <span className="text-xs font-bold text-slate-300">{t.playersCount(players.length)}</span>
+              <span className="ml-auto flex items-center gap-1.5 min-w-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" style={{ animation: 'livePulse 2s ease-in-out infinite' }} />
+                <span className="text-[10px] font-semibold text-slate-400 truncate">{t.waitingForPlayers}</span>
+              </span>
             </div>
             <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar space-y-1.5" style={{ overscrollBehaviorY: 'contain' }}>
               {players.map((p, i) => {
