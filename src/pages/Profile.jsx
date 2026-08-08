@@ -453,6 +453,11 @@ export default function Profile() {
     }
     return [type, sortByRarity(picks)];
   }));
+  // Level/challenge/collection-reward items can't be bought, but players
+  // should still see what's out there to chase — the Collection tab only
+  // shows owned items now, so this is their one preview spot.
+  const earnItems = sortByRarity(ALL_COSMETICS.filter(c =>
+    c.source.type !== 'shop' && c.source.type !== 'starter' && !profile.owned.includes(c.id)));
   const ch = challengeState();
 
   return (
@@ -557,8 +562,12 @@ export default function Profile() {
         <AnimatePresence mode="wait">
           {tab === 'collection' && (
             <motion.div key="collection" initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} transition={{ duration: 0.15 }}>
+              {/* The locker: only items the player actually owns. Buying happens
+                  exclusively in the Shop (daily rotation) — the counter still
+                  shows collection progress against the full catalog. */}
               {TYPE_ORDER.map(type => {
-                const items = sortByRarity(ALL_COSMETICS.filter(c => c.type === type));
+                const all = sortByRarity(ALL_COSMETICS.filter(c => c.type === type));
+                const items = all.filter(c => profile.owned.includes(c.id));
                 const key = `col_${type}`;
                 const isCollapsed = !!collapsed[key];
                 return (
@@ -568,7 +577,7 @@ export default function Profile() {
                       <span className="section-label">{TYPE_LABELS[type]}</span>
                       <span className="flex items-center gap-1.5">
                         <span className="text-[10px] font-bold text-slate-500 tabular-nums">
-                          {items.filter(c => profile.owned.includes(c.id)).length}/{items.length}
+                          {items.length}/{all.length}
                         </span>
                         <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`} />
                       </span>
@@ -577,20 +586,18 @@ export default function Profile() {
                       animate={{ height: isCollapsed ? 0 : 'auto', opacity: isCollapsed ? 0 : 1 }}
                       transition={{ duration: 0.25, ease: 'easeInOut' }}
                       className="overflow-hidden -mx-3 px-3">
-                      <div className="grid grid-cols-3 gap-2 pt-1 pb-1">
-                        {items.map(c => {
-                          const owned = profile.owned.includes(c.id);
-                          return (
-                            <CosmeticCard key={c.id} c={c} owned={owned}
+                      {items.length === 0 ? (
+                        <p className="text-[11px] font-semibold text-slate-500 px-1 pt-1 pb-2">{t.collectionEmpty}</p>
+                      ) : (
+                        <div className="grid grid-cols-3 gap-2 pt-1 pb-1">
+                          {items.map(c => (
+                            <CosmeticCard key={c.id} c={c} owned
                               equipped={profile.equipped?.[c.type] === c.id}
                               onTap={onTapCosmetic} justUnlocked={justUnlocked === c.id}
-                              sourceText={c.source.type !== 'shop' ? sourceLabel(c, t) : undefined}
-                              price={c.source.type === 'shop' ? c.source.price : undefined}
-                              affordable={(profile.picks || 0) >= (c.source.price || 0)}
                               playerName={profile.display_name} />
-                          );
-                        })}
-                      </div>
+                          ))}
+                        </div>
+                      )}
                     </motion.div>
                   </div>
                 );
@@ -656,6 +663,32 @@ export default function Profile() {
                   </div>
                 );
               })}
+              {earnItems.length > 0 && (
+                <div className="mb-3">
+                  <button onClick={() => toggleSection('earn')} aria-expanded={!collapsed.earn}
+                    className="w-full min-h-[44px] flex items-center justify-between px-1 rounded-xl transition-colors hover:bg-white/5 active:scale-[0.99]">
+                    <span className="section-label">{t.earnByPlaying}</span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-bold text-slate-500 tabular-nums">{earnItems.length}</span>
+                      <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${collapsed.earn ? '-rotate-90' : ''}`} />
+                    </span>
+                  </button>
+                  <motion.div initial={false}
+                    animate={{ height: collapsed.earn ? 0 : 'auto', opacity: collapsed.earn ? 0 : 1 }}
+                    transition={{ duration: 0.25, ease: 'easeInOut' }}
+                    className="overflow-hidden -mx-3 px-3">
+                    <div className="grid grid-cols-3 gap-2 pt-1 pb-1">
+                      {earnItems.map(c => (
+                        <CosmeticCard key={c.id} c={c} owned={false}
+                          equipped={false}
+                          onTap={onTapCosmetic} justUnlocked={justUnlocked === c.id}
+                          sourceText={sourceLabel(c, t)}
+                          playerName={profile.display_name} />
+                      ))}
+                    </div>
+                  </motion.div>
+                </div>
+              )}
             </motion.div>
           )}
 
