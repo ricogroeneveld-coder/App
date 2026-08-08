@@ -262,6 +262,16 @@ export const COLLECTIONS = [
     lore: 'Rise. Burn. Guess again.' },
 ];
 
+// Illustrated emblem art — drop `<id>.webp` into src/assets/emblems/ and the
+// matching emblem renders the artwork on a dark disc inside its rarity rim
+// instead of the emoji (see EmblemTile). Entries without a file keep the
+// emoji path untouched, so the set can grow one file at a time.
+const EMBLEM_ART = import.meta.glob('../assets/emblems/*.webp', { eager: true, import: 'default' });
+for (const e of EMBLEMS) {
+  const art = EMBLEM_ART[`../assets/emblems/${e.id}.webp`];
+  if (art) e.art = art;
+}
+
 export const ALL_COSMETICS = [...EMBLEMS, ...BANNERS, ...BORDERS, ...TITLES, ...REWARD_TITLES, ...NAME_COLORS];
 
 const byId = Object.fromEntries(ALL_COSMETICS.map(c => [c.id, c]));

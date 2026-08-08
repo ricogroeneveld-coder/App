@@ -49,6 +49,11 @@ const RIM = {
  * gloss crescent, and the character grounded with a cast shadow. `breathe`
  * adds a slow idle scale on big surfaces.
  */
+// Illustrated emblems trade the colored enamel for a near-black disc so the
+// artwork carries the color and the rarity rim reads as a clean ring
+// (proven in live tests against the alternative of art-on-enamel).
+const ART_DISC = 'radial-gradient(120% 120% at 32% 18%, #23232b 0%, #101016 55%, #050508 100%)';
+
 export function EmblemTile({ emblem, fontSize, breathe = false }) {
   return (
     <span className="relative w-full h-full flex select-none">
@@ -56,14 +61,20 @@ export function EmblemTile({ emblem, fontSize, breathe = false }) {
       <span aria-hidden className="absolute inset-0 rounded-full pointer-events-none"
         style={{ boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.55), inset 0 -1px 2px rgba(0,0,0,0.5)' }} />
       <span className="absolute rounded-full overflow-hidden flex items-center justify-center"
-        style={{ inset: '9%', background: emblem.tile,
+        style={{ inset: '9%', background: emblem.art ? ART_DISC : emblem.tile,
           boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.45), inset 0 -3px 6px -1px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.15)' }}>
         <span aria-hidden className="absolute inset-0 pointer-events-none"
           style={{ background: 'radial-gradient(130% 65% at 32% -6%, rgba(255,255,255,0.42), rgba(255,255,255,0.08) 40%, transparent 58%)' }} />
-        <span className={`relative ${breathe ? 'medal-breathe' : ''}`}
-          style={{ fontSize, lineHeight: 1, filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.5))' }}>
-          {emblem.emoji}
-        </span>
+        {emblem.art ? (
+          <img src={emblem.art} alt={emblem.name} draggable={false}
+            className={`relative ${breathe ? 'medal-breathe' : ''}`}
+            style={{ width: '84%', height: '84%', objectFit: 'contain', filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.5))' }} />
+        ) : (
+          <span className={`relative ${breathe ? 'medal-breathe' : ''}`}
+            style={{ fontSize, lineHeight: 1, filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.5))' }}>
+            {emblem.emoji}
+          </span>
+        )}
       </span>
     </span>
   );
