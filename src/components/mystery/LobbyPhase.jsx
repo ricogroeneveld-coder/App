@@ -13,7 +13,7 @@ import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import PlayerCardModal from '@/components/progression/PlayerCardModal';
 import BannerArt from '@/components/progression/BannerArt';
 import usePeerProfiles from '@/components/progression/usePeerProfiles';
-import { cosmeticById } from '@/lib/cosmetics';
+import { cosmeticById, RARITIES } from '@/lib/cosmetics';
 
 function categoryMeta(cat) {
   if (!cat) return null;
@@ -161,7 +161,7 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
           <p className="text-xs font-semibold text-white/[0.7] tracking-wide">{t.waitingForPlayers}</p>
         </motion.div>
 
-        <div className="space-y-2">
+        <div className="flex-1 min-h-0 flex flex-col space-y-2">
           {/* Room code — hero card, same material as the Home profile card */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
             onClick={copyCode} role="button" tabIndex={0}
@@ -182,32 +182,45 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
             </button>
           </motion.div>
 
-          {/* Players — compact 2-column grid with internal scroll */}
+          {/* Players — one wide row each so banners, emblems, and titles
+              actually show (the lobby is the cosmetics showcase). The frame
+              fills the space down to the host actions and scrolls internally,
+              same pattern as the in-game question history. */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-            className="glass-card p-3">
-            <div className="flex items-center gap-1.5 mb-1.5 px-1">
+            className="glass-card p-3 flex-1 min-h-0 flex flex-col">
+            <div className="flex items-center gap-1.5 mb-1.5 px-1 shrink-0">
               <Users className="w-3.5 h-3.5 text-violet-300" />
               <span className="text-xs font-bold text-slate-300">{t.playersCount(players.length)}</span>
             </div>
-            <div className="grid grid-cols-2 gap-1.5 max-h-[156px] overflow-y-auto hide-scrollbar" style={{ overscrollBehaviorY: 'none' }}>
+            <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar space-y-1.5" style={{ overscrollBehaviorY: 'contain' }}>
               {players.map((p, i) => {
                 const pProfile = profiles[p.user_id];
                 const pBanner = pProfile ? cosmeticById(pProfile.equipped?.banner) : null;
                 const pNameCls = pProfile ? cosmeticById(pProfile.equipped?.nameColor)?.cls : null;
+                const pTitle = pProfile ? cosmeticById(pProfile.equipped?.title) : null;
                 return (
                   <motion.div key={p.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
                     onClick={() => setCardPlayer(p)} role="button" tabIndex={0}
                     onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setCardPlayer(p)}
-                    className="glass-tile relative overflow-hidden flex items-center gap-2 h-9 px-2 cursor-pointer transition-transform duration-150 active:scale-[0.97]">
+                    className="glass-tile relative overflow-hidden flex items-center gap-2.5 h-14 px-2.5 cursor-pointer transition-transform duration-150 active:scale-[0.97]">
                     {pBanner && (
                       <>
-                        <BannerArt banner={pBanner} className="absolute inset-0" motifScale={0.55} />
-                        <span aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/50 via-black/25 to-black/45" />
+                        <BannerArt banner={pBanner} className="absolute inset-0" motifScale={0.8} />
+                        <span aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/55 via-black/25 to-black/45" />
                       </>
                     )}
-                    <PlayerAvatar profile={pProfile} name={p.display_name} color={p.color} size={24} className="relative" />
-                    <span className={`relative flex-1 min-w-0 font-semibold text-xs truncate ${pNameCls || 'text-white'}`}>{p.display_name}</span>
-                    {p.user_id === room.host_id && <Crown className="relative w-3.5 h-3.5 text-amber-400 shrink-0" fill="currentColor" />}
+                    <span className="relative shrink-0" style={{ filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.5))' }}>
+                      <PlayerAvatar profile={pProfile} name={p.display_name} color={p.color} size={40} />
+                    </span>
+                    <span className="relative flex-1 min-w-0 flex flex-col justify-center">
+                      <span className={`font-bold text-sm truncate leading-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)] ${pNameCls || 'text-white'}`}>{p.display_name}</span>
+                      {pTitle && (
+                        <span className={`self-start inline-flex items-center max-w-full h-4 mt-0.5 px-1.5 rounded-full text-[9px] font-extrabold ${RARITIES[pTitle.rarity].chip}`}>
+                          <span className="truncate">{pTitle.name}</span>
+                        </span>
+                      )}
+                    </span>
+                    {p.user_id === room.host_id && <Crown className="relative w-4 h-4 text-amber-400 shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]" fill="currentColor" />}
                     {p.user_id === me?.id && (
                       <span className="relative shrink-0 px-1.5 py-0.5 rounded-full bg-violet-500/20 ring-1 ring-violet-400/40 text-[9px] font-bold text-violet-200">
                         {t.you}
@@ -220,7 +233,7 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
           </motion.div>
         </div>
 
-        <div className="flex-1 min-h-2" />
+        <div className="shrink-0 h-2" />
 
         <div className="space-y-2">
           {/* Selected Category — host only, entire card is tappable */}
