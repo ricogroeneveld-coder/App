@@ -440,12 +440,12 @@
   /* Lobby logo — the visual anchor of the waiting room. Height-tiered: full
      presence on normal/tall phones, scaled down on short viewports so the
      no-scroll lobby column never clips. */
-  .lobby-logo { max-width: 240px; }
+  .lobby-logo { max-width: 180px; }
   @media (min-height: 700px) {
-    .lobby-logo { max-width: 300px; }
+    .lobby-logo { max-width: 220px; }
   }
   @media (min-height: 800px) {
-    .lobby-logo { max-width: 330px; }
+    .lobby-logo { max-width: 250px; }
   }
 
   /* Toast entrance — rises from the bottom edge with a soft settle */

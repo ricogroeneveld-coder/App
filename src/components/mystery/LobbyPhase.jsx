@@ -108,6 +108,22 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
         </button>
       </div>
 
+      {/* Room code — lives in the header between back and help (same spot the
+          playing phase shows it), tap anywhere on the pill to copy */}
+      <div className="absolute inset-x-16 z-20 flex justify-center" style={{ top: 'max(env(safe-area-inset-top), 0.75rem)' }}>
+        <button onClick={copyCode} aria-label={t.roomCode}
+          className={`h-11 px-4 rounded-full bg-gradient-to-b from-white/[0.08] to-black/[0.18] backdrop-blur-md ring-1 shadow-[0_1px_2px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.1)] flex items-center gap-2.5 transition-all duration-150 active:scale-[0.97] select-none ${copied ? 'ring-emerald-400/50' : 'ring-white/15 hover:ring-violet-400/40'}`}>
+          <span className="text-[9px] uppercase tracking-[0.16em] text-slate-400 font-extrabold">{t.roomCode}</span>
+          <span className="text-lg font-extrabold tracking-[0.14em] text-white leading-none"
+            style={{ textShadow: '0 0 16px rgba(157,92,255,0.5)' }}>
+            {roomCode}
+          </span>
+          <motion.span key={copied ? 'check' : 'copy'} initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', duration: 0.35 }}>
+            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-slate-300" />}
+          </motion.span>
+        </button>
+      </div>
+
       {/* How to play modal — identical to Home's modal */}
       {showHowToPlay && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
@@ -162,26 +178,6 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
         </motion.div>
 
         <div className="flex-1 min-h-0 flex flex-col space-y-2">
-          {/* Room code — hero card, same material as the Home profile card */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-            onClick={copyCode} role="button" tabIndex={0}
-            onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && copyCode()}
-            className="glass-card px-4 py-2.5 flex items-center justify-between gap-3 cursor-pointer transition-transform duration-150 active:scale-[0.98]">
-            <div className="min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.18em] text-slate-300 font-extrabold mb-0.5">{t.roomCode}</p>
-              <p className="text-[26px] font-extrabold tracking-[0.14em] text-white leading-none"
-                style={{ textShadow: '0 0 20px rgba(157,92,255,0.5)' }}>
-                {roomCode}
-              </p>
-            </div>
-            <button onClick={e => { e.stopPropagation(); copyCode(); }} tabIndex={-1} aria-label={t.roomCode}
-              className={`shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-b from-white/[0.07] to-black/20 backdrop-blur-sm ring-1 shadow-[0_1px_2px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.08)] transition-all duration-150 active:scale-[0.98] select-none ${copied ? 'ring-emerald-400/50' : 'ring-white/10 hover:bg-white/10 hover:ring-violet-400/40'}`}>
-              <motion.span key={copied ? 'check' : 'copy'} initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', duration: 0.35 }}>
-                {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-slate-200" />}
-              </motion.span>
-            </button>
-          </motion.div>
-
           {/* Players — one wide row each so banners, emblems, and titles
               actually show (the lobby is the cosmetics showcase). The frame
               fills the space down to the host actions and scrolls internally,
