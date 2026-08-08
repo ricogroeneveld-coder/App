@@ -74,13 +74,19 @@ function writeLocal(p) {
 // The session persists in localStorage and auto-refreshes. If anonymous
 // sign-ins are disabled or the device is offline, play continues local-only.
 let authReady = null;
-function ensureAuth() {
+export function ensureAuth() {
   if (!authReady) {
     authReady = (async () => {
       try {
         const { data } = await supabase.auth.getSession();
-        if (!data?.session) await supabase.auth.signInAnonymously();
-      } catch { /* local-only */ }
+        if (data?.session) return;
+        const { error } = await supabase.auth.signInAnonymously();
+        // A failed attempt (offline, toggle off) must retry on the NEXT
+        // write instead of staying broken until the app restarts.
+        if (error) authReady = null;
+      } catch {
+        authReady = null;
+      }
     })();
   }
   return authReady;

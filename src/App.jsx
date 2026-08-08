@@ -6,7 +6,7 @@ import { LanguageProvider } from '@/lib/LanguageContext';
 import { AuthProvider } from '@/lib/AuthContext';
 import ScrollToTop from './components/ScrollToTop';
 import { useEffect, useState } from 'react';
-import { devUnlockAll, devResetProfile } from '@/lib/playerProfile';
+import { devUnlockAll, devResetProfile, ensureAuth } from '@/lib/playerProfile';
 import { configurePurchases } from '@/lib/payments';
 import { restoreIdentityFromCloud, startCloudBackup, watchForLateBackup } from '@/lib/cloudBackup';
 import { isNativeApp } from '@/lib/platform';
@@ -97,6 +97,11 @@ function App() {
   });
   useEffect(() => {
     startCloudBackup();
+    // Establish the anonymous session eagerly on native — waiting for the
+    // first profile write meant a quiet session (daily reward already
+    // claimed, no round played) never signed in, never synced, and never
+    // wrote an iCloud backup.
+    if (isNativeApp()) ensureAuth();
     if (booted) return;
     let live = true;
     Promise.race([
