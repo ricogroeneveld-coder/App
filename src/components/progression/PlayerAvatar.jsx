@@ -68,7 +68,7 @@ export function EmblemTile({ emblem, fontSize, breathe = false }) {
         {emblem.art ? (
           <img src={emblem.art} alt={emblem.name} draggable={false}
             className={`relative ${breathe ? 'medal-breathe' : ''}`}
-            style={{ width: '84%', height: '84%', objectFit: 'contain', filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.5))' }} />
+            style={{ width: '88%', height: '88%', objectFit: 'contain', filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.5))' }} />
         ) : (
           <span className={`relative ${breathe ? 'medal-breathe' : ''}`}
             style={{ fontSize, lineHeight: 1, filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.5))' }}>
