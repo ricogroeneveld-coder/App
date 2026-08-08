@@ -5,9 +5,11 @@ import PageNotFound from './lib/PageNotFound';
 import { LanguageProvider } from '@/lib/LanguageContext';
 import { AuthProvider } from '@/lib/AuthContext';
 import ScrollToTop from './components/ScrollToTop';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { devUnlockAll, devResetProfile } from '@/lib/playerProfile';
 import { configurePurchases } from '@/lib/payments';
+import { restoreIdentityFromCloud, startCloudBackup } from '@/lib/cloudBackup';
+import { isNativeApp } from '@/lib/platform';
 // Add page imports here
 import Home from '@/pages/Home';
 import BrowseLobbies from '@/pages/BrowseLobbies';
@@ -83,6 +85,28 @@ function App() {
   useForcedDarkTheme();
   useDevParam();
   useEffect(() => { configurePurchases(); }, []);
+
+  // Fresh native install: check iCloud for a previous identity BEFORE any
+  // screen mints a new one (getGuestIdentity creates an id on first read).
+  // Existing installs and web skip straight through. Capped at 3s so a slow
+  // iCloud never delays startup noticeably — worst case it's a fresh start,
+  // exactly what happened before this feature existed.
+  const [booted, setBooted] = useState(() => {
+    try { return !isNativeApp() || !!localStorage.getItem('mystery_guest_id'); }
+    catch { return true; }
+  });
+  useEffect(() => {
+    startCloudBackup();
+    if (booted) return;
+    let live = true;
+    Promise.race([
+      restoreIdentityFromCloud(),
+      new Promise(resolve => setTimeout(resolve, 3000)),
+    ]).finally(() => { if (live) setBooted(true); });
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  if (!booted) return null; // dark launch background shows through
 
   return (
     <LanguageProvider>

@@ -140,6 +140,26 @@ Supabase provider setup, and linking guest progression to accounts.
 > profanity-filtered; players can be reported from their player card and
 > removed by the lobby host.
 
+## 6b. iCloud reinstall recovery — one-time App ID checkbox
+
+Progression (Picks/XP/cosmetics/name) is backed up to the player's iCloud
+key-value store, so it survives reinstalls and follows them to a new
+iPhone. The code ships in the repo (ICloudKVPlugin.swift +
+src/lib/cloudBackup.js + App.entitlements); the only manual step is
+enabling the capability on the App ID:
+
+1. developer.apple.com → Certificates, Identifiers & Profiles →
+   Identifiers → `com.whatsmypick.app`
+2. Tick **iCloud** in the capability list (key-value storage needs no
+   container — don't create one) → Save
+3. Next TestFlight build picks it up automatically (cloud signing
+   regenerates the profile with the entitlement).
+
+Also uses Supabase **anonymous sign-ins** (Dashboard → Authentication →
+Sign In / Providers → "Allow anonymous sign-ins" → ON) together with
+migration 0004 — without those, profile cloud sync pauses (local play
+is unaffected).
+
 ## 7. Before every store build
 
 - `dist/` built from a clean `npm run build`

@@ -34,6 +34,9 @@ export function setGuestName(name) {
   if (!localStorage.getItem(KEY_ID)) {
     localStorage.setItem(KEY_ID, generateId());
   }
+  // Keep the iCloud reinstall backup in sync (native no-ops on web).
+  // Dynamic import: this module stays dependency-free for everything else.
+  import('./cloudBackup').then(m => m.backupIdentityNow()).catch(() => {});
 }
 
 export function hasGuestName() {
@@ -43,4 +46,6 @@ export function hasGuestName() {
 export function clearGuestIdentity() {
   localStorage.removeItem(KEY_ID);
   localStorage.removeItem(KEY_NAME);
+  // A deleted profile must not resurrect from iCloud on the next install.
+  import('./cloudBackup').then(m => m.clearCloudBackup()).catch(() => {});
 }
