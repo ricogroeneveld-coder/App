@@ -111,3 +111,37 @@ export function startCloudBackup() {
     }
   });
 }
+
+// On-device truth for the hidden diagnostics panel (Profile Settings →
+// 7 taps on the title): reports each link of the restore chain separately
+// so a broken toggle, entitlement, or write is visible instead of guessed.
+export async function cloudBackupDiagnostics() {
+  const out = [];
+  out.push(`native: ${isNativeApp() ? 'yes' : 'no (web)'}`);
+  try {
+    const { data } = await supabase.auth.getSession();
+    if (data?.session) {
+      out.push(`auth session: ${data.session.user?.is_anonymous ? 'anonymous' : 'account'} (${(data.session.user?.id || '').slice(0, 8)}…)`);
+    } else {
+      out.push('auth session: none');
+      const { error } = await supabase.auth.signInAnonymously();
+      out.push(error ? `anon sign-in: FAILED — ${error.message}` : 'anon sign-in: ok (just created)');
+    }
+  } catch (e) {
+    out.push(`auth: ERROR — ${e?.message || e}`);
+  }
+  try {
+    const { value } = await ICloudKV.get({ key: BACKUP_KEY });
+    out.push(value ? `icloud backup: present (${value.length} bytes)` : 'icloud backup: EMPTY');
+  } catch (e) {
+    out.push(`icloud plugin: ERROR — ${e?.message || e}`);
+  }
+  try {
+    await backupIdentityNow();
+    const { value } = await ICloudKV.get({ key: BACKUP_KEY });
+    out.push(value ? 'write test: backup written ok' : 'write test: WRITE DID NOT STICK');
+  } catch (e) {
+    out.push(`write test: ERROR — ${e?.message || e}`);
+  }
+  return out;
+}

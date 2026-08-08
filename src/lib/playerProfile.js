@@ -100,6 +100,10 @@ async function remoteUpsert(p) {
     }, { onConflict: 'user_id' });
     if (error) throw error;
     remoteState = 'ok';
+    // Belt and braces for the iCloud reinstall backup: auth events cover the
+    // steady state, but refreshing it after every successful sync closes any
+    // first-session ordering gap. No-ops on web.
+    import('./cloudBackup').then(m => m.backupIdentityNow()).catch(() => {});
   } catch (e) {
     // Table missing / offline — keep playing from localStorage.
     markRemoteError(e);

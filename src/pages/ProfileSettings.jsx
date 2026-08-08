@@ -31,6 +31,19 @@ export default function ProfileSettings() {
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
   const [cosmeticProfile, setCosmeticProfile] = useState(getProfile());
   const [restoring, setRestoring] = useState(false);
+  // Hidden diagnostics: 7 taps on the page title reveal the iCloud-backup
+  // health readout (read-only — grants nothing, safe to ship).
+  const [diagTaps, setDiagTaps] = useState(0);
+  const [diagLines, setDiagLines] = useState(null);
+  const titleTapped = () => {
+    const n = diagTaps + 1;
+    setDiagTaps(n);
+    if (n >= 7 && !diagLines) {
+      setDiagLines(['Running checks…']);
+      import('@/lib/cloudBackup').then(m => m.cloudBackupDiagnostics()).then(setDiagLines)
+        .catch(e => setDiagLines([`diagnostics failed: ${e?.message || e}`]));
+    }
+  };
   useEffect(() => { let live = true; loadProfile().then(p => { if (live) setCosmeticProfile(p); }); return () => { live = false; }; }, []);
   const isRegistered = !!currentUser;
 
@@ -157,10 +170,21 @@ export default function ProfileSettings() {
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-lg font-extrabold tracking-tight">{t.profileSettings}</h1>
+        <h1 className="text-lg font-extrabold tracking-tight select-none" onClick={titleTapped}>{t.profileSettings}</h1>
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar px-4 pt-1 pb-6 max-w-md mx-auto w-full space-y-3">
+        {/* Hidden iCloud-backup diagnostics — revealed by 7 taps on the title */}
+        {diagLines && (
+          <div className="glass-panel rounded-[20px] p-4">
+            <p className="font-semibold text-white text-sm mb-2">Backup diagnostics</p>
+            <div className="space-y-1">
+              {diagLines.map((line, i) => (
+                <p key={i} className={`text-[11px] font-mono break-all ${/FAILED|ERROR|EMPTY|NOT/.test(line) ? 'text-rose-400' : 'text-emerald-300'}`}>{line}</p>
+              ))}
+            </div>
+          </div>
+        )}
         {/* Profile card */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
