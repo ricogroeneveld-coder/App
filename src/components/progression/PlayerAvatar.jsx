@@ -9,9 +9,15 @@ import { cosmeticById } from '@/lib/cosmetics';
  */
 export function AvatarFrame({ frame, size, className = '', children }) {
   const w = Math.max(1.5, size * 0.055);
+  // The glow's blur radius is a fixed px value tuned for showcase-sized
+  // avatars (profile cards, the lobby roster) — at the small sizes used in
+  // dense lists (chat, notebook, the players tab), a blur that size reads
+  // as a messy halo bigger than the avatar itself rather than a premium
+  // accent. Same cutoff sparkle already uses for the same reason.
+  const showGlow = frame.glow && size >= 36;
   return (
     <span className={`relative inline-flex rounded-full shrink-0 select-none ${className}`} style={{ width: size, height: size }}>
-      {frame.glow && (
+      {showGlow && (
         <span aria-hidden className={`absolute -inset-px rounded-full pointer-events-none ${frame.pulse ? 'frame-breathe' : ''}`}
           style={{ boxShadow: frame.glow }} />
       )}

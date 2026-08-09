@@ -105,6 +105,13 @@
     overscroll-behavior: none;
     height: 100%;
     overflow: hidden;
+    /* WebKit's automatic text-size-adjust (built for reading long-form
+       text without pinch-zooming) can inflate rendered font sizes on its
+       own — independent of the classic "input under 16px" zoom-on-focus
+       bug — most noticeably right when an input takes focus. Every size
+       here is already an explicit, deliberate choice, so opt out. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
   #root {
     height: 100%;
