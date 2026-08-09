@@ -102,7 +102,9 @@ async function remoteUpsert(p) {
   try {
     await ensureAuth();
     const { error } = await supabase.from('player_profiles').upsert({
-      ...p, updated_date: new Date().toISOString(),
+      // Carry the LOCAL write stamp (set in save()) — it's what the
+      // newest-wins merge in doLoadProfile compares against.
+      ...p, updated_date: p.updated_date || new Date().toISOString(),
     }, { onConflict: 'user_id' });
     if (error) throw error;
     remoteState = 'ok';
@@ -141,9 +143,23 @@ async function doLoadProfile() {
       if (error) throw error;
       remoteState = 'ok';
       if (data) {
-        // Remote wins on progression numbers (another device may be newer),
-        // merged with any local-only fields.
-        cache = { ...local, ...data };
+        // NEWEST wins, not remote-wins: blindly preferring remote meant an
+        // equip made moments ago (saved locally, upsert still in flight or
+        // failed) was clobbered back to the older server copy on the next
+        // screen — cosmetics visibly "reset to basic". Remote only wins
+        // when it's genuinely newer (another device played more recently).
+        // Date-parse both sides: Postgres serializes '+00:00', the client
+        // writes 'Z' — a plain string compare across those formats lies.
+        const localTs = Date.parse(local.updated_date || '') || 0;
+        const remoteTs = Date.parse(data.updated_date || '') || 0;
+        const remoteNewer = !localTs || (remoteTs && remoteTs > localTs);
+        if (remoteNewer) {
+          cache = { ...local, ...data };
+        } else {
+          cache = local;
+          // Local is ahead of the server — push it up so peers see it.
+          remoteUpsert(local);
+        }
       } else {
         remoteUpsert(local);
       }
@@ -160,6 +176,9 @@ async function doLoadProfile() {
 }
 
 function save() {
+  // Every local mutation stamps its own write time — the anchor for the
+  // newest-wins merge in doLoadProfile.
+  cache.updated_date = new Date().toISOString();
   writeLocal(cache);
   remoteUpsert(cache);
   emit();

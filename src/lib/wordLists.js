@@ -25,6 +25,7 @@ const CATEGORY_SHORT = {
   'World Dishes': 'Dishes',
   'Marvel/DC Heroes': 'Superheroes',
   'Marvel/DC Villains': 'Villains',
+  'Natural Wonders': 'Wonders',
   'Harry Potter Characters': 'Harry Potter',
   'Star Wars Characters': 'Star Wars',
   'Disney Characters': 'Disney',
@@ -111,6 +112,14 @@ export const WORD_LISTS_NL = {
     'Vaticaanstad', 'Golden Gate Bridge', 'Tower Bridge', 'Christusbeeld', 'Scheve Toren van Pisa',
     'Hagia Sophia', 'Trevi Fontein', 'Buckingham Palace', 'Kasteel Neuschwanstein', 'Noorderlicht'
   ],
+  'Natural Wonders': [
+    'Mount Everest', 'Groot Barrièrerif', 'Saharawoestijn', 'Amazoneregenwoud', 'Victoriawatervallen',
+    'Dode Zee', 'Uluru', 'Yellowstone', 'Kilimanjaro', 'Iguazuwatervallen',
+    'Ha Long Bay', 'Salar de Uyuni', "Giant's Causeway", 'Pamukkale', 'Matterhorn',
+    'Angelwatervallen', 'Galápagoseilanden', 'Plitvicemeren', 'Vesuvius', 'Baikalmeer',
+    'Cliffs of Moher', 'Antelope Canyon', 'Etna', 'Yosemite', 'Redwoodbos',
+    'Great Blue Hole', 'Perito Moreno-gletsjer', 'Zhangjiajie', 'Mont Blanc', 'Krakatau'
+  ],
   Fruits: [
     'Appel', 'Banaan', 'Sinaasappel', 'Aardbei', 'Ananas',
     'Mango', 'Watermeloen', 'Druif', 'Kiwi', 'Perzik',
@@ -170,7 +179,10 @@ export const PACKS = [
     id: 'world',
     name: 'World Pack',
     emoji: '🌍',
-    categories: ['Countries', 'European Countries', 'European Cities', 'World Capitals', 'Famous Landmarks', 'US States']
+    // 'European Countries' used to sit here too, but it's one of the FREE
+    // categories — a paid pack must never resell something free. Natural
+    // Wonders replaces it: same theme, no overlap with (man-made) Landmarks.
+    categories: ['Countries', 'Natural Wonders', 'European Cities', 'World Capitals', 'Famous Landmarks', 'US States']
   },
   {
     id: 'brands',
@@ -386,6 +398,17 @@ export const PREMIUM_WORD_LISTS = {
     'Vatican City', 'Golden Gate Bridge', 'Tower Bridge', 'Christ the Redeemer', 'Leaning Tower of Pisa',
     'Hagia Sophia', 'Trevi Fountain', 'Buckingham Palace', 'Neuschwanstein Castle', 'Northern Lights'
   ],
+  // No overlap with Famous Landmarks (that list already has Mount Fuji,
+  // Niagara Falls, Grand Canyon, Northern Lights) — the pack must never
+  // hand out the same secret word from two categories.
+  'Natural Wonders': [
+    'Mount Everest', 'Great Barrier Reef', 'Sahara Desert', 'Amazon Rainforest', 'Victoria Falls',
+    'Dead Sea', 'Uluru', 'Yellowstone', 'Mount Kilimanjaro', 'Iguazu Falls',
+    'Ha Long Bay', 'Salar de Uyuni', "Giant's Causeway", 'Pamukkale', 'Matterhorn',
+    'Angel Falls', 'Galápagos Islands', 'Plitvice Lakes', 'Mount Vesuvius', 'Lake Baikal',
+    'Cliffs of Moher', 'Antelope Canyon', 'Mount Etna', 'Yosemite', 'Redwood Forest',
+    'Great Blue Hole', 'Perito Moreno Glacier', 'Zhangjiajie', 'Mont Blanc', 'Krakatoa'
+  ],
   'US States': [
     'California', 'Texas', 'Florida', 'New York', 'Illinois',
     'Pennsylvania', 'Ohio', 'Georgia', 'Michigan', 'New Jersey',
@@ -549,7 +572,9 @@ export const PREMIUM_WORD_LISTS = {
 // Build EN→NL lookup after both WORD_LISTS and WORD_LISTS_NL are defined
 const EN_TO_NL = {};
 Object.entries(WORD_LISTS_NL).forEach(([cat, nlWords]) => {
-  const enWords = WORD_LISTS[cat] || [];
+  // Premium categories translate too — WORD_LISTS alone silently skipped
+  // them, so stored EN words in e.g. Famous Landmarks never displayed Dutch.
+  const enWords = WORD_LISTS[cat] || PREMIUM_WORD_LISTS[cat] || [];
   nlWords.forEach((nl, i) => { if (enWords[i]) EN_TO_NL[enWords[i].toLowerCase()] = nl; });
 });
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MysteryRoom, MysteryPlayer, MysteryQuestion, MysteryGuess } from '@/api/db';
-import { Loader2, WifiOff } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import LobbyPhase from '@/components/mystery/LobbyPhase';
 import WordEntryPhase from '@/components/mystery/WordEntryPhase';
 import PlayingPhase from '@/components/mystery/PlayingPhase';
@@ -28,11 +28,6 @@ export default function MysteryGame() {
   // Bumped when the tab wakes up — re-runs the subscribe effect so dead
   // realtime channels are replaced and state is re-fetched.
   const [sessionEpoch, setSessionEpoch] = useState(0);
-  // True while any of the four room-state channels has reported dropped
-  // (CHANNEL_ERROR/TIMED_OUT/CLOSED) rather than SUBSCRIBED — without this,
-  // a lost realtime connection just goes silently stale: chat, questions,
-  // guesses, and the player list stop updating with no indication at all.
-  const [connectionIssue, setConnectionIssue] = useState(false);
   const rejoiningRef = useRef(false);
   // Whether we've had a player row during THIS visit — distinguishes a kick
   // (row existed, then vanished) from a refresh (arrived with no row).
@@ -87,14 +82,13 @@ export default function MysteryGame() {
     };
 
     // Any channel dropping means all four are likely dead together (same
-    // socket) — flag it once and, since visibilitychange/online won't fire
-    // for a connection that dies while the tab stays open and in the
-    // foreground, self-heal with a short retry via the same sessionEpoch
-    // bump the wake-up handler uses.
+    // socket). visibilitychange/online won't fire for a connection that
+    // dies while the tab stays open and in the foreground, so self-heal
+    // silently with a short retry via the same sessionEpoch bump the
+    // wake-up handler uses. (No banner: the reconnect pill proved more
+    // annoying than the brief staleness it warned about.)
     const handleStatus = (status) => {
-      if (status === 'SUBSCRIBED') { setConnectionIssue(false); return; }
       if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-        setConnectionIssue(true);
         if (!retryTimer) {
           retryTimer = setTimeout(() => { setSessionEpoch(n => n + 1); }, 3000);
         }
@@ -279,22 +273,5 @@ export default function MysteryGame() {
   else if (room.status === 'playing') phase = <PlayingPhase {...commonProps} />;
   else if (room.status === 'finished') phase = <FinishedPhase {...commonProps} />;
 
-  return (
-    <>
-      {phase}
-      {connectionIssue && (
-        // Cleared below every phase's own header row (back/help buttons,
-        // Lobby's room-code pill, Playing's category/room/word strip) —
-        // sitting right at the safe-area edge collided with all of them.
-        <div className="fixed inset-x-0 z-[60] flex justify-center pointer-events-none px-4"
-          style={{ top: 'max(calc(env(safe-area-inset-top) + 3.75rem), 4rem)' }}>
-          <div role="status" aria-label={t.connectionLost}
-            className="pointer-events-auto flex items-center gap-2 h-9 px-3.5 rounded-full bg-amber-500/15 ring-1 ring-amber-400/40 backdrop-blur-md shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
-            <WifiOff className="w-3.5 h-3.5 text-amber-300 shrink-0" />
-            <span className="text-xs font-semibold text-amber-200">{t.reconnecting}</span>
-          </div>
-        </div>
-      )}
-    </>
-  );
+  return phase;
 }
