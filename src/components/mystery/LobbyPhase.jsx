@@ -4,7 +4,7 @@ import { MysteryPlayer, MysteryRoom } from '@/api/db';
 import { useToast } from '@/components/ui/use-toast';
 import { Copy, Check, Users, Crown, ArrowRight, ChevronRight, Sparkles, ArrowLeft, HelpCircle, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { CATEGORIES, CATEGORY_EMOJIS, PACKS, shortCategory } from '@/lib/wordLists';
+import { shortCategory, categoryMeta } from '@/lib/wordLists';
 import { useLang } from '@/lib/LanguageContext';
 import GameBackground from '@/components/GameBackground';
 import lobbyTitleImage from '../../../lobby-title.webp';
@@ -14,15 +14,6 @@ import PlayerCardModal from '@/components/progression/PlayerCardModal';
 import BannerArt from '@/components/progression/BannerArt';
 import usePeerProfiles from '@/components/progression/usePeerProfiles';
 import { cosmeticById, RARITIES } from '@/lib/cosmetics';
-
-function categoryMeta(cat) {
-  if (!cat) return null;
-  if (CATEGORIES.includes(cat)) {
-    return { emoji: CATEGORY_EMOJIS[cat] || '🎯', isFree: true };
-  }
-  const pack = PACKS.find(p => p.categories.includes(cat));
-  return { emoji: pack?.emoji || '⭐', isFree: false, packName: pack?.name };
-}
 
 export default function LobbyPhase({ room, players, me, roomCode }) {
   const { toast } = useToast();

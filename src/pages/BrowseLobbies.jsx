@@ -5,6 +5,7 @@ import { MysteryRoom, MysteryPlayer } from '@/api/db';
 import { useToast } from '@/components/ui/use-toast';
 import { ChevronLeft, RefreshCw, LogIn, Globe, Loader2 } from 'lucide-react';
 import { getGuestIdentity } from '@/lib/guestIdentity';
+import { categoryMeta, shortCategory } from '@/lib/wordLists';
 import { useLang } from '@/lib/LanguageContext';
 import GameBackground from '@/components/GameBackground';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
@@ -183,7 +184,12 @@ export default function BrowseLobbies() {
                     <PlayerAvatar profile={profiles[room.host_id]} name={room.host_name} color="#6d28d9" size={36} />
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-white text-[13px] truncate leading-tight">{room.host_name}'s lobby</p>
-                      <p className="text-[11px] text-slate-400 font-mono tracking-[0.12em]">{room.room_code}</p>
+                      <p className="text-[11px] text-slate-400 truncate">
+                        <span className="font-mono tracking-[0.12em]">{room.room_code}</span>
+                        {room.category && (
+                          <span className="font-medium"> · {categoryMeta(room.category)?.emoji} {shortCategory(room.category)}</span>
+                        )}
+                      </p>
                     </div>
                     <span className="shrink-0 flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/10 ring-1 ring-emerald-400/25">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" style={{ animation: 'livePulse 2s ease-in-out infinite' }} />

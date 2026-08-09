@@ -3,15 +3,13 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { MysteryPlayer, MysteryRoom } from '@/api/db';
 import { useToast } from '@/components/ui/use-toast';
-import { Lock, Check, Clock, Search, Pencil, ChevronsDown, ArrowLeft } from 'lucide-react';
+import { Lock, Check, Clock, Search, Pencil, ArrowLeft } from 'lucide-react';
 import { WORD_LISTS, WORD_LISTS_NL, PREMIUM_WORD_LISTS, shortCategory } from '@/lib/wordLists';
 import { useLang } from '@/lib/LanguageContext';
 import { cleanText } from '@/lib/cleanText';
 import GameBackground from '@/components/GameBackground';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
-import BannerArt from '@/components/progression/BannerArt';
 import usePeerProfiles from '@/components/progression/usePeerProfiles';
-import { cosmeticById } from '@/lib/cosmetics';
 
 export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }) {
   const { toast } = useToast();
@@ -88,19 +86,18 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
         </button>
       </div>
       <div
-        className="w-full max-w-md relative flex-1 min-h-0 overflow-y-auto hide-scrollbar p-4"
+        className="w-full max-w-md relative flex-1 min-h-0 overflow-y-auto hide-scrollbar px-4 pt-2 pb-3"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)' }}
       >
-        <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} className="text-center mb-4 pt-1">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-[18px] bg-gradient-to-b from-[#2a1150] to-[#0d0620] ring-1 ring-violet-400/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_5px_12px_-8px_rgba(0,0,0,0.45)] mb-3">
-            <Lock className="w-7 h-7 text-violet-300" />
-          </div>
-          <h2 className="text-xl font-extrabold tracking-tight mb-0.5">{t.chooseSecretWord}</h2>
+        {/* Compact header — every word must fit on ONE screen, so no big
+            icon tile; the whole picker is designed to a 667px budget */}
+        <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} className="text-center mb-2.5 pt-1">
+          <h2 className="text-lg font-extrabold tracking-tight leading-tight">{t.chooseSecretWord}</h2>
           <p className="text-xs font-semibold text-white/[0.7]">{t.category}: <span className="text-violet-300">{shortCategory(room.category)}</span></p>
         </motion.div>
 
         {!submitted ? (
-          <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.1 }} className="space-y-3">
+          <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.1 }} className="space-y-2.5">
             {isCustom ? (
               /* Custom word input */
               <div className="glass-card p-3.5 space-y-2.5">
@@ -118,52 +115,42 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
                 <p className="text-xs text-slate-400">{t.keepItSecret}</p>
               </div>
             ) : (
-              <div className="glass-card p-3 space-y-2.5">
-                {/* Selected word display */}
-                {selected && (
-                  <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-gradient-to-b from-[#3a2400] to-[#1a0f00] ring-1 ring-[#ffcf7a]/60 shadow-[inset_0_1px_1px_rgba(255,220,150,0.25)]">
-                    <span className="font-bold text-amber-200 text-sm">{selected}</span>
-                    <button onClick={() => setSelected('')} className="text-amber-300/70 hover:text-amber-200 text-xs font-semibold">{t.change2}</button>
-                  </div>
-                )}
-
-                {/* Search */}
+              <div className="glass-card p-2.5 space-y-2">
+                {/* Search — slim, filters the cloud; typing an exact word
+                    still selects it via the pill it leaves visible */}
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <input
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                     placeholder={t.search(shortCategory(room.category))} enterKeyHint="search"
-                    className="inset-input w-full h-10 pl-9 pr-4 text-base md:text-sm"
+                    className="inset-input w-full h-9 pl-9 pr-4 text-base md:text-sm"
                   />
                 </div>
 
-                {/* Word grid */}
-                <div className="max-h-52 overflow-y-auto rounded-xl bg-black/20 ring-1 ring-white/5 p-1.5 grid grid-cols-2 gap-1 word-grid-scroll" style={{ overscrollBehaviorY: 'none' }}>
+                {/* Word cloud — compact wrapping pills so ALL words fit on
+                    one screen with no scrolling (max list = 31 words) */}
+                <div className="flex flex-wrap gap-1 rounded-xl bg-black/20 ring-1 ring-white/5 p-1.5">
                   {filtered.map(w => (
                     <button key={w} onClick={() => { setSelected(w); setSearch(''); }}
-                      className={`text-left px-3 py-2 rounded-lg text-sm transition ${selected === w ? 'bg-violet-500 text-white font-semibold shadow-[0_2px_6px_-2px_rgba(139,92,246,0.6)]' : 'text-slate-300 hover:bg-white/10 active:scale-[0.98]'}`}>
+                      className={`px-2 py-1 rounded-full text-[11px] font-semibold transition active:scale-[0.96] ${selected === w
+                        ? 'bg-gradient-to-b from-violet-400 to-violet-700 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_-2px_rgba(139,92,246,0.7)] ring-1 ring-violet-300/60'
+                        : 'bg-white/5 ring-1 ring-white/10 text-slate-200 hover:bg-white/10'}`}>
                       {w}
                     </button>
                   ))}
                   {filtered.length === 0 && (
-                    <p className="col-span-2 text-center text-slate-400 text-sm py-4">{t.noResults}</p>
+                    <p className="w-full text-center text-slate-400 text-sm py-4">{t.noResults}</p>
                   )}
                 </div>
-                {filtered.length > 8 && (
-                  <div className="flex items-center justify-center gap-1.5 text-slate-400 text-xs">
-                    <ChevronsDown className="w-3.5 h-3.5 animate-bounce" />
-                    <span>{t.scrollForMore}</span>
-                  </div>
-                )}
               </div>
             )}
 
             <button onClick={submitWord} disabled={submitting || (!isCustom && !selected) || (isCustom && !customInput.trim())}
-              className="gold-btn w-full h-14 rounded-[20px] flex items-center justify-center gap-2">
-              <Lock className="relative w-4 h-4 text-[#2c1500]" />
-              <span className="relative text-sm font-extrabold tracking-tight text-[#2c1500] drop-shadow-[0_1px_0_rgba(255,255,255,0.25)]">
-                {submitting ? t.lockingIn : t.lockIn}
+              className="gold-btn w-full h-12 rounded-[18px] flex items-center justify-center gap-2 px-4">
+              <Lock className="relative w-4 h-4 shrink-0 text-[#2c1500]" />
+              <span className="relative text-sm font-extrabold tracking-tight text-[#2c1500] drop-shadow-[0_1px_0_rgba(255,255,255,0.25)] truncate">
+                {submitting ? t.lockingIn : selected && !isCustom ? `${t.lockIn} · ${selected}` : t.lockIn}
               </span>
             </button>
           </motion.div>
@@ -178,25 +165,24 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
           </motion.div>
         )}
 
-        <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.2 }} className="glass-card mt-3 p-3 space-y-1.5">
+        {/* Player readiness — one compact horizontal strip (32px avatars
+            with a check/clock corner badge) so the word cloud above keeps
+            the vertical space; full player showcase lives in the lobby */}
+        <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.2 }}
+          className="glass-card mt-2.5 px-3 py-2 flex flex-wrap items-start justify-center gap-x-2.5 gap-y-1.5">
           {players.map(p => {
             const pProfile = profiles[p.user_id];
-            const pBanner = pProfile ? cosmeticById(pProfile.equipped?.banner) : null;
-            const pNameCls = pProfile ? cosmeticById(pProfile.equipped?.nameColor)?.cls : null;
             return (
-              <div key={p.id} className="glass-tile relative overflow-hidden flex items-center gap-2.5 h-9 px-2.5">
-                {pBanner && (
-                  <>
-                    <BannerArt banner={pBanner} className="absolute inset-0" motifScale={0.55} />
-                    <span aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/50 via-black/25 to-black/45" />
-                  </>
-                )}
-                <PlayerAvatar profile={pProfile} name={p.display_name} color={p.color} size={24} className="relative" />
-                <span className={`relative flex-1 min-w-0 text-xs font-semibold truncate ${pNameCls || 'text-white'}`}>{p.display_name}</span>
-                {p.user_id === me?.id && <span className="relative shrink-0 px-1.5 py-0.5 rounded-full bg-violet-500/20 ring-1 ring-violet-400/40 text-[9px] font-bold text-violet-200">{t.you}</span>}
-                {p.word_submitted
-                  ? <Check className="relative w-4 h-4 text-emerald-400 shrink-0" />
-                  : <Clock className="relative w-4 h-4 text-slate-500 animate-pulse shrink-0" />}
+              <div key={p.id} className="flex flex-col items-center gap-0.5 w-12">
+                <span className="relative">
+                  <PlayerAvatar profile={pProfile} name={p.display_name} color={p.color} size={28} />
+                  <span className={`absolute -bottom-0.5 -right-1 w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-[#0d0716] ${p.word_submitted ? 'bg-emerald-500' : 'bg-slate-600'}`}>
+                    {p.word_submitted
+                      ? <Check className="w-2.5 h-2.5 text-white" strokeWidth={3.5} />
+                      : <Clock className="w-2.5 h-2.5 text-slate-300 animate-pulse" />}
+                  </span>
+                </span>
+                <span className={`w-full text-center text-[9px] font-semibold truncate ${p.user_id === me?.id ? 'text-violet-300' : 'text-slate-400'}`}>{p.display_name}</span>
               </div>
             );
           })}

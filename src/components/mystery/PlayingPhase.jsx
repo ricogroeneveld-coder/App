@@ -47,6 +47,13 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
   const [submittingHint, setSubmittingHint] = useState(false);
   const [cardPlayer, setCardPlayer] = useState(null);
   const profiles = usePeerProfiles(players);
+  // Unread chat badge — counted here because ChatPanel only exists while
+  // its tab is open. The ref keeps the subscription callback seeing the
+  // CURRENT tab without resubscribing on every tab switch.
+  const [unreadChat, setUnreadChat] = useState(0);
+  const tabRef = useRef(tab);
+  tabRef.current = tab;
+  useEffect(() => { if (tab === 'chat') setUnreadChat(0); }, [tab]);
 
   const activePlayers = players.filter(p => !p.is_eliminated && !p.word_revealed);
   // Asking rotation includes word_revealed players (they can still ask and guess others)
@@ -241,10 +248,14 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
       if (event.type === 'create' && event.data?.room_code === roomCode) {
         const emote = EMOTES.find(e => event.data.message?.includes(e));
         if (emote) handleEmoteRain(emote);
+        // Others' messages count as unread while any other tab is open
+        if (event.data.user_id !== me?.id && tabRef.current !== 'chat') {
+          setUnreadChat(u => u + 1);
+        }
       }
     });
     return unsub;
-  }, [roomCode]);
+  }, [roomCode, me?.id]);
 
   const timerColor = timeLeft !== null && timeLeft <= 30 ? 'text-rose-400' : 'text-amber-400';
 
@@ -580,6 +591,11 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
             )}
             <Icon className={`w-5 h-5 transition-transform ${tab === id ? 'text-violet-400 scale-110 drop-shadow-[0_0_6px_rgba(157,92,255,0.6)]' : ''}`} />
             {label}
+            {id === 'chat' && unreadChat > 0 && (
+              <span className="absolute top-1 left-[calc(50%+6px)] min-w-[16px] h-4 px-1 rounded-full bg-gradient-to-b from-rose-400 to-rose-600 text-[9px] font-extrabold text-white flex items-center justify-center leading-none shadow-[0_1px_3px_rgba(0,0,0,0.5)] ring-2 ring-[#0a0616]">
+                {unreadChat > 9 ? '9+' : unreadChat}
+              </span>
+            )}
           </button>
         ))}
       </div>

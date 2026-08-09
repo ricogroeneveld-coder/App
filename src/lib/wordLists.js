@@ -34,6 +34,19 @@ export function shortCategory(cat) {
   return CATEGORY_SHORT[cat] || cat;
 }
 
+// Emoji + free/pack metadata for a category — used anywhere a category is
+// shown outside the selector (lobby header, public-lobby rows). Defined
+// with lazy references so it can sit above CATEGORIES/PACKS declarations.
+export function categoryMeta(cat) {
+  if (!cat) return null;
+  if (CATEGORIES.includes(cat)) {
+    return { emoji: CATEGORY_EMOJIS[cat] || '🎯', isFree: true };
+  }
+  if (cat === CUSTOM_CATEGORY) return { emoji: '✏️', isFree: true };
+  const pack = PACKS.find(p => p.categories.includes(cat));
+  return { emoji: pack?.emoji || '⭐', isFree: false, packName: pack?.name };
+}
+
 // Dutch translations for categories that contain common words (not proper nouns)
 export const WORD_LISTS_NL = {
   Pets: [
