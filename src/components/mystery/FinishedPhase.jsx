@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { MysteryPlayer, MysteryQuestion, MysteryGuess, MysteryRoom } from '@/api/db';
 import { leaveRoom } from '@/lib/roomLifecycle';
-import { Trophy, Home, RotateCcw } from 'lucide-react';
+import { Trophy, Home, RotateCcw, Award, Palette, MessageCircle } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { toDisplayWord } from '@/lib/wordLists';
 import GameBackground from '@/components/GameBackground';
@@ -13,7 +13,10 @@ import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import PlayerCardModal from '@/components/progression/PlayerCardModal';
 import RewardSummary from '@/components/progression/RewardSummary';
 import usePeerProfiles from '@/components/progression/usePeerProfiles';
-import RoomChat from './RoomChat';
+import ChatPanel from './ChatPanel';
+import RoomTabBar from './RoomTabBar';
+import QuickEquip from './QuickEquip';
+import useUnreadChat from './useUnreadChat';
 
 export default function FinishedPhase({ players, guesses, room, me, myPlayer, roomCode }) {
   const navigate = useNavigate();
@@ -21,7 +24,9 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
   const [loading, setLoading] = useState(false);
   const [breakdown, setBreakdown] = useState(null);
   const [cardPlayer, setCardPlayer] = useState(null);
+  const [tab, setTab] = useState('results'); // 'results' | 'profile' | 'chat'
   const profiles = usePeerProfiles(players);
+  const unreadChat = useUnreadChat(roomCode, me?.id, tab === 'chat');
 
   useEffect(() => {
     let live = true;
@@ -100,9 +105,10 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
       }}
     >
       <GameBackground />
+      {tab === 'results' && (
       <div
         className="w-full max-w-md flex-1 min-h-0 overflow-y-auto hide-scrollbar p-4 flex flex-col"
-        style={{ paddingBottom: 'max(calc(env(safe-area-inset-bottom) + 0.75rem), 1.75rem)' }}
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 4.75rem)' }}
       >
         <motion.div initial={{ scale:0 }} animate={{ scale:1 }} transition={{ type:'spring' }}
           className="text-center mb-5">
@@ -177,12 +183,35 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
           <Home className="w-4 h-4 mr-2" /> {t.backToHome}
         </Button>
       </div>
+      )}
+
+      {tab === 'profile' && (
+        <div className="w-full max-w-md flex-1 min-h-0 overflow-y-auto hide-scrollbar px-4 pb-4"
+          style={{ paddingTop: 'max(calc(env(safe-area-inset-top) + 3.5rem), 3.75rem)', paddingBottom: 'calc(env(safe-area-inset-bottom) + 4.75rem)' }}>
+          <QuickEquip />
+        </div>
+      )}
+
+      {tab === 'chat' && (
+        <div className="w-full max-w-md flex-1 min-h-0 flex flex-col px-4 pb-4"
+          style={{ paddingTop: 'max(calc(env(safe-area-inset-top) + 3.5rem), 3.75rem)', paddingBottom: 'calc(env(safe-area-inset-bottom) + 4.75rem)' }}>
+          <ChatPanel roomCode={roomCode} me={me} myPlayer={myPlayer} onEmoteRain={() => {}} />
+        </div>
+      )}
 
       {cardPlayer && (
         <PlayerCardModal player={cardPlayer} profile={profiles[cardPlayer.user_id]} meId={me?.id} roomCode={roomCode} onClose={() => setCardPlayer(null)} />
       )}
 
-      <RoomChat roomCode={roomCode} me={me} myPlayer={myPlayer} />
+      <RoomTabBar
+        active={tab}
+        onChange={setTab}
+        items={[
+          { id: 'results', label: t.tabResults, icon: Award },
+          { id: 'profile', label: t.tabProfile, icon: Palette },
+          { id: 'chat', label: t.tabChat, icon: MessageCircle, badge: unreadChat },
+        ]}
+      />
     </div>
   );
 }

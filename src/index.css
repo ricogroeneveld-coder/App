@@ -4,6 +4,11 @@
 
 @layer base {
   :root {
+    /* Toasts are fixed to the bottom of the viewport at the highest
+       z-index — a screen with its own bottom tab bar (Playing, and now
+       Lobby/Word Entry/Finished) toggles .has-bottom-tab-bar on <body>
+       (see RoomTabBar.jsx) so toasts clear it instead of covering it. */
+    --toast-bottom-offset: max(env(safe-area-inset-bottom), 1rem);
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
@@ -104,6 +109,11 @@
   #root {
     height: 100%;
     overflow: hidden;
+  }
+
+  /* See --toast-bottom-offset above */
+  body.has-bottom-tab-bar {
+    --toast-bottom-offset: calc(env(safe-area-inset-bottom) + 4.75rem);
   }
 
   /* Prevent default zoom on double-tap for interactive elements */

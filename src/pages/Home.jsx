@@ -26,6 +26,7 @@ export default function Home() {
   const [nameInput, setNameInput] = useState('');
   const [nameSet, setNameSet] = useState(hasGuestName());
   const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const [pendingDailyReward, setPendingDailyReward] = useState(false);
   const [showCreateSheet, setShowCreateSheet] = useState(false);
   const [profile, setProfile] = useState(getProfile());
 
@@ -62,15 +63,25 @@ export default function Home() {
     if (!nameInput.trim()) { toast({ title: t.enterYourName, variant: 'destructive' }); return; }
     setGuestName(nameInput.trim());
     setNameSet(true);
-    // First session skips the mount-time daily check (no name yet) — grant
-    // the day-1 login reward now so the economy says hello right away.
-    ensureDailyLogin().then(res => {
-      if (res) toast({ title: `🎁 ${t.dailyReward}: +${res.picks} Picks` });
-    });
     // A brand-new player has no reason to know the rules modal exists behind
     // the header icon — show it once, right after they've named themselves,
-    // instead of leaving it to be discovered by accident.
+    // instead of leaving it to be discovered by accident. The day-1 reward
+    // toast waits until they click it away (see closeHowToPlay) — firing it
+    // underneath the modal meant it was gone before they ever saw it.
+    setPendingDailyReward(true);
     setShowHowToPlay(true);
+  };
+
+  const closeHowToPlay = () => {
+    setShowHowToPlay(false);
+    if (pendingDailyReward) {
+      setPendingDailyReward(false);
+      // First session skips the mount-time daily check (no name yet) — grant
+      // the day-1 login reward now so the economy says hello right away.
+      ensureDailyLogin().then(res => {
+        if (res) toast({ title: `🎁 ${t.dailyReward}: +${res.picks} Picks` });
+      });
+    }
   };
 
   const generateCode = () => {
@@ -181,7 +192,7 @@ export default function Home() {
             className="glass-card w-full max-w-md bg-slate-900/95 p-6 max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-bold text-white">{t.howToPlay}</h2>
-              <button onClick={() => setShowHowToPlay(false)} className="p-2.5 -m-1 rounded-xl hover:bg-white/10 text-slate-400" aria-label={t.gotIt}>
+              <button onClick={closeHowToPlay} className="p-2.5 -m-1 rounded-xl hover:bg-white/10 text-slate-400" aria-label={t.gotIt}>
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -196,7 +207,7 @@ export default function Home() {
                 </div>
               ))}
             </div>
-            <button onClick={() => setShowHowToPlay(false)}
+            <button onClick={closeHowToPlay}
               className="violet-solid-btn mt-6 w-full h-11 text-sm">
               {t.gotIt}
             </button>

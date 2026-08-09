@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MysteryPlayer, MysteryRoom } from '@/api/db';
 import { leaveRoom } from '@/lib/roomLifecycle';
 import { useToast } from '@/components/ui/use-toast';
-import { Copy, Check, Users, Crown, ArrowRight, ChevronRight, Sparkles, ArrowLeft, HelpCircle, X, Share } from 'lucide-react';
+import { Copy, Check, Users, Crown, ArrowRight, ChevronRight, Sparkles, ArrowLeft, HelpCircle, X, Share, Palette, MessageCircle } from 'lucide-react';
 import { shareRoomInvite } from '@/lib/share';
 import { useNavigate } from 'react-router-dom';
 import { shortCategory, categoryMeta } from '@/lib/wordLists';
@@ -11,7 +11,10 @@ import { useLang } from '@/lib/LanguageContext';
 import GameBackground from '@/components/GameBackground';
 import lobbyTitleImage from '../../../lobby-title.webp';
 import CategorySelector from './CategorySelector';
-import RoomChat from './RoomChat';
+import ChatPanel from './ChatPanel';
+import RoomTabBar from './RoomTabBar';
+import QuickEquip from './QuickEquip';
+import useUnreadChat from './useUnreadChat';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import PlayerCardModal from '@/components/progression/PlayerCardModal';
 import BannerArt from '@/components/progression/BannerArt';
@@ -29,9 +32,11 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
   const [showCategorySelector, setShowCategorySelector] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [cardPlayer, setCardPlayer] = useState(null);
+  const [tab, setTab] = useState('lobby'); // 'lobby' | 'profile' | 'chat'
   const profiles = usePeerProfiles(players);
   const isHost = room.host_id === me?.id;
   const meta = categoryMeta(selectedCategory);
+  const unreadChat = useUnreadChat(roomCode, me?.id, tab === 'chat');
 
   const leaveGame = async () => {
     try {
@@ -79,7 +84,7 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
   return (
     <div
       className="h-dvh overflow-hidden text-white flex items-start justify-center p-4 relative"
-      style={{ paddingTop: 'max(calc(env(safe-area-inset-top) + 4.25rem), 4.75rem)', paddingBottom: 'max(calc(env(safe-area-inset-bottom) + 0.75rem), 1.75rem)' }}
+      style={{ paddingTop: 'max(calc(env(safe-area-inset-top) + 4.25rem), 4.75rem)', paddingBottom: 'calc(env(safe-area-inset-bottom) + 4.75rem)' }}
     >
       <GameBackground />
 
@@ -181,6 +186,7 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
           info (title, code, players) reads top-down, while the host's two
           actions (category + start) sink to the bottom thumb zone — the
           spacer collapses on short screens so nothing ever clips. */}
+      {tab === 'lobby' && (
       <div className="relative z-10 w-full max-w-md flex flex-col min-h-0 self-stretch">
         {/* Title */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-2">
@@ -330,6 +336,19 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
           )}
         </div>
       </div>
+      )}
+
+      {tab === 'profile' && (
+        <div className="relative z-10 w-full max-w-md flex-1 min-h-0 overflow-y-auto hide-scrollbar self-stretch pt-1">
+          <QuickEquip />
+        </div>
+      )}
+
+      {tab === 'chat' && (
+        <div className="relative z-10 w-full max-w-md flex-1 min-h-0 flex flex-col self-stretch">
+          <ChatPanel roomCode={roomCode} me={me} myPlayer={myPlayer} onEmoteRain={() => {}} />
+        </div>
+      )}
 
       {cardPlayer && (
         <PlayerCardModal player={cardPlayer} profile={profiles[cardPlayer.user_id]} meId={me?.id} roomCode={roomCode} onClose={() => setCardPlayer(null)}
@@ -339,7 +358,15 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
           } : undefined} />
       )}
 
-      <RoomChat roomCode={roomCode} me={me} myPlayer={myPlayer} />
+      <RoomTabBar
+        active={tab}
+        onChange={setTab}
+        items={[
+          { id: 'lobby', label: t.tabLobby, icon: Users },
+          { id: 'profile', label: t.tabProfile, icon: Palette },
+          { id: 'chat', label: t.tabChat, icon: MessageCircle, badge: unreadChat },
+        ]}
+      />
     </div>
   );
 }

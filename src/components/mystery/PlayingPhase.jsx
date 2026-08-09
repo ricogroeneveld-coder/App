@@ -8,7 +8,7 @@ import Notebook from '@/components/mystery/Notebook';
 import GuessModal from '@/components/mystery/GuessModal';
 import ChatPanel from '@/components/mystery/ChatPanel';
 import EmojiRain from '@/components/mystery/EmojiRain';
-import { BookOpen, MessageCircleQuestion, Trophy, Mic, Users, MessageCircle, Zap, Timer, Lightbulb, CheckCircle2, LogOut } from 'lucide-react';
+import { BookOpen, MessageCircleQuestion, Trophy, Mic, Users, MessageCircle, Zap, Timer, Lightbulb, CheckCircle2, LogOut, Sparkles, X } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { toDisplayWord, shortCategory } from '@/lib/wordLists';
 import GameBackground from '@/components/GameBackground';
@@ -42,6 +42,10 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
   const [emojiRainTrigger, setEmojiRainTrigger] = useState(0);
   const [correctGuessAlert, setCorrectGuessAlert] = useState(null); // { guesserName, targetName, word }
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  // First-ever timer-driven auto-question: a dismissible banner, not a
+  // toast — a toast fires and vanishes on its own timer, so a player who
+  // wasn't staring at the screen right at that second never saw it at all.
+  const [showAutoQuestionHint, setShowAutoQuestionHint] = useState(false);
   const prevGuessesRef = useRef(guesses);
   // Hint phase: every 5 rounds, track if hint submitted
   const [hintText, setHintText] = useState('');
@@ -55,6 +59,14 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
   const tabRef = useRef(tab);
   tabRef.current = tab;
   useEffect(() => { if (tab === 'chat') setUnreadChat(0); }, [tab]);
+
+  // Toasts are fixed to the bottom of the viewport at a higher z-index than
+  // this screen's tab bar — without this, a toast renders on top of it. See
+  // --toast-bottom-offset in index.css.
+  useEffect(() => {
+    document.body.classList.add('has-bottom-tab-bar');
+    return () => document.body.classList.remove('has-bottom-tab-bar');
+  }, []);
 
   const activePlayers = players.filter(p => !p.is_eliminated && !p.word_revealed);
   // Asking rotation includes word_revealed players (they can still ask and guess others)
@@ -132,12 +144,14 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
     setAutoAsking(true);
     // First time the timer (not a manual skip) auto-asks for a player, they
     // have no way to know why a question they didn't write just appeared —
-    // explain it once, ever.
+    // explain it once, ever, with a banner that stays until dismissed
+    // (a toast here would auto-dismiss before someone who stepped away
+    // ever saw it).
     if (isTimeout) {
       try {
         if (!localStorage.getItem('wmp_seen_auto_question_hint')) {
           localStorage.setItem('wmp_seen_auto_question_hint', '1');
-          toast({ title: t.autoQuestionExplainer });
+          setShowAutoQuestionHint(true);
         }
       } catch { /* ignore */ }
     }
@@ -390,6 +404,21 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
             {/* Transient cards stack on top; the history frame below them
                 fills the remaining height and scrolls internally */}
             <div className="flex-1 min-h-0 flex flex-col gap-3 pb-2">
+
+            {/* First-ever auto-question explainer — stays until dismissed,
+                not timed, so stepping away for a moment can't make it
+                disappear unseen. */}
+            {showAutoQuestionHint && (
+              <motion.div initial={{ opacity:0, y:-10 }} animate={{ opacity:1, y:0 }}
+                className="flex items-start gap-2.5 rounded-2xl bg-violet-500/10 ring-1 ring-violet-400/30 p-3">
+                <Sparkles className="w-4 h-4 text-violet-300 shrink-0 mt-0.5" />
+                <p className="flex-1 text-xs font-medium text-violet-200">{t.autoQuestionExplainer}</p>
+                <button onClick={() => setShowAutoQuestionHint(false)} aria-label={t.gotIt}
+                  className="shrink-0 p-1 -m-1 rounded-lg text-violet-300/70 hover:text-white hover:bg-white/10 transition">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </motion.div>
+            )}
 
             {/* Dedicated hint round — blocks normal question UI until all hints submitted */}
             {isHintPhase && !allHintsSubmitted && (
