@@ -163,7 +163,12 @@ is unaffected).
 ## 7. Before every store build
 
 - `dist/` built from a clean `npm run build`
-- Supabase migrations 0001–0005 applied
+- Supabase migrations 0001–0006 applied (0006 adds the atomic answer RPC
+  and the profile delete policy — without it the app falls back to the old
+  racy answer merge, and "Delete my profile" can't remove the remote row)
+- Optional: set `VITE_SENTRY_DSN` (GitHub secret, same place as the other
+  build secrets) to enable crash reporting — without it no Sentry code
+  ships at all
 - Don't set `VITE_ENABLE_DEV_TOOLS` for a store build — without it, the
   `?dev=unlock` / `?dev=reset` URLs (test-mode unlock, profile reset,
   simulated web purchases) are inert at the code level, not just hidden, so

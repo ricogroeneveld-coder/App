@@ -14,9 +14,17 @@ import usePeerProfiles from '@/components/progression/usePeerProfiles';
 import ChatPanel from './ChatPanel';
 import RoomTabBar from './RoomTabBar';
 import QuickEquip from './QuickEquip';
+import EmojiRain from './EmojiRain';
 import useUnreadChat from './useUnreadChat';
 
 const WORD_ENTRY_TIMER_SECONDS = 60;
+// Enforcement stagger for removing stalled players — see PlayingPhase's
+// deadline enforcement for the pattern (grace, then per-player stagger).
+const ENFORCE_GRACE_MS = 6000;
+const ENFORCE_STAGGER_MS = 4000;
+const MAX_CUSTOM_WORD_LENGTH = 30;
+
+const formatTimer = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
 export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }) {
   const { toast } = useToast();
@@ -34,29 +42,79 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
   const submitted = myPlayer?.word_submitted;
   const allSubmitted = players.length > 0 && players.every(p => p.word_submitted);
   const isCustom = room.category === 'Custom';
-  const unreadChat = useUnreadChat(roomCode, me?.id, tab === 'chat');
+  const [rain, setRain] = useState({ emote: null, trigger: 0 });
+  const unreadChat = useUnreadChat(roomCode, me?.id, tab === 'chat',
+    (emote) => setRain(r => ({ emote, trigger: r.trigger + 1 })));
 
-  // A player who doesn't lock in a word within a minute gets removed —
-  // otherwise one distracted player can stall everyone else indefinitely.
-  // With only 2 in the room, removing one leaves an unplayable 1-player
-  // game, so the whole attempt cancels back to the lobby instead.
+  // A player who doesn't lock in a word before the shared deadline gets
+  // removed — otherwise one distracted player can stall everyone else
+  // indefinitely. With only 2 in the room, removing one leaves an unplayable
+  // 1-player game, so the whole attempt cancels back to the lobby instead.
+  //
+  // The deadline is stored on the room (set when the host starts the game),
+  // NOT a device-local countdown: iOS freezes the webview when the stalled
+  // player backgrounds the app, so their own timer is exactly the one that
+  // can't be trusted to fire. Their client self-removes when awake; everyone
+  // who already submitted enforces it when it isn't (effect below).
+  const deadlineMs = room.question_deadline ? new Date(room.question_deadline).getTime() : null;
   useEffect(() => {
     if (submitted) { clearInterval(wordTimerRef.current); setWordTimeLeft(null); return; }
-    setWordTimeLeft(WORD_ENTRY_TIMER_SECONDS);
-    wordTimerRef.current = setInterval(() => {
-      setWordTimeLeft(prev => {
-        if (prev === null) return null;
-        if (prev <= 1) {
-          clearInterval(wordTimerRef.current);
-          handleWordTimeout();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    // Legacy room without a deadline: the host claims one so every client
+    // counts down against the same clock.
+    if (!deadlineMs) {
+      if (isHost) {
+        MysteryRoom.update(room.id, {
+          question_deadline: new Date(Date.now() + WORD_ENTRY_TIMER_SECONDS * 1000).toISOString(),
+        }).catch(() => {});
+      }
+      setWordTimeLeft(WORD_ENTRY_TIMER_SECONDS);
+      return;
+    }
+    const tick = () => {
+      const secs = Math.max(0, Math.ceil((deadlineMs - Date.now()) / 1000));
+      setWordTimeLeft(secs);
+      if (secs <= 0) {
+        clearInterval(wordTimerRef.current);
+        handleWordTimeout();
+      }
+    };
+    tick();
+    wordTimerRef.current = setInterval(tick, 1000);
     return () => clearInterval(wordTimerRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [submitted]);
+  }, [submitted, deadlineMs]);
+
+  // Deadline enforcement by players who already submitted: if a stalled
+  // player's device is asleep, remove them on their behalf once the deadline
+  // is comfortably past (staggered; re-checked against fresh state).
+  const enforcedRef = useRef(false);
+  useEffect(() => {
+    if (!submitted || !deadlineMs) return;
+    const iv = setInterval(async () => {
+      const rank = players.filter(p => p.word_submitted).findIndex(p => p.user_id === me?.id);
+      if (rank < 0) return;
+      if (Date.now() < deadlineMs + ENFORCE_GRACE_MS + rank * ENFORCE_STAGGER_MS) return;
+      if (enforcedRef.current) return;
+      enforcedRef.current = true;
+      try {
+        const fresh = await MysteryPlayer.filter({ room_code: roomCode });
+        const stalled = (fresh || []).filter(p => !p.word_submitted);
+        if (!stalled.length) return;
+        if ((fresh.length - stalled.length) < 2) {
+          // Not enough locked-in players left for a game — reset everyone
+          // back to the lobby (same rule as the self-timeout path).
+          await Promise.all((fresh || []).map(p =>
+            MysteryPlayer.update(p.id, { secret_word: '', word_submitted: false })
+          ));
+          await MysteryRoom.update(room.id, { status: 'lobby', question_deadline: null });
+        } else {
+          await Promise.all(stalled.map(p => MysteryPlayer.delete(p.id)));
+        }
+      } catch { /* another enforcer got it, or we're offline — theirs counts */ }
+    }, 1000);
+    return () => clearInterval(iv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [submitted, deadlineMs, players, me?.id, roomCode]);
 
   const handleWordTimeout = async () => {
     if (timedOutRef.current || submitted) return;
@@ -70,7 +128,7 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
         await Promise.all(players.map(p =>
           MysteryPlayer.update(p.id, { secret_word: '', word_submitted: false })
         ));
-        await MysteryRoom.update(room.id, { status: 'lobby' });
+        await MysteryRoom.update(room.id, { status: 'lobby', question_deadline: null });
       } catch (e) { /* ignore */ }
       return;
     }
@@ -107,7 +165,11 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
 
   const startPlaying = async () => {
     try {
-      await MysteryRoom.update(room.id, { status: 'playing', current_questioner_index: 0, round_number: 1 });
+      await MysteryRoom.update(room.id, {
+        status: 'playing', current_questioner_index: 0, round_number: 1,
+        // First asker's shared turn deadline (see PlayingPhase).
+        question_deadline: new Date(Date.now() + 30 * 1000).toISOString(),
+      });
     } catch(e) {
       toast({ title: t.errorTitle, description: e.message, variant: 'destructive' });
     }
@@ -143,6 +205,7 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
       }}
     >
       <GameBackground />
+      <EmojiRain emote={rain.emote} trigger={rain.trigger} />
       <div className="absolute left-4 z-20" style={{ top: 'max(env(safe-area-inset-top), 0.75rem)' }}>
         <button onClick={goBack} className="header-btn" title={t.leave} aria-label={t.leave}>
           <ArrowLeft className="w-5 h-5" />
@@ -185,7 +248,7 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
             {!submitted && wordTimeLeft !== null && (
               <span className={`inline-flex items-center justify-center gap-1 h-5 px-2 rounded-full font-mono font-bold text-[11px] leading-none tabular-nums shrink-0 ${wordTimeLeft <= 10 ? 'bg-rose-500/15 text-rose-300' : 'bg-white/5 text-slate-300'}`}>
                 <Timer className="w-3 h-3 shrink-0" />
-                <span className="leading-none">0:{String(wordTimeLeft).padStart(2, '0')}</span>
+                <span className="leading-none">{formatTimer(wordTimeLeft)}</span>
               </span>
             )}
           </div>
@@ -202,9 +265,9 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
                 </div>
                 <input
                   value={customInput}
-                  onChange={e => setCustomInput(e.target.value)}
+                  onChange={e => setCustomInput(e.target.value.slice(0, MAX_CUSTOM_WORD_LENGTH))}
                   onKeyDown={e => e.key === 'Enter' && submitWord()}
-                  placeholder={t.enterSecretWord} enterKeyHint="done"
+                  placeholder={t.enterSecretWord} enterKeyHint="done" maxLength={MAX_CUSTOM_WORD_LENGTH}
                   className="w-full h-12 px-4 rounded-xl bg-gradient-to-b from-[#1e0d42]/80 to-[#0a0518]/90 shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1px_rgba(251,191,36,0.3)] text-white placeholder:text-slate-500 text-base focus:outline-none focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1.5px_rgba(251,191,36,0.6)] transition-shadow"
                 />
                 <p className="text-xs text-slate-400">{t.keepItSecret}</p>

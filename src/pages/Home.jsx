@@ -29,9 +29,30 @@ export default function Home() {
   const [pendingDailyReward, setPendingDailyReward] = useState(false);
   const [showCreateSheet, setShowCreateSheet] = useState(false);
   const [profile, setProfile] = useState(getProfile());
+  // iOS kills backgrounded apps constantly — without this, a player whose
+  // game is still running lands on Home with no trace of it and has to
+  // remember and retype the code. One query on mount finds it.
+  const [activeGame, setActiveGame] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
+    if (hasGuestName()) {
+      (async () => {
+        try {
+          const guest = getGuestIdentity();
+          const myPlayers = await MysteryPlayer.filter({ user_id: guest.id });
+          for (const p of myPlayers || []) {
+            if (p.is_eliminated) continue;
+            const rooms = await MysteryRoom.filter({ room_code: p.room_code });
+            const room = rooms?.[0];
+            if (room && room.status !== 'finished') {
+              if (!cancelled) setActiveGame(room);
+              return;
+            }
+          }
+        } catch { /* offline — banner just doesn't show */ }
+      })();
+    }
     loadProfile().then(p => { if (!cancelled) setProfile(p); });
     if (hasGuestName()) {
       ensureDailyLogin().then(res => {
@@ -95,17 +116,27 @@ export default function Home() {
     setLoading('create');
     try {
       const guest = getGuestIdentity();
-      const code = generateCode();
-      await MysteryRoom.create({
-        room_code: code,
-        host_id: guest.id,
-        host_name: guest.name,
-        status: 'lobby',
-        current_questioner_index: 0,
-        round_number: 1,
-        max_rounds: 10,
-        is_public: isPublic
-      });
+      // room_code is UNIQUE in the DB — on the (rare) collision with a live
+      // room, retry with a fresh code instead of surfacing a cryptic error.
+      let code;
+      let room = null;
+      for (let attempt = 0; attempt < 3 && !room; attempt++) {
+        code = generateCode();
+        try {
+          room = await MysteryRoom.create({
+            room_code: code,
+            host_id: guest.id,
+            host_name: guest.name,
+            status: 'lobby',
+            current_questioner_index: 0,
+            round_number: 1,
+            max_rounds: 10,
+            is_public: isPublic
+          });
+        } catch (err) {
+          if (err?.code !== '23505' || attempt === 2) throw err;
+        }
+      }
       await MysteryPlayer.create({
         room_code: code,
         user_id: guest.id,
@@ -298,6 +329,21 @@ export default function Home() {
         ) : (
           <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.2 }}>
           <div className="space-y-5 cards-shift">
+            {/* Game-in-progress banner — the way back into a round after iOS
+                killed the backgrounded app. Without it the player would have
+                to remember and retype the room code. */}
+            {activeGame && (
+              <motion.button initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+                onClick={() => navigate(`/mystery/${activeGame.room_code}`)}
+                className="w-full h-12 -mb-2 rounded-2xl bg-violet-500/15 ring-1 ring-violet-400/40 backdrop-blur-md shadow-[0_2px_8px_rgba(0,0,0,0.35)] px-4 flex items-center gap-2.5 transition-all duration-150 active:scale-[0.98] hover:ring-violet-300/60">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" style={{ animation: 'livePulse 2s ease-in-out infinite' }} />
+                <span className="flex-1 min-w-0 text-left text-sm font-bold text-violet-100 truncate">
+                  {t.gameInProgress} <span className="font-mono tracking-[0.12em] text-white">{activeGame.room_code}</span>
+                </span>
+                <span className="shrink-0 text-xs font-extrabold text-violet-200">{t.rejoinGame}</span>
+                <ChevronRight className="w-4 h-4 text-violet-300 shrink-0" />
+              </motion.button>
+            )}
             {/* Profile card — tap opens the full profile */}
             <div onClick={() => navigate('/profile')} role="button" tabIndex={0}
               onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && navigate('/profile')}

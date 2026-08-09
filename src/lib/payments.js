@@ -26,13 +26,14 @@ import { isNativeApp, isDevToolsEnabled } from './platform';
 export const PRODUCTS = {
   // Apple permanently blocks reuse of a deleted product ID, even after it
   // was only briefly created with the wrong type — this one had to move
-  // to .popculture2 for that reason.
-  pop_culture: { productId: 'com.whatsmypick.pack.popculture2', price: '$2.99' },
-  animals:     { productId: 'com.whatsmypick.pack.animals2',   price: '$2.99' },
-  world:       { productId: 'com.whatsmypick.pack.world',      price: '$2.99' },
-  brands:      { productId: 'com.whatsmypick.pack.brands',     price: '$2.99' },
-  fantasy:     { productId: 'com.whatsmypick.pack.fantasy',    price: '$2.99' },
-  food:        { productId: 'com.whatsmypick.pack.food',       price: '$2.99' },
+  // to .popculture2 for that reason. Prices are NOT stored here — they come
+  // localized from StoreKit at runtime (getPackPrices below).
+  pop_culture: { productId: 'com.whatsmypick.pack.popculture2' },
+  animals:     { productId: 'com.whatsmypick.pack.animals2' },
+  world:       { productId: 'com.whatsmypick.pack.world' },
+  brands:      { productId: 'com.whatsmypick.pack.brands' },
+  fantasy:     { productId: 'com.whatsmypick.pack.fantasy' },
+  food:        { productId: 'com.whatsmypick.pack.food' },
 };
 
 const isNative = isNativeApp;
@@ -57,6 +58,39 @@ export async function configurePurchases() {
   if (!apiKey) return; // build without the key still runs; purchases just stay unavailable
   configured = true;
   await Purchases.configure({ apiKey });
+  // Silent auto-restore: pack unlock flags live in localStorage, which dies
+  // with a reinstall — but the entitlements live with the Apple ID. Re-sync
+  // them at startup so a reinstalling buyer never sees their pack locked
+  // (Settings → Restore Purchases stays as the manual, Apple-required path).
+  try {
+    const { customerInfo } = await Purchases.getCustomerInfo();
+    for (const packId of Object.keys(PRODUCTS)) {
+      if (customerInfo.entitlements.active[packId] && !isPackUnlocked(packId)) {
+        unlockPack(packId);
+      }
+    }
+  } catch { /* offline — the manual restore button still exists */ }
+}
+
+// Localized store prices, e.g. { pop_culture: "€2,99" }. Fetched once from
+// StoreKit via RevenueCat — NEVER hardcoded in UI strings, so every
+// storefront sees its real local price and App Store Connect price changes
+// apply without an app update. Returns {} on web / before configure.
+let priceCache = null;
+export async function getPackPrices() {
+  if (priceCache) return priceCache;
+  if (!isNative() || !configured) return {};
+  try {
+    const ids = Object.values(PRODUCTS).map(p => p.productId);
+    const { products } = await Purchases.getProducts({ productIdentifiers: ids });
+    const byProductId = Object.fromEntries((products || []).map(p => [p.identifier, p.priceString]));
+    priceCache = Object.fromEntries(
+      Object.entries(PRODUCTS).map(([packId, { productId }]) => [packId, byProductId[productId]])
+    );
+    return priceCache;
+  } catch {
+    return {};
+  }
 }
 
 /**

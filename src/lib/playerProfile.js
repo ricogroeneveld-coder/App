@@ -30,7 +30,7 @@ function markRemoteError(e) {
 
 export function subscribeProfile(fn) {
   listeners.add(fn);
-  return () => listeners.delete(fn);
+  return () => { listeners.delete(fn); };
 }
 function emit() {
   // Fresh snapshot per emit — cache is mutated in place, and React setState
@@ -299,7 +299,11 @@ export async function grantMatchRewards({ room, players, guesses, me }) {
   players.forEach(p => { roundScore[p.user_id] = 0; });
   guesses.forEach(g => { if (g.correct && g.guesser_id in roundScore) roundScore[g.guesser_id] += 1; });
   const topScore = Math.max(0, ...Object.values(roundScore));
-  const isWinner = (roundScore[me.id] || 0) === topScore && players.length > 1;
+  // Winning requires actually having guessed something: a round that ends
+  // with zero correct guesses (everyone else left, host abandoned) pays the
+  // completion reward but never winner/perfect/streak — otherwise two
+  // players could farm "wins" by taking turns leaving.
+  const isWinner = topScore > 0 && (roundScore[me.id] || 0) === topScore && players.length > 1;
   const myCorrect = guesses.filter(g => g.guesser_id === me.id && g.correct).length;
   const isHost = room.host_id === me.id;
   const perfect = isWinner && myCorrect >= players.length - 1 && players.length > 1;
@@ -320,11 +324,15 @@ export async function grantMatchRewards({ room, players, guesses, me }) {
   if (perfect) add('perfect', ECONOMY.perfect);
   if (isHost) add('host', ECONOMY.host);
 
-  cache.win_streak = isWinner ? (cache.win_streak || 0) + 1 : 0;
-  const streakIdx = Math.min(cache.win_streak, ECONOMY.streakBonus.length - 1);
-  if (isWinner && ECONOMY.streakBonus[streakIdx] > 0) {
-    add('streak', { picks: ECONOMY.streakBonus[streakIdx], xp: 0 });
-    breakdown.streak = cache.win_streak;
+  // A walkover round (nobody guessed anything — opponents left) neither
+  // extends nor breaks a streak; only genuinely contested rounds count.
+  if (topScore > 0) {
+    cache.win_streak = isWinner ? (cache.win_streak || 0) + 1 : 0;
+    const streakIdx = Math.min(cache.win_streak, ECONOMY.streakBonus.length - 1);
+    if (isWinner && ECONOMY.streakBonus[streakIdx] > 0) {
+      add('streak', { picks: ECONOMY.streakBonus[streakIdx], xp: 0 });
+      breakdown.streak = cache.win_streak;
+    }
   }
 
   addXp(breakdown.totalXp, breakdown);
@@ -384,6 +392,22 @@ export function equipCosmetic(id) {
   cache.equipped = { ...cache.equipped, [c.type]: id };
   save();
   return true;
+}
+
+// ── Deletion ───────────────────────────────────────────────────────────────
+
+// "Delete my profile" must actually remove the data the privacy policy says
+// it removes: the remote player_profiles row (name, stats, cosmetics) plus
+// the local copy. Remote delete needs the owning anonymous session
+// (migration 0006's owner delete policy) — best-effort, so deletion still
+// completes offline. Callers clear the guest identity separately.
+export async function deleteProfileData() {
+  try {
+    await ensureAuth();
+    await supabase.from('player_profiles').delete().eq('user_id', getGuestIdentity().id);
+  } catch { /* offline / policy — local wipe still proceeds */ }
+  try { localStorage.removeItem(LS_KEY); } catch { /* ignore */ }
+  cache = null;
 }
 
 // ── Dev/test helpers ───────────────────────────────────────────────────────

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MysteryPlayer, MysteryRoom } from '@/api/db';
+import { supabase } from '@/lib/supabaseClient';
 import { leaveRoom } from '@/lib/roomLifecycle';
 import { useToast } from '@/components/ui/use-toast';
 import { Copy, Check, Users, Crown, ArrowRight, ChevronRight, Sparkles, ArrowLeft, HelpCircle, X, Share, Palette, MessageCircle } from 'lucide-react';
@@ -14,6 +15,7 @@ import CategorySelector from './CategorySelector';
 import ChatPanel from './ChatPanel';
 import RoomTabBar from './RoomTabBar';
 import QuickEquip from './QuickEquip';
+import EmojiRain from './EmojiRain';
 import useUnreadChat from './useUnreadChat';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import PlayerCardModal from '@/components/progression/PlayerCardModal';
@@ -38,7 +40,37 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
   const profiles = usePeerProfiles(players);
   const isHost = room.host_id === me?.id;
   const meta = categoryMeta(selectedCategory);
-  const unreadChat = useUnreadChat(roomCode, me?.id, tab === 'chat');
+  const [rain, setRain] = useState({ emote: null, trigger: 0 });
+  const unreadChat = useUnreadChat(roomCode, me?.id, tab === 'chat',
+    (emote) => setRain(r => ({ emote, trigger: r.trigger + 1 })));
+
+  // Presence — iOS never fires beforeunload when the app is killed, so a
+  // player's row can linger in the lobby for hours ("ghost" seats the host
+  // waits on). Everyone in the lobby tracks themselves on a presence
+  // channel; rows with no live presence show as "away" so the host knows
+  // to kick (or not wait for) them. Recently-created rows get a grace
+  // period: a joiner's row arrives via realtime before their presence does.
+  const [presentIds, setPresentIds] = useState(null);
+  useEffect(() => {
+    if (!me?.id) return;
+    const channel = supabase.channel(`lobby-presence-${roomCode}`, {
+      config: { presence: { key: me.id } },
+    });
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        setPresentIds(new Set(Object.keys(channel.presenceState())));
+      })
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') channel.track({}).catch(() => {});
+      });
+    return () => { supabase.removeChannel(channel); };
+  }, [roomCode, me?.id]);
+  const isAway = (p) => {
+    if (!presentIds || p.user_id === me?.id) return false;
+    if (presentIds.has(p.user_id)) return false;
+    const age = Date.now() - new Date(p.created_date).getTime();
+    return age > 15000;
+  };
 
   const leaveGame = async () => {
     try {
@@ -96,7 +128,12 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
     const cat = selectedCategory;
     setLoading(true);
     try {
-      await MysteryRoom.update(room.id, { status: 'word_entry', category: cat });
+      await MysteryRoom.update(room.id, {
+        status: 'word_entry', category: cat,
+        // Shared word-entry deadline — every client counts down against this
+        // and players who already locked in enforce it (see WordEntryPhase).
+        question_deadline: new Date(Date.now() + 60 * 1000).toISOString(),
+      });
     } catch(e) {
       toast({ title: t.errorTitle, description: e.message, variant: 'destructive' });
     } finally {
@@ -110,6 +147,7 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
       style={{ paddingTop: 'max(calc(env(safe-area-inset-top) + 4.25rem), 4.75rem)', paddingBottom: 'calc(env(safe-area-inset-bottom) + 4.75rem)' }}
     >
       <GameBackground />
+      <EmojiRain emote={rain.emote} trigger={rain.trigger} />
 
       {/* Back button — identical to Home's header buttons */}
       <div className="absolute left-4 z-20" style={{ top: 'max(env(safe-area-inset-top), 0.75rem)' }}>
@@ -261,6 +299,11 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
                         </span>
                       )}
                     </span>
+                    {isAway(p) && (
+                      <span className="relative shrink-0 px-1.5 py-0.5 rounded-full bg-amber-500/15 ring-1 ring-amber-400/30 text-[9px] font-bold text-amber-300">
+                        {t.away}
+                      </span>
+                    )}
                     {p.user_id === room.host_id && <Crown className="relative w-4 h-4 text-amber-400 shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]" fill="currentColor" />}
                     {p.user_id === me?.id && (
                       <span className="relative shrink-0 px-1.5 py-0.5 rounded-full bg-violet-500/20 ring-1 ring-violet-400/40 text-[9px] font-bold text-violet-200">

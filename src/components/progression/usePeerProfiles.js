@@ -36,8 +36,13 @@ export default function usePeerProfiles(players) {
     // supabase_realtime publication — migration 0002).
     const channel = supabase
       .channel(`peer-profiles-${Math.random().toString(36).slice(2)}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'player_profiles' }, (payload) => {
-        const row = payload.new;
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'player_profiles',
+        // Only this room's peers — without the filter every client received
+        // every profile edit made anywhere in the app.
+        ...(idSet.size ? { filter: `user_id=in.(${[...idSet].join(',')})` } : {}),
+      }, (payload) => {
+        const row = /** @type {any} */ (payload.new);
         if (live && row?.user_id && row.user_id !== myId && idSet.has(row.user_id)) {
           setProfiles(prev => ({ ...prev, [row.user_id]: row }));
         }

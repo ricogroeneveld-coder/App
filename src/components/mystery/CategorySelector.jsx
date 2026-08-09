@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Check, ChevronRight, Lock, Sparkles } from 'lucide-react';
-import { CATEGORIES, CATEGORY_EMOJIS, PACKS, shortCategory } from '@/lib/wordLists';
+import { CATEGORIES, CATEGORY_EMOJIS, PACKS, CUSTOM_CATEGORY, shortCategory } from '@/lib/wordLists';
 import { isPackUnlocked } from '@/lib/premiumPacks';
-import { purchasePack, purchasesAvailable } from '@/lib/payments';
+import { purchasePack, purchasesAvailable, getPackPrices } from '@/lib/payments';
 import { useToast } from '@/components/ui/use-toast';
 import { useLang } from '@/lib/LanguageContext';
 import GameBackground from '@/components/GameBackground';
@@ -38,6 +38,15 @@ export default function CategorySelector({ selectedCategory, onSelect, onClose }
   const [activePack, setActivePack] = useState(null);
   const [buying, setBuying] = useState(false);
   const [, forceRerender] = useState(0);
+  // Localized StoreKit prices ({ packId: "€2,99" }) — never hardcoded, so
+  // every storefront sees its own currency and App Store Connect price
+  // changes apply without an app update. Empty on web.
+  const [prices, setPrices] = useState({});
+  React.useEffect(() => {
+    let live = true;
+    getPackPrices().then(p => { if (live) setPrices(p || {}); });
+    return () => { live = false; };
+  }, []);
 
   const openPack = (pack) => {
     setActivePack(pack);
@@ -102,6 +111,11 @@ export default function CategorySelector({ selectedCategory, onSelect, onClose }
                   <SelectionCard key={cat} emoji={CATEGORY_EMOJIS[cat] || '🎯'} label={cat}
                     selected={selectedCategory === cat} onClick={() => onSelect(cat)} />
                 ))}
+                {/* Custom mode — everyone types their own secret word instead
+                    of picking from a list. Free: it's the party-classic way
+                    to play, and it needs no word data at all. */}
+                <SelectionCard key={CUSTOM_CATEGORY} emoji="✏️" label={t.customCategoryLabel}
+                  selected={selectedCategory === CUSTOM_CATEGORY} onClick={() => onSelect(CUSTOM_CATEGORY)} />
               </div>
 
               <p className="section-label mb-2 px-1">{t.moreCategories}</p>
@@ -167,7 +181,7 @@ export default function CategorySelector({ selectedCategory, onSelect, onClose }
                 className="gold-btn w-full h-14 mb-2.5 rounded-[20px] flex items-center justify-center gap-2">
                 <Lock className="relative w-4 h-4 text-[#2c1500]" />
                 <span className="relative text-sm font-extrabold tracking-tight text-[#2c1500] drop-shadow-[0_1px_0_rgba(255,255,255,0.25)]">
-                  {buying ? t.purchasing : t.unlockFor}
+                  {buying ? t.purchasing : t.unlockFor(prices[activePack.id])}
                 </span>
               </button>
               {!purchasesAvailable() && (

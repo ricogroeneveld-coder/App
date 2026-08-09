@@ -54,9 +54,7 @@ function createEntity(table) {
     },
 
     /**
-     * Subscribes to every INSERT/UPDATE/DELETE on this table (Supabase
-     * Realtime, not filtered server-side — call sites filter by room_code
-     * themselves once the payload arrives, same as the old base44 events).
+     * Subscribes to INSERT/UPDATE/DELETE on this table (Supabase Realtime).
      * Returns an unsubscribe function.
      *
      * @param {(status: string, err?: Error) => void} [onStatus] - optional;
@@ -64,12 +62,18 @@ function createEntity(table) {
      *   'CHANNEL_ERROR', 'TIMED_OUT', 'CLOSED') whenever it changes, so a
      *   caller can surface a dropped connection instead of silently going
      *   stale.
+     * @param {string} [filter] - optional server-side realtime filter, e.g.
+     *   `room_code=eq.ABCD12`. Without it every client receives every row
+     *   change across ALL rooms (and traffic scales with total app usage,
+     *   not room size) — pass one wherever the caller only cares about a
+     *   single room. Callers must still re-check the payload: DELETE events
+     *   match against the OLD row (REPLICA IDENTITY FULL makes that work).
      */
-    subscribe(callback, onStatus) {
+    subscribe(callback, onStatus, filter) {
       const channelName = `${table}-${Math.random().toString(36).slice(2)}`;
       const channel = supabase
         .channel(channelName)
-        .on('postgres_changes', { event: '*', schema: 'public', table }, (payload) => {
+        .on('postgres_changes', { event: '*', schema: 'public', table, ...(filter ? { filter } : {}) }, (payload) => {
           const type = payload.eventType === 'INSERT' ? 'create'
             : payload.eventType === 'DELETE' ? 'delete'
             : 'update';

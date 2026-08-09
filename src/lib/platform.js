@@ -7,7 +7,7 @@
 // native also keeps App Review guideline 4.8 (Sign in with Apple) out of
 // scope — it only applies to apps that offer third-party login.
 export function isNativeApp() {
-  return typeof window !== 'undefined' && !!window.Capacitor?.isNativePlatform?.();
+  return typeof window !== 'undefined' && !!(/** @type {any} */ (window).Capacitor?.isNativePlatform?.());
 }
 
 // Gates the ?dev= URL mechanism (test-mode unlock, profile reset, simulated

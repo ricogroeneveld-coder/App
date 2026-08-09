@@ -5,7 +5,7 @@ import { MysteryPlayer, MysteryRoom } from '@/api/db';
 import { supabase } from '@/lib/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { ArrowLeft, Trash2, AlertTriangle, Globe, DoorOpen, Volume2, Vibrate, LogOut, LogIn, RotateCcw, Shield } from 'lucide-react';
+import { ArrowLeft, Trash2, AlertTriangle, Globe, DoorOpen, Volume2, Vibrate, LogOut, LogIn, RotateCcw, Shield, LifeBuoy } from 'lucide-react';
 import { getGuestIdentity, clearGuestIdentity } from '@/lib/guestIdentity';
 import { useAuth } from '@/lib/AuthContext';
 import { useLang } from '@/lib/LanguageContext';
@@ -16,9 +16,16 @@ import GameBackground from '@/components/GameBackground';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import BannerArt from '@/components/progression/BannerArt';
 import { cosmeticById, RARITIES } from '@/lib/cosmetics';
-import { getProfile, loadProfile } from '@/lib/playerProfile';
+import { getProfile, loadProfile, deleteProfileData } from '@/lib/playerProfile';
 import { restorePurchases } from '@/lib/payments';
 import { isNativeApp } from '@/lib/platform';
+
+// Public site pages (also linked from the App Store listing). Kept in one
+// place so the in-app links can't drift from the deployed files
+// (public/privacy.html and public/support.html).
+const SITE_BASE = 'https://jinnieoclock.com/whatsmypick';
+const PRIVACY_URL = `${SITE_BASE}/privacy.html`;
+const SUPPORT_URL = `${SITE_BASE}/support.html`;
 
 export default function ProfileSettings() {
   const navigate = useNavigate();
@@ -106,15 +113,30 @@ export default function ProfileSettings() {
     checkActiveGame();
   }, []);
 
-  // Guest profile deletion — clears local game records + the guest identity itself.
+  // Everything the privacy policy's "removes your data permanently" covers:
+  // game rows, chat messages, the remote progression profile, and the local
+  // identity/progression. Purchased packs are deliberately NOT touched —
+  // they belong to the Apple ID and restore via Restore Purchases.
+  const wipeMyData = async () => {
+    const players = await MysteryPlayer.filter({ user_id: guest.id });
+    for (const p of players || []) {
+      await MysteryPlayer.delete(p.id);
+    }
+    // Chat messages carry the display name — they're part of "my data".
+    try { await supabase.from('mystery_chats').delete().eq('user_id', guest.id); } catch { /* best-effort */ }
+    await deleteProfileData();
+    try {
+      localStorage.removeItem('wmp_reported');
+      localStorage.removeItem('wmp_muted');
+    } catch { /* ignore */ }
+    clearGuestIdentity();
+  };
+
+  // Guest profile deletion — clears local + remote data and the guest identity itself.
   const handleDeleteGuestProfile = async () => {
     setDeleting(true);
     try {
-      const players = await MysteryPlayer.filter({ user_id: guest.id });
-      for (const p of players || []) {
-        await MysteryPlayer.delete(p.id);
-      }
-      clearGuestIdentity();
+      await wipeMyData();
       toast({ title: t.profileDeleted, description: t.profileDeletedDesc });
       navigate('/');
     } catch (e) {
@@ -130,13 +152,11 @@ export default function ProfileSettings() {
   const handleDeleteAccount = async () => {
     setDeleting(true);
     try {
+      // Wipe game/profile data FIRST — the remote profile delete needs the
+      // still-authenticated session that deleting the auth account destroys.
+      await wipeMyData();
       const { error } = await supabase.functions.invoke('delete-account');
       if (error) throw error;
-      const players = await MysteryPlayer.filter({ user_id: guest.id });
-      for (const p of players || []) {
-        await MysteryPlayer.delete(p.id);
-      }
-      clearGuestIdentity();
       await logout();
       toast({ title: t.accountDeleted, description: t.accountDeletedDesc });
       navigate('/');
@@ -165,7 +185,7 @@ export default function ProfileSettings() {
 
   const displayName = isRegistered
     ? (currentUser.user_metadata?.full_name || currentUser.email)
-    : (guest.name || 'Guest Player');
+    : (guest.name || t.playerFallback);
   const displaySub = isRegistered ? currentUser.email : `${guest.id?.slice(0, 12)}…`;
 
   return (
@@ -347,10 +367,15 @@ export default function ProfileSettings() {
               {iCloudStatus === 'ok' ? `✓ ${t.icloudBackedUp}` : `⚠ ${t.icloudNotBackedUp}`}
             </p>
           )}
-          <a href="https://jinnieoclock.com/whatsmypick/" target="_blank" rel="noopener"
+          <a href={PRIVACY_URL} target="_blank" rel="noopener"
             className="flex items-center gap-3 pt-3 border-t border-white/10 text-sm font-semibold text-slate-300 hover:text-white transition min-h-[44px]">
             <Shield className="w-5 h-5 text-violet-400 flex-shrink-0" />
             {t.privacyPolicy}
+          </a>
+          <a href={SUPPORT_URL} target="_blank" rel="noopener"
+            className="flex items-center gap-3 pt-3 border-t border-white/10 text-sm font-semibold text-slate-300 hover:text-white transition min-h-[44px]">
+            <LifeBuoy className="w-5 h-5 text-violet-400 flex-shrink-0" />
+            {t.supportFaq}
           </a>
         </motion.div>
 
@@ -366,19 +391,29 @@ export default function ProfileSettings() {
             <div className="flex items-center gap-3 mb-3">
               <DoorOpen className="w-5 h-5 text-rose-400 flex-shrink-0" />
               <div>
-                <p className="font-semibold text-white">{t.leaveGame}</p>
+                <p className="font-semibold text-white">{t.gameInProgress}</p>
                 <p className="text-slate-400 text-sm font-mono">{activeGame.room.room_code}</p>
               </div>
             </div>
-            <Button
-              onClick={handleLeaveGame}
-              disabled={leavingGame}
-              className="w-full h-11 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/30 hover:border-rose-400/50 font-semibold select-none-interactive"
-              variant="ghost"
-            >
-              <DoorOpen className="w-4 h-4 mr-2" />
-              {leavingGame ? '…' : t.leaveGame}
-            </Button>
+            <div className="flex gap-2">
+              {/* Rejoin first — getting back in is the common case; leaving
+                  is the escape hatch. */}
+              <Button
+                onClick={() => navigate(`/mystery/${activeGame.room.room_code}`)}
+                className="flex-1 h-11 violet-solid-btn border-0 bg-transparent hover:bg-transparent font-bold select-none-interactive"
+              >
+                {t.rejoinGame}
+              </Button>
+              <Button
+                onClick={handleLeaveGame}
+                disabled={leavingGame}
+                className="flex-1 h-11 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/30 hover:border-rose-400/50 font-semibold select-none-interactive"
+                variant="ghost"
+              >
+                <DoorOpen className="w-4 h-4 mr-2" />
+                {leavingGame ? '…' : t.leaveGame}
+              </Button>
+            </div>
           </motion.div>
         )}
 

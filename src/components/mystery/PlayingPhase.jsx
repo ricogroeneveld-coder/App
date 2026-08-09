@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MysteryQuestion, MysteryRoom, MysteryChat } from '@/api/db';
+import { MysteryQuestion, MysteryRoom } from '@/api/db';
+import { supabase } from '@/lib/supabaseClient';
 import { leaveRoom } from '@/lib/roomLifecycle';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -8,11 +9,14 @@ import Notebook from '@/components/mystery/Notebook';
 import GuessModal from '@/components/mystery/GuessModal';
 import ChatPanel from '@/components/mystery/ChatPanel';
 import EmojiRain from '@/components/mystery/EmojiRain';
+import RoomTabBar from '@/components/mystery/RoomTabBar';
+import useUnreadChat from '@/components/mystery/useUnreadChat';
 import { BookOpen, MessageCircleQuestion, Trophy, Mic, Users, MessageCircle, Zap, Timer, Lightbulb, CheckCircle2, LogOut, Sparkles, X } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { toDisplayWord, shortCategory } from '@/lib/wordLists';
 import GameBackground from '@/components/GameBackground';
 import { playAlert, playHint } from '@/lib/sounds';
+import { vibrate } from '@/lib/haptics';
 import { getRandomQuestion } from '@/lib/questionBank';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
@@ -22,6 +26,15 @@ import usePeerProfiles from '@/components/progression/usePeerProfiles';
 import { cosmeticById } from '@/lib/cosmetics';
 
 const QUESTION_TIMER_SECONDS = 30;
+// How long past the shared deadline other players wait before asking on the
+// absent player's behalf, plus per-player stagger so at most one client
+// usually fires (the create is double-checked against fresh room state too).
+const ENFORCE_GRACE_MS = 6000;
+const ENFORCE_STAGGER_MS = 4000;
+const MAX_QUESTION_LENGTH = 200;
+const MAX_HINT_LENGTH = 120;
+
+const nextDeadline = () => new Date(Date.now() + QUESTION_TIMER_SECONDS * 1000).toISOString();
 
 export default function PlayingPhase({ room, players, questions, guesses, me, myPlayer, roomCode, reload }) {
   const { toast } = useToast();
@@ -52,31 +65,32 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
   const [submittingHint, setSubmittingHint] = useState(false);
   const [cardPlayer, setCardPlayer] = useState(null);
   const profiles = usePeerProfiles(players);
-  // Unread chat badge — counted here because ChatPanel only exists while
-  // its tab is open. The ref keeps the subscription callback seeing the
-  // CURRENT tab without resubscribing on every tab switch.
-  const [unreadChat, setUnreadChat] = useState(0);
-  const tabRef = useRef(tab);
-  tabRef.current = tab;
-  useEffect(() => { if (tab === 'chat') setUnreadChat(0); }, [tab]);
-
-  // Toasts are fixed to the bottom of the viewport at a higher z-index than
-  // this screen's tab bar — without this, a toast renders on top of it. See
-  // --toast-bottom-offset in index.css.
-  useEffect(() => {
-    document.body.classList.add('has-bottom-tab-bar');
-    return () => document.body.classList.remove('has-bottom-tab-bar');
-  }, []);
-
   const activePlayers = players.filter(p => !p.is_eliminated && !p.word_revealed);
   // Asking rotation includes word_revealed players (they can still ask and guess others)
   const askingPlayers = players.filter(p => !p.is_eliminated);
   const questioner = askingPlayers[room.current_questioner_index % Math.max(askingPlayers.length, 1)];
 
   const latestQuestion = questions[questions.length - 1];
-  // Block asking until the current question is fully answered
-  const currentQuestionPending = latestQuestion && latestQuestion.status === 'answering';
+  // "Pending" is derived from the LIVE roster, never trusted from the stored
+  // status alone: if the last unanswered player leaves mid-question, the row
+  // stays 'answering' forever and the stored flag would soft-lock the whole
+  // game (nobody could ever ask again).
+  const latestNonAskers = latestQuestion
+    ? activePlayers.filter(p => p.user_id !== latestQuestion.asker_id)
+    : [];
+  const latestAllAnswered = !!latestQuestion &&
+    latestNonAskers.every(p => (latestQuestion.answers || {})[p.user_id] !== undefined);
+  const currentQuestionPending = latestQuestion && latestQuestion.status === 'answering' && !latestAllAnswered;
   const isMyTurnToAsk = questioner?.user_id === me?.id && !currentQuestionPending;
+
+  // Heal the stored status too (idempotent — every client writes the same
+  // value) so the question history and other derived checks agree.
+  useEffect(() => {
+    if (latestQuestion?.status === 'answering' && latestAllAnswered) {
+      MysteryQuestion.update(latestQuestion.id, { status: 'complete' }).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [latestQuestion?.id, latestQuestion?.status, latestAllAnswered]);
 
   // word_revealed players cannot answer questions (their word is known, irrelevant)
   const needsMyAnswer = latestQuestion &&
@@ -116,28 +130,100 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
       const rawWord = players.find(p => p.user_id === g.target_player_id)?.secret_word || '?';
       setCorrectGuessAlert({ guesserName: g.guesser_name, targetName: g.target_player_name, word: toDisplayWord(rawWord, lang) });
       playAlert();
+      vibrate(30);
       setTimeout(() => setCorrectGuessAlert(null), 5000);
     }
     prevGuessesRef.current = guesses;
   }, [guesses]);
 
-  // Question timer
+  // Question timer — driven by the SHARED deadline stored on the room
+  // (room.question_deadline), not a device-local countdown. The absent-player
+  // problem: iOS freezes the webview the moment the current asker backgrounds
+  // the app, so a local-only timer can never fire exactly when it's needed
+  // most. With the deadline in the room row, this client counts down against
+  // it, and every OTHER client can enforce it too (see the enforcement effect
+  // below).
+  const inHintBreak = isHintPhase && !allHintsSubmitted;
   useEffect(() => {
-    if (!isMyTurnToAsk) { setTimeLeft(null); return; }
-    setTimeLeft(QUESTION_TIMER_SECONDS);
-    timerRef.current = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev === null) return null;
-        if (prev <= 1) {
-          clearInterval(timerRef.current);
-          handleAutoQuestion(true);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    if (!isMyTurnToAsk || inHintBreak) { setTimeLeft(null); return; }
+    const deadlineMs = room.question_deadline ? new Date(room.question_deadline).getTime() : null;
+    // Missing or stale deadline (older room, resume after a hint break where
+    // nobody refreshed it): my turn, so my client claims a fresh one. The
+    // room update re-runs this effect with the real value.
+    if (!deadlineMs || deadlineMs <= Date.now()) {
+      MysteryRoom.update(room.id, { question_deadline: nextDeadline() }).catch(() => {});
+      setTimeLeft(QUESTION_TIMER_SECONDS);
+      return;
+    }
+    const tick = () => {
+      const secs = Math.max(0, Math.ceil((deadlineMs - Date.now()) / 1000));
+      setTimeLeft(secs);
+      if (secs <= 0) {
+        clearInterval(timerRef.current);
+        handleAutoQuestion(true);
+      }
+    };
+    tick();
+    timerRef.current = setInterval(tick, 1000);
     return () => clearInterval(timerRef.current);
-  }, [isMyTurnToAsk, room.current_questioner_index]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMyTurnToAsk, inHintBreak, room.current_questioner_index, room.question_deadline]);
+
+  // Deadline enforcement by everyone else: if the asker's device is asleep,
+  // the first awake client asks on their behalf once the deadline is
+  // comfortably past. Staggered per player so at most one usually fires; the
+  // fresh-state re-check before writing closes the rest of the race.
+  const enforcedKeyRef = useRef('');
+  useEffect(() => {
+    if (room.status !== 'playing') return;
+    const iv = setInterval(() => {
+      if (!room.question_deadline || currentQuestionPending || inHintBreak) return;
+      if (!questioner || !me?.id || questioner.user_id === me.id) return;
+      const rank = askingPlayers.filter(p => p.user_id !== questioner.user_id)
+        .findIndex(p => p.user_id === me.id);
+      if (rank < 0) return;
+      const fireAt = new Date(room.question_deadline).getTime() + ENFORCE_GRACE_MS + rank * ENFORCE_STAGGER_MS;
+      if (Date.now() < fireAt) return;
+      const key = `${room.current_questioner_index}:${questions.length}`;
+      if (enforcedKeyRef.current === key) return;
+      enforcedKeyRef.current = key;
+      enforceStalledTurn();
+    }, 1000);
+    return () => clearInterval(iv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [room, questions, players, me?.id, currentQuestionPending, inHintBreak]);
+
+  const enforceStalledTurn = async () => {
+    try {
+      // Re-check against fresh state — the asker may have just submitted, or
+      // another enforcer may have beaten us to it.
+      const [freshRooms, freshQs] = await Promise.all([
+        MysteryRoom.filter({ room_code: roomCode }),
+        MysteryQuestion.filter({ room_code: roomCode }),
+      ]);
+      const fr = freshRooms?.[0];
+      if (!fr || fr.status !== 'playing') return;
+      if (fr.current_questioner_index !== room.current_questioner_index) return;
+      if ((freshQs?.length || 0) > questions.length) return;
+      const prevTexts = (freshQs || []).slice(-8).map(q => q.question_text);
+      const autoQ = getRandomQuestion(fr.category, prevTexts) || 'Is it bigger than a cat?';
+      await MysteryQuestion.create({
+        room_code: roomCode,
+        round_number: fr.round_number,
+        question_text: autoQ,
+        asker_id: questioner.user_id,
+        asker_name: questioner.display_name,
+        is_ai: true,
+        answers: {},
+        status: 'answering'
+      });
+      await MysteryRoom.update(fr.id, {
+        round_number: fr.round_number + 1,
+        current_questioner_index: (fr.current_questioner_index + 1) % Math.max(askingPlayers.length, 1),
+        question_deadline: nextDeadline(),
+      });
+    } catch { /* next enforcer tick retries via a new key */ }
+  };
 
   const handleAutoQuestion = async (isTimeout = false) => {
     if (autoAsking) return;
@@ -172,7 +258,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
       await MysteryQuestion.create({
         room_code: roomCode,
         round_number: room.round_number,
-        question_text: text.trim(),
+        question_text: text.trim().slice(0, MAX_QUESTION_LENGTH),
         asker_id: me.id,
         asker_name: myPlayer?.display_name,
         is_ai: isAI || false,
@@ -183,7 +269,9 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
       const nextIdx = (room.current_questioner_index + 1) % Math.max(askingPlayers.length, 1);
       await MysteryRoom.update(room.id, {
         round_number: room.round_number + 1,
-        current_questioner_index: nextIdx
+        current_questioner_index: nextIdx,
+        // Next asker's shared deadline — see the timer/enforcement effects.
+        question_deadline: nextDeadline()
       });
     } catch(e) {
       toast({ title: t.errorTitle, description: e.message, variant: 'destructive' });
@@ -210,14 +298,22 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
   const submitAnswer = async (qId, answer) => {
     setSubmittingAnswer(true);
     try {
-      const q = questions.find(q => q.id === qId);
-      const updated = { ...(q?.answers || {}), [me.id]: answer };
-      const nonAskers = activePlayers.filter(p => p.user_id !== q?.asker_id);
-      const allAnswered = nonAskers.every(p => updated[p.user_id] !== undefined);
-      await MysteryQuestion.update(qId, {
-        answers: updated,
-        status: allAnswered ? 'complete' : 'answering'
+      // Atomic server-side merge (migration 0006): the old client-side
+      // read-modify-write lost one of two simultaneous answers. Falls back
+      // to the legacy merge if the RPC hasn't been deployed.
+      const { error } = await supabase.rpc('submit_mystery_answer', {
+        q_id: qId, answerer_id: me.id, answer,
       });
+      if (error) {
+        const q = questions.find(q => q.id === qId);
+        const updated = { ...(q?.answers || {}), [me.id]: answer };
+        const nonAskers = activePlayers.filter(p => p.user_id !== q?.asker_id);
+        const allAnswered = nonAskers.every(p => updated[p.user_id] !== undefined);
+        await MysteryQuestion.update(qId, {
+          answers: updated,
+          status: allAnswered ? 'complete' : 'answering'
+        });
+      }
     } catch(e) {
       toast({ title: t.errorTitle, description: e.message, variant: 'destructive' });
     } finally {
@@ -229,16 +325,26 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
     if (!hintText.trim() || submittingHint) return;
     setSubmittingHint(true);
     try {
+      // Am I the last hint outstanding? Then asking resumes right after this
+      // submit — refresh the shared turn deadline so the next asker gets a
+      // full timer instead of one that expired during the hint break.
+      const lastOutstanding = activePlayers2.every(p =>
+        p.user_id === me.id ||
+        questions.some(q => q.question_text?.startsWith('[HINT]') && q.asker_id === p.user_id && q.round_number === hintPhaseNumber)
+      );
       await MysteryQuestion.create({
         room_code: roomCode,
         round_number: hintPhaseNumber, // used to track which hint phase this belongs to
-        question_text: `[HINT] ${hintText.trim()}`,
+        question_text: `[HINT] ${hintText.trim().slice(0, MAX_HINT_LENGTH)}`,
         asker_id: me.id,
         asker_name: myPlayer?.display_name,
         is_ai: false,
         answers: {},
         status: 'complete'
       });
+      if (lastOutstanding) {
+        MysteryRoom.update(room.id, { question_deadline: nextDeadline() }).catch(() => {});
+      }
       setHintText('');
       playHint();
     } catch(e) {
@@ -268,20 +374,14 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
     setEmojiRainTrigger(t => t + 1);
   };
 
-  useEffect(() => {
-    const EMOTES = ['😂', '🔥', '👀', '💀', '🤔', '😱', '🎉', '👏', '😏', '🤯'];
-    const unsub = MysteryChat.subscribe((event) => {
-      if (event.type === 'create' && event.data?.room_code === roomCode) {
-        const emote = EMOTES.find(e => event.data.message?.includes(e));
-        if (emote) handleEmoteRain(emote);
-        // Others' messages count as unread while any other tab is open
-        if (event.data.user_id !== me?.id && tabRef.current !== 'chat') {
-          setUnreadChat(u => u + 1);
-        }
-      }
-    });
-    return unsub;
-  }, [roomCode, me?.id]);
+  // Unread badge + chat-driven emote rain — the shared per-room hook, so the
+  // count carries across phase transitions instead of resetting.
+  const unreadChat = useUnreadChat(roomCode, me?.id, tab === 'chat', handleEmoteRain);
+
+  // A tactile nudge when the game needs YOU — your turn to ask, or a
+  // question waiting on your yes/no. Fires only on the false→true edge.
+  useEffect(() => { if (isMyTurnToAsk) vibrate(30); }, [isMyTurnToAsk]);
+  useEffect(() => { if (needsMyAnswer) vibrate(20); }, [needsMyAnswer]);
 
   // Was "<= 30" from when the full timer was 120s (a real last-third
   // warning); now that the timer itself is 30s, that threshold would make
@@ -454,9 +554,9 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
                   <>
                     <p className="text-sm text-yellow-200 mb-3 font-medium">{t.giveHint}</p>
                     <div className="flex gap-2">
-                      <input value={hintText} onChange={e => setHintText(e.target.value)}
+                      <input value={hintText} onChange={e => setHintText(e.target.value.slice(0, MAX_HINT_LENGTH))}
                         onKeyDown={e => e.key === 'Enter' && submitHint()}
-                        placeholder={t.hintPlaceholder} enterKeyHint="send"
+                        placeholder={t.hintPlaceholder} enterKeyHint="send" maxLength={MAX_HINT_LENGTH}
                         className="inset-input flex-1 h-10 px-3 text-base md:text-sm" />
                       <Button onClick={submitHint} disabled={submittingHint || !hintText.trim()}
                         className="h-10 px-4 rounded-xl bg-gradient-to-b from-amber-400 to-amber-600 hover:brightness-110 border-0 text-sm font-bold text-[#2c1500] shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_2px_6px_-2px_rgba(0,0,0,0.5)] active:scale-[0.98] transition-all">
@@ -535,9 +635,9 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
                       )}
                       {timeLeft === 0 && <span className="text-xs text-rose-400 font-medium">{t.autoAsking}</span>}
                     </div>
-                    <input value={questionText} onChange={e => setQuestionText(e.target.value)}
+                    <input value={questionText} onChange={e => setQuestionText(e.target.value.slice(0, MAX_QUESTION_LENGTH))}
                       onKeyDown={e => e.key === 'Enter' && submitQuestion()}
-                      placeholder={t.askPlaceholder} enterKeyHint="send"
+                      placeholder={t.askPlaceholder} enterKeyHint="send" maxLength={MAX_QUESTION_LENGTH}
                       className="inset-input w-full h-10 px-3 text-base md:text-sm mb-2" />
                     <div className="flex gap-2">
                       <Button onClick={submitQuestion} disabled={submittingQ || !questionText.trim()}
@@ -577,8 +677,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
         )}
 
         {tab === 'notebook' && (
-          <Notebook players={players} questions={questions} guesses={guesses} me={me} myPlayer={myPlayer}
-            onGuess={(p) => setGuessTarget(p)} roomCode={roomCode} reload={reload} />
+          <Notebook players={players} questions={questions} guesses={guesses} me={me} myPlayer={myPlayer} />
         )}
 
         {tab === 'players' && (
@@ -626,28 +725,18 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
         )}
       </div>
 
-      {/* Bottom Tab Bar */}
-      <div
-        className="fixed bottom-0 left-0 right-0 z-30 flex bg-[#0a0616]/95 backdrop-blur-md border-t border-white/10 shadow-[0_-4px_16px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)]"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 16px)' }}
-      >
-        {[['questions', t.tabQuestions, MessageCircleQuestion],['notebook', t.tabNotebook, BookOpen],['players', t.tabPlayers, Users],['chat', t.tabChat, MessageCircle]].map(([id, label, Icon]) => (
-          <button key={id} onClick={() => setTab(id)}
-            className={`relative flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-bold transition ${tab === id ? 'text-violet-300' : 'text-slate-400'}`}>
-            {tab === id && (
-              <span className="pointer-events-none absolute top-0 inset-x-6 h-0.5 rounded-full bg-gradient-to-r from-transparent via-violet-400 to-transparent" />
-            )}
-            <Icon className={`w-5 h-5 transition-transform ${tab === id ? 'text-violet-400 scale-110 drop-shadow-[0_0_6px_rgba(157,92,255,0.6)]' : ''}`} />
-            {label}
-            {id === 'chat' && unreadChat > 0 && (
-              <span className="absolute top-1 left-[calc(50%+6px)] min-w-[16px] h-4 px-1 rounded-full bg-gradient-to-b from-rose-400 to-rose-600 text-[9px] font-extrabold text-white flex items-center justify-center leading-none shadow-[0_1px_3px_rgba(0,0,0,0.5)] ring-2 ring-[#0a0616]">
-                {unreadChat > 9 ? '9+' : unreadChat}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-
+      {/* Bottom tab bar — the shared RoomTabBar, so all four phases render
+          the identical bar (this file used to carry its own copy). */}
+      <RoomTabBar
+        active={tab}
+        onChange={setTab}
+        items={[
+          { id: 'questions', label: t.tabQuestions, icon: MessageCircleQuestion },
+          { id: 'notebook', label: t.tabNotebook, icon: BookOpen },
+          { id: 'players', label: t.tabPlayers, icon: Users },
+          { id: 'chat', label: t.tabChat, icon: MessageCircle, badge: unreadChat },
+        ]}
+      />
 
 
       {guessTarget && (
