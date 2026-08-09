@@ -53,7 +53,8 @@ export default function ProfileSettings() {
     setRestoring(true);
     try {
       const res = await restorePurchases();
-      if (res.ok) toast({ title: t.restoreDone });
+      if (res.ok) toast({ title: t.restoreDone(res.restored || 0) });
+      else if (res.reason === 'error') toast({ title: t.restoreFailed, variant: 'destructive' });
       else toast({ title: t.purchaseUnavailable });
     } finally {
       setRestoring(false);

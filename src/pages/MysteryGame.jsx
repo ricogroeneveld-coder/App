@@ -37,6 +37,11 @@ export default function MysteryGame() {
   // Whether we've had a player row during THIS visit — distinguishes a kick
   // (row existed, then vanished) from a refresh (arrived with no row).
   const hadRowRef = useRef(false);
+  // Mirrors `players` for the join/leave toast below, which needs the
+  // pre-change roster (to detect an elimination transition) without
+  // re-running the subscribe effect on every player-list update.
+  const playersRef = useRef([]);
+  useEffect(() => { playersRef.current = players; }, [players]);
 
   const roomCode = code?.toUpperCase();
 
@@ -103,8 +108,24 @@ export default function MysteryGame() {
         await loadAll();
         setLoading(false);
 
+        // A player stepping away to Chat/Settings has no other way to learn
+        // someone joined or left — the roster just silently re-renders.
+        // Skipped for our own row: we already know when we join or leave.
+        const handlePlayerEvent = (event) => {
+          debouncedLoad();
+          if (event.data?.room_code !== roomCode || event.data?.user_id === guest.id) return;
+          if (event.type === 'create') {
+            toast({ title: t.playerJoined(event.data.display_name) });
+          } else if (event.type === 'delete') {
+            toast({ title: t.playerLeft(event.data.display_name) });
+          } else if (event.type === 'update' && event.data?.is_eliminated) {
+            const prev = playersRef.current.find(p => p.id === event.data.id);
+            if (prev && !prev.is_eliminated) toast({ title: t.playerLeft(event.data.display_name) });
+          }
+        };
+
         unsubs.push(MysteryRoom.subscribe(debouncedLoad, handleStatus));
-        unsubs.push(MysteryPlayer.subscribe(debouncedLoad, handleStatus));
+        unsubs.push(MysteryPlayer.subscribe(handlePlayerEvent, handleStatus));
         unsubs.push(MysteryQuestion.subscribe(debouncedLoad, handleStatus));
         unsubs.push(MysteryGuess.subscribe(debouncedLoad, handleStatus));
       } catch(e) {

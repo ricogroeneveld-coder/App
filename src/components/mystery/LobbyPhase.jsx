@@ -3,20 +3,22 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MysteryPlayer, MysteryRoom } from '@/api/db';
 import { leaveRoom } from '@/lib/roomLifecycle';
 import { useToast } from '@/components/ui/use-toast';
-import { Copy, Check, Users, Crown, ArrowRight, ChevronRight, Sparkles, ArrowLeft, HelpCircle, X } from 'lucide-react';
+import { Copy, Check, Users, Crown, ArrowRight, ChevronRight, Sparkles, ArrowLeft, HelpCircle, X, Share } from 'lucide-react';
+import { shareRoomInvite } from '@/lib/share';
 import { useNavigate } from 'react-router-dom';
 import { shortCategory, categoryMeta } from '@/lib/wordLists';
 import { useLang } from '@/lib/LanguageContext';
 import GameBackground from '@/components/GameBackground';
 import lobbyTitleImage from '../../../lobby-title.webp';
 import CategorySelector from './CategorySelector';
+import RoomChat from './RoomChat';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import PlayerCardModal from '@/components/progression/PlayerCardModal';
 import BannerArt from '@/components/progression/BannerArt';
 import usePeerProfiles from '@/components/progression/usePeerProfiles';
 import { cosmeticById, RARITIES } from '@/lib/cosmetics';
 
-export default function LobbyPhase({ room, players, me, roomCode }) {
+export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t } = useLang();
@@ -45,6 +47,11 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
     navigator.clipboard.writeText(roomCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const shareInvite = async () => {
+    const result = await shareRoomInvite(roomCode, t);
+    if (result === 'copied') toast({ title: t.linkCopied });
   };
 
   const selectCategory = (cat) => {
@@ -236,9 +243,9 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
               })}
               {players.length === 1 && (
                 <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
-                  onClick={copyCode}
+                  onClick={shareInvite}
                   className="w-full py-6 flex flex-col items-center gap-1.5 text-center rounded-2xl border border-dashed border-white/10 hover:border-violet-400/40 hover:bg-white/[0.03] transition-colors">
-                  <Copy className="w-4 h-4 text-violet-300" />
+                  <Share className="w-4 h-4 text-violet-300" />
                   <span className="text-xs font-semibold text-slate-400 px-6 leading-relaxed">{t.inviteHint}</span>
                 </motion.button>
               )}
@@ -331,6 +338,8 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
             setCardPlayer(null);
           } : undefined} />
       )}
+
+      <RoomChat roomCode={roomCode} me={me} myPlayer={myPlayer} />
     </div>
   );
 }

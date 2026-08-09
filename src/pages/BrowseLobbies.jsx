@@ -91,6 +91,13 @@ export default function BrowseLobbies() {
     const guest = getGuestIdentity();
     setLoading(room.room_code);
     try {
+      // Re-check live status right before joining — the list snapshot can be
+      // stale by the time it's tapped, and a lobby that started in the
+      // meantime should never silently accept a new, ungated player.
+      const fresh = await MysteryRoom.filter({ room_code: room.room_code });
+      if (!fresh?.length) { toast({ title: t.roomNotFound, variant: 'destructive' }); fetchLobbies(); return; }
+      if (fresh[0].status !== 'lobby') { toast({ title: t.gameAlreadyStarted, variant: 'destructive' }); fetchLobbies(); return; }
+
       const existing = await MysteryPlayer.filter({ room_code: room.room_code, user_id: guest.id });
       if (!existing?.length) {
         const players = await MysteryPlayer.filter({ room_code: room.room_code });

@@ -13,6 +13,7 @@ import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import PlayerCardModal from '@/components/progression/PlayerCardModal';
 import RewardSummary from '@/components/progression/RewardSummary';
 import usePeerProfiles from '@/components/progression/usePeerProfiles';
+import RoomChat from './RoomChat';
 
 export default function FinishedPhase({ players, guesses, room, me, myPlayer, roomCode }) {
   const navigate = useNavigate();
@@ -180,6 +181,8 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
       {cardPlayer && (
         <PlayerCardModal player={cardPlayer} profile={profiles[cardPlayer.user_id]} meId={me?.id} roomCode={roomCode} onClose={() => setCardPlayer(null)} />
       )}
+
+      <RoomChat roomCode={roomCode} me={me} myPlayer={myPlayer} />
     </div>
   );
 }

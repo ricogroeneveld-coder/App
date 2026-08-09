@@ -11,6 +11,7 @@ import { cleanText } from '@/lib/cleanText';
 import GameBackground from '@/components/GameBackground';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import usePeerProfiles from '@/components/progression/usePeerProfiles';
+import RoomChat from './RoomChat';
 
 export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }) {
   const { toast } = useToast();
@@ -213,6 +214,8 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
           </motion.div>
         )}
       </div>
+
+      <RoomChat roomCode={roomCode} me={me} myPlayer={myPlayer} />
     </div>
   );
 }
