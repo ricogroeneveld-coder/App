@@ -15,7 +15,7 @@ import {
 import { ALL_COSMETICS, cosmeticById, RARITIES, TYPE_LABELS, topEquippedRarity, COLLECTIONS, collectionItems, collectionProgress, sortByRarity } from '@/lib/cosmetics';
 import { shortCategory } from '@/lib/wordLists';
 import { setGuestName, normalizeName, MAX_NAME_LENGTH } from '@/lib/guestIdentity';
-import { SEASON_NAME, todayKey, levelFromXp } from '@/lib/progression';
+import { SEASON_NAME, todayKey, msUntilNextDay, levelFromXp } from '@/lib/progression';
 import { isDevToolsEnabled } from '@/lib/platform';
 
 const TYPE_ORDER = ['emblem', 'banner', 'border', 'title', 'nameColor'];
@@ -75,7 +75,7 @@ const ART_GLOW = {
  * check = owned, lock = locked. Prices render as pills (gold when
  * affordable). Border previews show the ring itself around a neutral disc.
  */
-function CosmeticCard({ c, owned, equipped, onTap, justUnlocked, sourceText, price, affordable, playerName }) {
+function CosmeticCard({ c, owned, equipped, onTap, justUnlocked, sourceText = undefined, price = undefined, affordable = false, playerName }) {
   const rar = RARITIES[c.rarity];
   const fancy = c.rarity === 'legendary' || c.rarity === 'mythic';
   return (
@@ -357,6 +357,21 @@ export default function Profile() {
     return next;
   });
 
+  // "New stock in 5h 12m" — a rotation without a visible clock reads as
+  // static inventory. Ticks each minute; only rendered on the shop tab.
+  const [rotateLeft, setRotateLeft] = useState(msUntilNextDay());
+  useEffect(() => {
+    if (tab !== 'shop') return;
+    setRotateLeft(msUntilNextDay());
+    const iv = setInterval(() => setRotateLeft(msUntilNextDay()), 60000);
+    return () => clearInterval(iv);
+  }, [tab]);
+  const rotateCountdown = (() => {
+    const mins = Math.max(1, Math.round(rotateLeft / 60000));
+    const h = Math.floor(mins / 60); const m = mins % 60;
+    return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  })();
+
   const saveRename = async () => {
     const clean = normalizeName(nameDraft);
     if (!clean) return;
@@ -620,7 +635,7 @@ export default function Profile() {
                     <p className="section-label flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5 text-amber-300" /> {t.featured}
                     </p>
-                    <p className="text-[10px] font-bold text-slate-400">{t.rotatesDaily}</p>
+                    <p className="text-[10px] font-bold text-slate-400">{t.newStockIn(rotateCountdown)}</p>
                   </div>
                   <HeroFeatured c={featured[0]} profile={profile} onTap={onTapCosmetic} featuredLabel={t.featured} />
                 </div>
@@ -637,7 +652,7 @@ export default function Profile() {
               </div>
               <div className="flex items-end justify-between mb-1 px-1">
                 <p className="section-label">{t.todaysShop}</p>
-                <p className="text-[10px] font-bold text-slate-400">{t.rotatesDaily}</p>
+                <p className="text-[10px] font-bold text-slate-400">{t.newStockIn(rotateCountdown)}</p>
               </div>
               {TYPE_ORDER.map(type => {
                 const items = dailyStock[type];

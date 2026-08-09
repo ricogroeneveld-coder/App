@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import confetti from 'canvas-confetti';
 import { Button } from '@/components/ui/button';
 import { MysteryPlayer, MysteryQuestion, MysteryGuess, MysteryRoom } from '@/api/db';
 import { leaveRoom } from '@/lib/roomLifecycle';
-import { Trophy, Home, RotateCcw, Award, Palette, MessageCircle } from 'lucide-react';
+import { Trophy, Home, RotateCcw, Award, Palette, MessageCircle, Share } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { toDisplayWord } from '@/lib/wordLists';
 import GameBackground from '@/components/GameBackground';
 import { grantMatchRewards } from '@/lib/playerProfile';
+import { hapticSuccess } from '@/lib/haptics';
+import { shareText } from '@/lib/share';
+import { useToast } from '@/components/ui/use-toast';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import PlayerCardModal from '@/components/progression/PlayerCardModal';
 import RewardSummary from '@/components/progression/RewardSummary';
@@ -16,17 +20,21 @@ import usePeerProfiles from '@/components/progression/usePeerProfiles';
 import ChatPanel from './ChatPanel';
 import RoomTabBar from './RoomTabBar';
 import QuickEquip from './QuickEquip';
+import EmojiRain from './EmojiRain';
 import useUnreadChat from './useUnreadChat';
 
 export default function FinishedPhase({ players, guesses, room, me, myPlayer, roomCode }) {
   const navigate = useNavigate();
   const { t, lang } = useLang();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [breakdown, setBreakdown] = useState(null);
   const [cardPlayer, setCardPlayer] = useState(null);
   const [tab, setTab] = useState('results'); // 'results' | 'profile' | 'chat'
   const profiles = usePeerProfiles(players);
-  const unreadChat = useUnreadChat(roomCode, me?.id, tab === 'chat');
+  const [rain, setRain] = useState({ emote: null, trigger: 0 });
+  const unreadChat = useUnreadChat(roomCode, me?.id, tab === 'chat',
+    (emote) => setRain(r => ({ emote, trigger: r.trigger + 1 })));
 
   useEffect(() => {
     let live = true;
@@ -46,7 +54,9 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
   const sorted = [...players].sort((a, b) =>
     (roundScore[b.user_id] - roundScore[a.user_id]) || ((b.score || 0) - (a.score || 0)));
   const topScore = roundScore[sorted[0]?.user_id] || 0;
-  const winners = sorted.filter(p => roundScore[p.user_id] === topScore);
+  // A round can end with zero correct guesses (everyone else left) — nobody
+  // "wins" a walkover, so skip the trophy/tie copy and celebrations.
+  const winners = topScore > 0 ? sorted.filter(p => roundScore[p.user_id] === topScore) : [];
   const isWinner = winners.some(p => p.user_id === me?.id);
   // Nobody guessed a single word this round — the only way that happens is
   // players leaving before the game really got going. Without this, a 0-0
@@ -56,6 +66,28 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
   const noOneScored = topScore === 0;
   const multiRound = players.some(p => (p.score || 0) !== roundScore[p.user_id]);
   const isHost = room.host_id === me?.id;
+
+  // Winner celebration: one confetti burst + a success haptic. Honors the
+  // OS Reduce Motion setting (framer's MotionConfig can't reach a canvas).
+  useEffect(() => {
+    if (!isWinner || tab !== 'results') return;
+    hapticSuccess();
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const timer = setTimeout(() => {
+      confetti({ particleCount: 90, spread: 75, startVelocity: 42, origin: { y: 0.35 }, zIndex: 40 });
+      confetti({ particleCount: 40, angle: 60, spread: 55, origin: { x: 0, y: 0.6 }, zIndex: 40 });
+      confetti({ particleCount: 40, angle: 120, spread: 55, origin: { x: 1, y: 0.6 }, zIndex: 40 });
+    }, 350);
+    return () => clearTimeout(timer);
+    // Once per results screen, not on every re-render/tab hop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isWinner, room?.id]);
+
+  const shareResult = async () => {
+    const myRank = sorted.findIndex(p => p.user_id === me?.id) + 1;
+    const result = await shareText(t.shareResultText(isWinner, myRank, players.length));
+    if (result === 'copied') toast({ title: t.linkCopied });
+  };
 
   const playAgain = async () => {
     setLoading(true);
@@ -111,6 +143,7 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
       }}
     >
       <GameBackground />
+      <EmojiRain emote={rain.emote} trigger={rain.trigger} />
       {tab === 'results' && (
       <div
         className="w-full max-w-md flex-1 min-h-0 overflow-y-auto hide-scrollbar p-4 flex flex-col"
@@ -148,8 +181,10 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
           {sorted.map((p, i) => {
             const pScore = roundScore[p.user_id] || 0;
             const rank = sorted.filter(o => (roundScore[o.user_id] || 0) > pScore).length + 1;
-            const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}`;
-            const isTop = pScore === topScore;
+            // No medals or gold rows on a 0-guess walkover — everyone "tied
+            // at 0" reading as all-champions looked absurd.
+            const medal = topScore === 0 ? '—' : rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}`;
+            const isTop = topScore > 0 && pScore === topScore;
             return (
               <motion.div key={p.id} initial={{ opacity:0, x:-20 }} animate={{ opacity:1, x:0 }} transition={{ delay: i * 0.07 }}
                 onClick={() => setCardPlayer(p)} role="button" tabIndex={0}
@@ -191,10 +226,16 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
           <p className="text-center text-slate-400 text-sm font-medium mb-2.5">{t.waitingForHostRound}</p>
         )}
 
-        <Button onClick={goHome} variant="ghost"
-          className="w-full h-11 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 border border-white/10 font-semibold">
-          <Home className="w-4 h-4 mr-2" /> {t.backToHome}
-        </Button>
+        <div className="flex gap-2.5">
+          <Button onClick={goHome} variant="ghost"
+            className="flex-1 h-11 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 border border-white/10 font-semibold">
+            <Home className="w-4 h-4 mr-2" /> {t.backToHome}
+          </Button>
+          <Button onClick={shareResult} variant="ghost"
+            className="h-11 px-4 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 border border-white/10 font-semibold">
+            <Share className="w-4 h-4 mr-2" /> {t.shareResult}
+          </Button>
+        </div>
       </div>
       )}
 

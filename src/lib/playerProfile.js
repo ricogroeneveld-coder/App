@@ -30,7 +30,7 @@ function markRemoteError(e) {
 
 export function subscribeProfile(fn) {
   listeners.add(fn);
-  return () => listeners.delete(fn);
+  return () => { listeners.delete(fn); };
 }
 function emit() {
   // Fresh snapshot per emit — cache is mutated in place, and React setState
@@ -394,6 +394,22 @@ export function equipCosmetic(id) {
   cache.equipped = { ...cache.equipped, [c.type]: id };
   save();
   return true;
+}
+
+// ── Deletion ───────────────────────────────────────────────────────────────
+
+// "Delete my profile" must actually remove the data the privacy policy says
+// it removes: the remote player_profiles row (name, stats, cosmetics) plus
+// the local copy. Remote delete needs the owning anonymous session
+// (migration 0006's owner delete policy) — best-effort, so deletion still
+// completes offline. Callers clear the guest identity separately.
+export async function deleteProfileData() {
+  try {
+    await ensureAuth();
+    await supabase.from('player_profiles').delete().eq('user_id', getGuestIdentity().id);
+  } catch { /* offline / policy — local wipe still proceeds */ }
+  try { localStorage.removeItem(LS_KEY); } catch { /* ignore */ }
+  cache = null;
 }
 
 // ── Dev/test helpers ───────────────────────────────────────────────────────

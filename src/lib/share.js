@@ -35,3 +35,25 @@ export async function shareRoomInvite(roomCode, t) {
     return 'unsupported';
   }
 }
+
+/**
+ * Share a finished-game result via the OS share sheet (clipboard fallback,
+ * same contract as shareRoomInvite). `text` comes pre-localized from the
+ * caller — this module stays free of UI strings beyond the app name.
+ */
+export async function shareText(text) {
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: "What's My Pick!", text });
+      return 'shared';
+    } catch (e) {
+      if (e?.name === 'AbortError') return 'cancelled';
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    return 'copied';
+  } catch {
+    return 'unsupported';
+  }
+}

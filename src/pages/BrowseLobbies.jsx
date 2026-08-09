@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MysteryRoom, MysteryPlayer } from '@/api/db';
+import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 import { ChevronLeft, RefreshCw, LogIn, Globe, Loader2 } from 'lucide-react';
 import { getGuestIdentity } from '@/lib/guestIdentity';
@@ -28,11 +29,25 @@ export default function BrowseLobbies() {
   const scrollRef = useRef(null);
   const profiles = usePeerProfiles(publicLobbies.map(r => ({ user_id: r.host_id })));
 
+  // room_code → player count, so lobby rows can show "3/12" — players pick
+  // a lobby by how full it is, and the list said nothing about that.
+  const [lobbyCounts, setLobbyCounts] = useState({});
+
   const fetchLobbies = async () => {
     setLobbiesLoading(true);
     try {
       const rooms = await MysteryRoom.filter({ status: 'lobby', is_public: true }, '-created_date', 20);
       setPublicLobbies(rooms || []);
+      const codes = (rooms || []).map(r => r.room_code);
+      if (codes.length) {
+        const { data } = await supabase.from('mystery_players')
+          .select('room_code').in('room_code', codes);
+        const counts = {};
+        (data || []).forEach(p => { counts[p.room_code] = (counts[p.room_code] || 0) + 1; });
+        setLobbyCounts(counts);
+      } else {
+        setLobbyCounts({});
+      }
     } catch (e) {
       setPublicLobbies([]);
     } finally {
@@ -79,12 +94,11 @@ export default function BrowseLobbies() {
 
   useEffect(() => {
     fetchLobbies();
-    const unsub = MysteryRoom.subscribe((event) => {
-      if (event.data?.is_public) {
-        fetchLobbies();
-      }
-    });
+    // Server-side filter: only public rooms' events reach this screen.
+    const unsub = MysteryRoom.subscribe(() => { fetchLobbies(); },
+      undefined, 'is_public=eq.true');
     return unsub;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wakeEpoch]);
 
   const joinLobby = async (room) => {
@@ -190,7 +204,7 @@ export default function BrowseLobbies() {
                     className="glass-panel w-full p-2.5 flex items-center gap-2.5 text-left transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5 hover:ring-white/20 disabled:opacity-50">
                     <PlayerAvatar profile={profiles[room.host_id]} name={room.host_name} color="#6d28d9" size={36} />
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-white text-[13px] truncate leading-tight">{room.host_name}'s lobby</p>
+                      <p className="font-bold text-white text-[13px] truncate leading-tight">{t.hostLobby(room.host_name)}</p>
                       <p className="text-[11px] text-slate-400 truncate">
                         <span className="font-mono tracking-[0.12em]">{room.room_code}</span>
                         {room.category && (
@@ -200,7 +214,9 @@ export default function BrowseLobbies() {
                     </div>
                     <span className="shrink-0 flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/10 ring-1 ring-emerald-400/25">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" style={{ animation: 'livePulse 2s ease-in-out infinite' }} />
-                      <span className="text-[10px] font-bold text-emerald-300">{t.waiting}</span>
+                      <span className="text-[10px] font-bold text-emerald-300 tabular-nums">
+                        {lobbyCounts[room.room_code] ? `${Math.min(lobbyCounts[room.room_code], 12)}/12` : t.waiting}
+                      </span>
                     </span>
                     <span className="shrink-0 w-8 h-8 rounded-full bg-gradient-to-b from-white/[0.07] to-black/20 ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center">
                       <LogIn className="w-3.5 h-3.5 text-violet-300" />

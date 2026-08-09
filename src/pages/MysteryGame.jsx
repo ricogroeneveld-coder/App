@@ -124,10 +124,13 @@ export default function MysteryGame() {
           }
         };
 
-        unsubs.push(MysteryRoom.subscribe(debouncedLoad, handleStatus));
-        unsubs.push(MysteryPlayer.subscribe(handlePlayerEvent, handleStatus));
-        unsubs.push(MysteryQuestion.subscribe(debouncedLoad, handleStatus));
-        unsubs.push(MysteryGuess.subscribe(debouncedLoad, handleStatus));
+        // Server-side filter: without it every client receives every room's
+        // events app-wide (traffic scales with total usage, not room size).
+        const roomFilter = `room_code=eq.${roomCode}`;
+        unsubs.push(MysteryRoom.subscribe(debouncedLoad, handleStatus, roomFilter));
+        unsubs.push(MysteryPlayer.subscribe(handlePlayerEvent, handleStatus, roomFilter));
+        unsubs.push(MysteryQuestion.subscribe(debouncedLoad, handleStatus, roomFilter));
+        unsubs.push(MysteryGuess.subscribe(debouncedLoad, handleStatus, roomFilter));
       } catch(e) {
         setLoading(false);
       }

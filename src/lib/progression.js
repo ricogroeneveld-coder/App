@@ -64,8 +64,19 @@ export const SEASON = [
 export const SEASON_ID = 'S1';
 export const SEASON_NAME = 'Season 1';
 
+// LOCAL calendar day, not UTC: daily rewards, challenge resets, and the
+// shop rotation should flip at the player's own midnight — toISOString
+// meant a Dutch player's "new day" arrived at 1–2 AM and a US player's in
+// the middle of the afternoon.
 export function todayKey(d = new Date()) {
-  return d.toISOString().slice(0, 10);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// Milliseconds until the next local midnight — drives the "new stock in…"
+// countdown next to anything that rotates on todayKey().
+export function msUntilNextDay(d = new Date()) {
+  const next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
+  return next.getTime() - d.getTime();
 }
 
 export function weekKey(d = new Date()) {
@@ -74,7 +85,7 @@ export function weekKey(d = new Date()) {
   const dayNum = date.getUTCDay() || 7;
   date.setUTCDate(date.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-  const week = Math.ceil(((date - yearStart) / 86400000 + 1) / 7);
+  const week = Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
   return `${date.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
 }
 

@@ -5,6 +5,7 @@ import PlayerAvatar from './PlayerAvatar';
 import BannerArt from './BannerArt';
 import { cosmeticById, RARITIES, topEquippedRarity } from '@/lib/cosmetics';
 import { reportPlayer, hasReported } from '@/lib/reports';
+import { isMuted, setMuted } from '@/lib/mutes';
 import { useLang } from '@/lib/LanguageContext';
 
 const CARD_BG = '#10141f';
@@ -16,11 +17,16 @@ const CARD_BG = '#10141f';
  * rarity, so a Legendary profile reads Legendary at a glance.
  * Pass onKick to show a host-only "remove from game" action.
  */
-export default function PlayerCardModal({ player, profile, onClose, onKick, meId, roomCode }) {
+export default function PlayerCardModal({ player, profile, onClose, onKick = undefined, meId, roomCode }) {
   const { t } = useLang();
   const [reported, setReported] = useState(() => hasReported(roomCode, player?.user_id));
+  const [muted, setMutedState] = useState(() => isMuted(player?.user_id));
   if (!player) return null;
   const canReport = player.user_id && meId && player.user_id !== meId;
+  const toggleMute = () => {
+    setMuted(player.user_id, !muted);
+    setMutedState(!muted);
+  };
   const banner = profile ? cosmeticById(profile.equipped?.banner) : null;
   const title = profile ? cosmeticById(profile.equipped?.title) : null;
   const nameColor = profile ? cosmeticById(profile.equipped?.nameColor) : null;
@@ -98,6 +104,16 @@ export default function PlayerCardModal({ player, profile, onClose, onKick, meId
             <button onClick={onKick}
               className="relative w-full h-11 mt-3.5 rounded-xl bg-rose-500/15 ring-1 ring-rose-400/40 text-rose-300 text-sm font-bold hover:bg-rose-500/25 transition-all duration-150 active:scale-[0.98]">
               {t.removeFromGame}
+            </button>
+          )}
+          {/* Mute — the personal "block this user" Apple's UGC guideline
+              expects: hides their chat and emote rains on this device only. */}
+          {canReport && (
+            <button onClick={toggleMute}
+              className={`relative w-full h-11 mt-2 rounded-xl text-sm font-bold transition-all duration-150 active:scale-[0.98] ring-1 ${muted
+                ? 'bg-white/5 ring-white/15 text-slate-300 hover:bg-white/10'
+                : 'bg-amber-500/10 ring-amber-400/30 text-amber-300 hover:bg-amber-500/20'}`}>
+              {muted ? t.unmutePlayer : t.mutePlayer}
             </button>
           )}
           {canReport && (

@@ -7,6 +7,16 @@ import { X, Check, XCircle } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { toDisplayWord } from '@/lib/wordLists';
 import { playCorrect, playWrong } from '@/lib/sounds';
+import { hapticSuccess, hapticError } from '@/lib/haptics';
+
+// Forgiving comparison for typed guesses: case, accents, punctuation, and
+// spacing never decide a round ("Coca Cola" vs "coca-cola", "Pokemon" vs
+// "Pokémon"). Tap-to-pick guesses were always exact; this matters for the
+// free-type path (Custom words).
+const normalizeGuess = (s) => (s || '')
+  .toLowerCase()
+  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .replace(/[^a-z0-9]+/g, '');
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import usePeerProfiles from '@/components/progression/usePeerProfiles';
 
@@ -30,7 +40,8 @@ export default function GuessModal({ target, players, guesses, me, myPlayer, roo
     if (!selectedTarget || !guessWord.trim()) return;
     setSubmitting(true);
     try {
-      const isCorrect = guessWord.trim().toLowerCase() === selectedTarget.secret_word?.toLowerCase();
+      const isCorrect = !!normalizeGuess(guessWord) &&
+        normalizeGuess(guessWord) === normalizeGuess(selectedTarget.secret_word);
       await MysteryGuess.create({
         room_code: roomCode,
         guesser_id: me.id,
@@ -51,6 +62,7 @@ export default function GuessModal({ target, players, guesses, me, myPlayer, roo
         ]);
         setResult('correct');
         playCorrect();
+        hapticSuccess();
 
         const updatedPlayers = players.map(p => {
           if (p.id === selectedTarget.id) return { ...p, word_revealed: true };
@@ -65,6 +77,7 @@ export default function GuessModal({ target, players, guesses, me, myPlayer, roo
       } else {
         setResult('wrong');
         playWrong();
+        hapticError();
       }
       await reload();
     } catch(e) {

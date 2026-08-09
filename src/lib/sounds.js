@@ -5,7 +5,7 @@ let _ctx = null;
 function ctx() {
   if (typeof window === 'undefined') return null;
   if (!_ctx) {
-    const AC = window.AudioContext || window.webkitAudioContext;
+    const AC = window.AudioContext || (/** @type {any} */ (window).webkitAudioContext);
     if (!AC) return null;
     _ctx = new AC();
   }

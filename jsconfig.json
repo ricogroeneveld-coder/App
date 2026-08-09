@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
@@ -15,9 +14,9 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "types": []
-
+    "maxNodeModuleJsDepth": 0,
+    "types": ["vite/client"]
   },
-  "include": ["src/components/**/*.js", "src/pages/**/*.jsx", "src/Layout.jsx"],
+  "include": ["src/components/**/*.js", "src/pages/**/*.jsx", "src/Layout.jsx", "src/types/**/*.d.ts"],
   "exclude": ["node_modules", "dist", "src/vite-plugins", "src/components/ui", "src/api", "src/lib"]
 }

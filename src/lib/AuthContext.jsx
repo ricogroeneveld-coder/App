@@ -10,7 +10,7 @@ import { useLang } from '@/lib/LanguageContext';
 // offer an account for people who want one, without gating any gameplay
 // behind it — see the note in supabase/migrations/0001_init.sql and the
 // README for why that matters for App Store review.
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 // The profile-sync layer signs every device in ANONYMOUSLY (see
 // playerProfile.js ensureAuth) — that session is plumbing, not an account.

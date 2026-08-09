@@ -4,10 +4,15 @@ import { Send, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLang } from '@/lib/LanguageContext';
 import { cleanText } from '@/lib/cleanText';
+import { isMuted, subscribeMutes } from '@/lib/mutes';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import usePeerProfiles from '@/components/progression/usePeerProfiles';
 
 const EMOTES = ['😂', '🔥', '👀', '💀', '🤔', '😱', '🎉', '👏', '😏', '🤯'];
+// Hard cap on one message — matches nothing in particular except sanity:
+// long enough for any real sentence, short enough that one paste can't
+// wreck the layout for the whole room. Mirrored by maxLength on the input.
+const MAX_MESSAGE_LENGTH = 300;
 const EMOTE_LABELS = { '😂': 'Laughing', '🔥': 'Fire', '👀': 'Eyes', '💀': 'Skull', '🤔': 'Thinking', '😱': 'Shocked', '🎉': 'Party', '👏': 'Clapping', '😏': 'Smirking', '🤯': 'Mind blown' };
 // Near-bottom threshold (px) — within this, a new message still auto-scrolls;
 // further up, the reader is treated as browsing history and left alone.
@@ -50,17 +55,23 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
     };
   }, []);
 
+  // Re-render when a player is muted/unmuted so their bubbles hide live.
+  const [, setMuteEpoch] = useState(0);
+  useEffect(() => subscribeMutes(() => setMuteEpoch(n => n + 1)), []);
+
   useEffect(() => {
-    MysteryChat.filter({ room_code: roomCode }, 'created_date', 60)
-      .then(msgs => setMessages(msgs || []));
+    // NEWEST 60, then restore chronological order — ascending+limit returned
+    // the OLDEST 60, so busy rooms reopened chat onto stale history.
+    MysteryChat.filter({ room_code: roomCode }, '-created_date', 60)
+      .then(msgs => setMessages((msgs || []).reverse()));
 
     const unsub = MysteryChat.subscribe((event) => {
       if (event.type === 'create' && event.data?.room_code === roomCode) {
         setMessages(prev => [...prev, event.data]);
         const emote = extractEmote(event.data.message);
-        if (emote) onEmoteRain(emote);
+        if (emote && !isMuted(event.data.user_id)) onEmoteRain(emote);
       }
-    });
+    }, undefined, `room_code=eq.${roomCode}`);
     return unsub;
   }, [roomCode, wakeEpoch]);
 
@@ -98,7 +109,7 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
       id: tempId,
       room_code: roomCode,
       user_id: me?.id,
-      display_name: myPlayer?.display_name || 'Player',
+      display_name: myPlayer?.display_name || me?.full_name || t.playerFallback,
       color: myPlayer?.color || '#6366f1',
       message: trimmed,
       has_emote: !!emote,
@@ -112,7 +123,7 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
       await MysteryChat.create({
         room_code: roomCode,
         user_id: me?.id,
-        display_name: myPlayer?.display_name || 'Player',
+        display_name: myPlayer?.display_name || me?.full_name || t.playerFallback,
         color: myPlayer?.color || '#6366f1',
         message: trimmed,
         has_emote: !!emote,
@@ -129,7 +140,7 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
   };
 
   const send = async () => {
-    const trimmed = cleanText(text.trim());
+    const trimmed = cleanText(text.trim()).slice(0, MAX_MESSAGE_LENGTH);
     if (!trimmed || sending) return;
     setText('');
     await sendText(trimmed);
@@ -146,7 +157,7 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
           <p className="text-center text-slate-400 text-sm py-8">{t.chatEmpty}</p>
         )}
         <AnimatePresence initial={false}>
-          {messages.map(msg => {
+          {messages.filter(msg => !isMuted(msg.user_id)).map(msg => {
             const isMe = msg.user_id === me?.id;
             const clickable = msg._failed;
             return (
@@ -206,9 +217,9 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
       <div className="flex gap-2 pt-1">
         <input
           value={text}
-          onChange={e => setText(e.target.value)}
+          onChange={e => setText(e.target.value.slice(0, MAX_MESSAGE_LENGTH))}
           onKeyDown={e => e.key === 'Enter' && send()}
-          placeholder={t.chatPlaceholder} enterKeyHint="send"
+          placeholder={t.chatPlaceholder} enterKeyHint="send" maxLength={MAX_MESSAGE_LENGTH}
           className="inset-input flex-1 h-10 px-3 text-base md:text-sm"
         />
         <button onClick={send} disabled={!text.trim() || sending} aria-label="Send"
