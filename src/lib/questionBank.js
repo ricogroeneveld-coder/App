@@ -272,6 +272,18 @@ export const QUESTION_BANK_BY_CATEGORY = {
     'Is the capital famous for a bridge?', 'Is the capital in an island country?', 'Is the capital in a mountain country?', 'Does the capital have a metro?', 'Is the capital old?',
     'Is the capital at a high altitude?', 'Is the capital the largest city in its country?',
   ],
+  'Natural Wonders': [
+    'Is it in Europe?', 'Is it in Asia?', 'Is it in Africa?', 'Is it in North America?', 'Is it in South America?',
+    'Is it in Oceania?', 'Is it in the Northern Hemisphere?', 'Is it a mountain?', 'Is it a volcano?', 'Is it a waterfall?',
+    'Is it a desert?', 'Is it a lake or sea?', 'Is it in or under the ocean?', 'Is it a forest or jungle?', 'Is it a canyon or valley?',
+    'Is it an island or group of islands?', 'Is it made of rock?', 'Is it made of sand?', 'Is it made of ice or salt?', 'Does it involve water?',
+    'Can you swim there?', 'Can you climb it?', 'Can you hike there?', 'Is it usually cold there?', 'Is it usually hot there?',
+    'Does it snow there?', 'Is it at high altitude?', 'Is it below sea level?', 'Is it famous for its colors?', 'Is it bigger than a city?',
+    'Is it one of the biggest of its kind on Earth?', 'Is it a UNESCO World Heritage site?', 'Is it inside a national park?', 'Do famous animals live there?', 'Is it dangerous to visit?',
+    'Has it ever erupted?', 'Is it still growing or changing?', 'Is it millions of years old?', 'Is it near a big city?', 'Is it easy to visit as a tourist?',
+    'Do many tourists visit it every year?', 'Is it surrounded by jungle?', 'Is it in a country where English is spoken?', 'Is it in a tropical place?', 'Can you take a boat there?',
+    'Can you see it from an airplane?', 'Is it taller than it is wide?', 'Is it on a coastline?', 'Would you need special gear to explore it?', 'Is it famous from documentaries?',
+  ],
   'Famous Landmarks': [
     'Is the landmark in Europe?', 'Is the landmark in Asia?', 'Is the landmark in Africa?', 'Is the landmark in the Americas?', 'Is the landmark man-made?',
     'Is the landmark natural?', 'Is the landmark a building?', 'Is the landmark a statue?', 'Is the landmark a tower?', 'Is the landmark a monument?',

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Check, ChevronRight, Lock, Sparkles } from 'lucide-react';
-import { CATEGORIES, CATEGORY_EMOJIS, PACKS, CUSTOM_CATEGORY, shortCategory } from '@/lib/wordLists';
+import { CATEGORIES, CATEGORY_EMOJIS, PACKS, shortCategory } from '@/lib/wordLists';
 import { isPackUnlocked } from '@/lib/premiumPacks';
 import { purchasePack, purchasesAvailable, getPackPrices } from '@/lib/payments';
 import { useToast } from '@/components/ui/use-toast';
@@ -111,11 +111,6 @@ export default function CategorySelector({ selectedCategory, onSelect, onClose }
                   <SelectionCard key={cat} emoji={CATEGORY_EMOJIS[cat] || '🎯'} label={cat}
                     selected={selectedCategory === cat} onClick={() => onSelect(cat)} />
                 ))}
-                {/* Custom mode — everyone types their own secret word instead
-                    of picking from a list. Free: it's the party-classic way
-                    to play, and it needs no word data at all. */}
-                <SelectionCard key={CUSTOM_CATEGORY} emoji="✏️" label={t.customCategoryLabel}
-                  selected={selectedCategory === CUSTOM_CATEGORY} onClick={() => onSelect(CUSTOM_CATEGORY)} />
               </div>
 
               <p className="section-label mb-2 px-1">{t.moreCategories}</p>
