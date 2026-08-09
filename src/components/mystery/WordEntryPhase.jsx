@@ -117,7 +117,9 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
                 <div className="grid grid-cols-3 gap-1 rounded-xl bg-black/20 ring-1 ring-white/5 p-1.5">
                   {wordList.map(w => (
                     <button key={w} onClick={() => setSelected(w)}
-                      className={`px-1 py-1.5 rounded-lg text-[11px] font-semibold text-center leading-tight break-words transition active:scale-[0.96] ${selected === w
+                      className={`px-1 py-2 rounded-lg font-semibold text-center leading-none whitespace-nowrap transition active:scale-[0.96] ${
+                        w.length > 18 ? 'text-[8.5px]' : w.length > 13 ? 'text-[9.5px]' : 'text-[11px]'
+                      } ${selected === w
                         ? 'bg-gradient-to-b from-violet-400 to-violet-700 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_-2px_rgba(139,92,246,0.7)] ring-1 ring-violet-300/60'
                         : 'bg-white/5 ring-1 ring-white/10 text-slate-200 hover:bg-white/10'}`}>
                       {w}
