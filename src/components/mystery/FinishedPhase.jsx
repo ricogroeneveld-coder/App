@@ -48,6 +48,12 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
   const topScore = roundScore[sorted[0]?.user_id] || 0;
   const winners = sorted.filter(p => roundScore[p.user_id] === topScore);
   const isWinner = winners.some(p => p.user_id === me?.id);
+  // Nobody guessed a single word this round — the only way that happens is
+  // players leaving before the game really got going. Without this, a 0-0
+  // tie reads as everyone "winning," which is exactly backwards, and
+  // matches playerProfile.js's grantMatchRewards() voiding rewards for the
+  // same 0-0 case.
+  const noOneScored = topScore === 0;
   const multiRound = players.some(p => (p.score || 0) !== roundScore[p.user_id]);
   const isHost = room.host_id === me?.id;
 
@@ -112,7 +118,12 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
       >
         <motion.div initial={{ scale:0 }} animate={{ scale:1 }} transition={{ type:'spring' }}
           className="text-center mb-5">
-          {isWinner ? (
+          {noOneScored ? (
+            <>
+              <div className="text-5xl mb-3">🚪</div>
+              <h1 className="text-2xl font-extrabold tracking-tight mb-0.5">{t.gameEndedEarly}</h1>
+            </>
+          ) : isWinner ? (
             <>
               <div className="w-20 h-20 mx-auto mb-3 rounded-[24px] bg-gradient-to-b from-[#3a2400] to-[#1a0f00] ring-1 ring-[#ffcf7a]/60 shadow-[0_2px_3px_rgba(0,0,0,0.4),0_8px_16px_-8px_rgba(0,0,0,0.5),0_0_20px_-6px_rgba(255,180,60,0.5),inset_0_1px_1px_rgba(255,220,150,0.25)] flex items-center justify-center">
                 <Trophy className="w-10 h-10 text-amber-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]" />
@@ -125,7 +136,9 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
               <h1 className="text-2xl font-extrabold tracking-tight mb-0.5">{t.gameOver}</h1>
             </>
           )}
-          {winners.length === 1
+          {noOneScored ? (
+            <p className="text-sm font-medium text-slate-300">{t.noCorrectGuesses}</p>
+          ) : winners.length === 1
             ? <p className="text-sm font-medium text-slate-300">{t.winsWithPoints(winners[0].display_name, topScore)}</p>
             : <p className="text-sm font-medium text-slate-300">{t.tiedFirst(winners.map(w => w.display_name).join(' & '), topScore)}</p>
           }
