@@ -5,21 +5,23 @@ import PageNotFound from './lib/PageNotFound';
 import { LanguageProvider } from '@/lib/LanguageContext';
 import { AuthProvider } from '@/lib/AuthContext';
 import ScrollToTop from './components/ScrollToTop';
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { devUnlockAll, devResetProfile, ensureAuth } from '@/lib/playerProfile';
 import { configurePurchases } from '@/lib/payments';
 import { restoreIdentityFromCloud, startCloudBackup, watchForLateBackup } from '@/lib/cloudBackup';
 import { isNativeApp, isDevToolsEnabled } from '@/lib/platform';
-// Add page imports here
+// Core play path stays eager (Home + joining a game via link must never wait
+// on a second network fetch); everything else code-splits out of the main
+// chunk — it was one 950 kB bundle, which slows first paint on the web build.
 import Home from '@/pages/Home';
-import BrowseLobbies from '@/pages/BrowseLobbies';
 import MysteryGame from '@/pages/MysteryGame';
-import ProfileSettings from '@/pages/ProfileSettings';
-import Profile from '@/pages/Profile';
-import Login from '@/pages/Login';
-import Register from '@/pages/Register';
-import ForgotPassword from '@/pages/ForgotPassword';
-import ResetPassword from '@/pages/ResetPassword';
+const BrowseLobbies = lazy(() => import('@/pages/BrowseLobbies'));
+const ProfileSettings = lazy(() => import('@/pages/ProfileSettings'));
+const Profile = lazy(() => import('@/pages/Profile'));
+const Login = lazy(() => import('@/pages/Login'));
+const Register = lazy(() => import('@/pages/Register'));
+const ForgotPassword = lazy(() => import('@/pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -36,18 +38,20 @@ const AnimatedRoutes = () => {
       >
         {/* Sign-in is entirely optional — nothing below is gated behind it.
             Gameplay routes work the same whether or not you're signed in. */}
-        <Routes location={location}>
-          <Route path="/" element={<Home />} />
-          <Route path="/browse-lobbies" element={<BrowseLobbies />} />
-          <Route path="/mystery/:code" element={<MysteryGame />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/profile-settings" element={<ProfileSettings />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="*" element={<PageNotFound />} />
-        </Routes>
+        <Suspense fallback={null /* dark launch background shows through */}>
+          <Routes location={location}>
+            <Route path="/" element={<Home />} />
+            <Route path="/browse-lobbies" element={<BrowseLobbies />} />
+            <Route path="/mystery/:code" element={<MysteryGame />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile-settings" element={<ProfileSettings />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="*" element={<PageNotFound />} />
+          </Routes>
+        </Suspense>
       </motion.div>
     </AnimatePresence>
   );

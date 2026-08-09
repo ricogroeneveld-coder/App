@@ -1,7 +1,7 @@
 import React from "react";
 import GameBackground from "@/components/GameBackground";
 
-export default function AuthLayout({ icon: Icon, title, subtitle, footer, children }) {
+export default function AuthLayout({ icon: Icon, title, subtitle, footer = null, children }) {
   return (
     // `dark` re-scopes the shadcn theme tokens so the form controls inside
     // (Input, Button, Label) render dark regardless of the device scheme —

@@ -22,9 +22,10 @@ export default class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, info) {
-    // No crash-reporting SDK is wired up yet (see the audit) — this is the
-    // one place a production crash gets logged at all today.
     console.error('Unhandled render error', error, info);
+    // Sentry, when a build ships with VITE_SENTRY_DSN (see main.jsx). Kept
+    // as a window hook so this boundary stays dependency-free.
+    try { window.__sentryCapture?.(error); } catch { /* never throw from here */ }
   }
 
   render() {
