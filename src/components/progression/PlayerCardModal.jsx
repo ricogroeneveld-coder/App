@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 import PlayerAvatar from './PlayerAvatar';
 import BannerArt from './BannerArt';
 import { cosmeticById, RARITIES, topEquippedRarity } from '@/lib/cosmetics';
-import { reportPlayer } from '@/lib/reports';
+import { reportPlayer, hasReported } from '@/lib/reports';
 import { useLang } from '@/lib/LanguageContext';
 
 const CARD_BG = '#10141f';
@@ -18,7 +18,7 @@ const CARD_BG = '#10141f';
  */
 export default function PlayerCardModal({ player, profile, onClose, onKick, meId, roomCode }) {
   const { t } = useLang();
-  const [reported, setReported] = useState(false);
+  const [reported, setReported] = useState(() => hasReported(roomCode, player?.user_id));
   if (!player) return null;
   const canReport = player.user_id && meId && player.user_id !== meId;
   const banner = profile ? cosmeticById(profile.equipped?.banner) : null;

@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { toast } from '@/components/ui/use-toast';
+import { useLang } from '@/lib/LanguageContext';
 
 // Optional identity layer on top of the guest-only game. Gameplay never
 // reads from this — MysteryGame.jsx and friends always use the localStorage
@@ -20,21 +22,38 @@ const accountUser = (session) =>
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+  const { t } = useLang();
+  const prevUserRef = useRef(null);
+  // Set right before our own signOut() call, so the SIGNED_OUT event it
+  // triggers isn't mistaken for a session that expired on its own.
+  const loggingOutRef = useRef(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(accountUser(session));
+      const u = accountUser(session);
+      prevUserRef.current = u;
+      setUser(u);
       setIsLoadingAuth(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(accountUser(session));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      const next = accountUser(session);
+      // A spontaneous sign-out (expired/invalid refresh token) while we
+      // hadn't asked to sign out — otherwise "Registered Account" just
+      // silently disappears from Settings with no explanation.
+      if (event === 'SIGNED_OUT' && prevUserRef.current && !loggingOutRef.current) {
+        toast({ title: t.sessionExpired });
+      }
+      loggingOutRef.current = false;
+      prevUserRef.current = next;
+      setUser(next);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [t]);
 
   const logout = async () => {
+    loggingOutRef.current = true;
     await supabase.auth.signOut();
     setUser(null);
   };

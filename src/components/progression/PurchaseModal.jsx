@@ -6,6 +6,7 @@ import PlayerAvatar, { AvatarFrame, EmblemTile } from './PlayerAvatar';
 import BannerArt from './BannerArt';
 import { useLang } from '@/lib/LanguageContext';
 import { playUnlock } from '@/lib/sounds';
+import { vibrate } from '@/lib/haptics';
 
 function useTickDown(from, to, active, duration = 800, delay = 350) {
   const [value, setValue] = useState(from);
@@ -91,6 +92,7 @@ const CONFETTI_COLORS = ['#ffcb45', '#ff8bd8', '#7db9ff', '#7dffa8', '#c98bff', 
 export default function PurchaseModal({ cosmetic: c, balance, typeLabel, profile, onConfirm, onClose }) {
   const { t } = useLang();
   const [phase, setPhase] = useState('confirm'); // confirm | celebrate
+  const [confirming, setConfirming] = useState(false);
   const rar = RARITIES[c.rarity];
   const fancy = c.rarity === 'legendary' || c.rarity === 'mythic';
   const price = c.source.price;
@@ -98,12 +100,15 @@ export default function PurchaseModal({ cosmetic: c, balance, typeLabel, profile
   const shownBalance = useTickDown(balance, balance - price, phase === 'celebrate');
 
   const confirm = () => {
+    if (confirming) return;
+    setConfirming(true);
     const res = onConfirm(c);
     if (res?.ok) {
       setPhase('celebrate');
       playUnlock();
-      // Soft haptic tick where supported (Android; silently ignored on iOS)
-      try { navigator.vibrate?.(35); } catch { /* ignore */ }
+      vibrate(35); // soft tick where supported (Android; silently ignored on iOS)
+    } else {
+      setConfirming(false);
     }
   };
 
@@ -184,7 +189,7 @@ export default function PurchaseModal({ cosmetic: c, balance, typeLabel, profile
                   className="flex-1 h-12 rounded-[16px] bg-white/5 ring-1 ring-white/15 text-sm font-bold text-slate-300 hover:bg-white/10 transition-all duration-150 active:scale-[0.97]">
                   {t.cancel}
                 </button>
-                <button onClick={confirm} disabled={!affordable}
+                <button onClick={confirm} disabled={!affordable || confirming}
                   className="gold-btn flex-1 h-12 rounded-[16px] flex items-center justify-center gap-1.5">
                   {!affordable && <Lock className="relative w-3.5 h-3.5 text-[#2c1500]" />}
                   <span className="relative text-sm font-extrabold tracking-tight text-[#2c1500] drop-shadow-[0_1px_0_rgba(255,255,255,0.25)]">

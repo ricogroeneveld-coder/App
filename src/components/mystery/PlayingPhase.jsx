@@ -118,7 +118,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
         if (prev === null) return null;
         if (prev <= 1) {
           clearInterval(timerRef.current);
-          handleAutoQuestion();
+          handleAutoQuestion(true);
           return 0;
         }
         return prev - 1;
@@ -127,9 +127,20 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
     return () => clearInterval(timerRef.current);
   }, [isMyTurnToAsk, room.current_questioner_index]);
 
-  const handleAutoQuestion = async () => {
+  const handleAutoQuestion = async (isTimeout = false) => {
     if (autoAsking) return;
     setAutoAsking(true);
+    // First time the timer (not a manual skip) auto-asks for a player, they
+    // have no way to know why a question they didn't write just appeared —
+    // explain it once, ever.
+    if (isTimeout) {
+      try {
+        if (!localStorage.getItem('wmp_seen_auto_question_hint')) {
+          localStorage.setItem('wmp_seen_auto_question_hint', '1');
+          toast({ title: t.autoQuestionExplainer });
+        }
+      } catch { /* ignore */ }
+    }
     try {
       const prevTexts = questions.slice(-8).map(q => q.question_text);
       // Picked locally from the static question bank — no server round-trip needed.
@@ -462,6 +473,9 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
               <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar space-y-2" style={{ overscrollBehaviorY: 'contain' }}>
                 {/* Hints live in the notebook (per player), not in the
                     question history — mixing them in here read as clutter. */}
+                {normalQuestions.length === 0 && (
+                  <p className="text-center text-slate-400 text-sm py-8">{t.noQuestionsYet}</p>
+                )}
                 {[...normalQuestions].reverse().map(q => (
                   <QuestionCard key={q.id} question={q} players={players} me={me} />
                 ))}
