@@ -111,15 +111,20 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
               </div>
             ) : (
               <div className="glass-card p-2.5">
-                {/* Aligned 3-column word grid — every word visible at once,
-                    equal-width cells so rows and columns line up (no search
-                    bar: with the full list on screen it earned nothing) */}
+                {/* Aligned 3-column word grid, every word visible at once.
+                    Long words (the ones that wrap to 2 lines) are grouped
+                    into the SAME rows — aligned to a full-row boundary — so
+                    every row has a uniform height instead of one tall cell
+                    stretching a row of short words. */}
                 <div className="grid grid-cols-3 gap-1 rounded-xl bg-black/20 ring-1 ring-white/5 p-1.5">
-                  {wordList.map(w => (
+                  {(() => {
+                    const shorts = wordList.filter(w => w.length <= 13);
+                    const longs = wordList.filter(w => w.length > 13);
+                    const keep = shorts.length - (shorts.length % 3);
+                    return [...shorts.slice(0, keep), ...longs, ...shorts.slice(keep)];
+                  })().map(w => (
                     <button key={w} onClick={() => setSelected(w)}
-                      className={`px-1 py-2 rounded-lg font-semibold text-center leading-none whitespace-nowrap transition active:scale-[0.96] ${
-                        w.length > 18 ? 'text-[8.5px]' : w.length > 13 ? 'text-[9.5px]' : 'text-[11px]'
-                      } ${selected === w
+                      className={`px-1 py-1.5 rounded-lg text-[11px] font-semibold text-center leading-tight break-words transition active:scale-[0.96] ${selected === w
                         ? 'bg-gradient-to-b from-violet-400 to-violet-700 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_-2px_rgba(139,92,246,0.7)] ring-1 ring-violet-300/60'
                         : 'bg-white/5 ring-1 ring-white/10 text-slate-200 hover:bg-white/10'}`}>
                       {w}
