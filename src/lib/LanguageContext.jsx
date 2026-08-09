@@ -284,6 +284,8 @@ const translations = {
     // Finished
     youWin: '🎉 You Win!',
     gameOver: 'Game Over',
+    gameEndedEarly: 'Game Ended Early',
+    noCorrectGuesses: 'No one guessed a word this round — no rewards this time.',
     winsWithPoints: (name, pts) => `🏆 ${name} wins with ${pts} point${pts !== 1 ? 's' : ''}!`,
     tiedFirst: (names, pts) => `🏆 Tied 1st place: ${names} with ${pts} pts!`,
     secret: 'Secret',
@@ -615,6 +617,8 @@ const translations = {
     // Finished
     youWin: '🎉 Jij wint!',
     gameOver: 'Spel afgelopen',
+    gameEndedEarly: 'Spel vroegtijdig beëindigd',
+    noCorrectGuesses: 'Niemand raadde een woord deze ronde — geen beloningen dit keer.',
     winsWithPoints: (name, pts) => `🏆 ${name} wint met ${pts} punt${pts !== 1 ? 'en' : ''}!`,
     tiedFirst: (names, pts) => `🏆 Gelijk 1e: ${names} met ${pts} ptn!`,
     totalPts: (n) => `Totaal: ${n}`,

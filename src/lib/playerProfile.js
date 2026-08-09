@@ -299,6 +299,16 @@ export async function grantMatchRewards({ room, players, guesses, me }) {
   players.forEach(p => { roundScore[p.user_id] = 0; });
   guesses.forEach(g => { if (g.correct && g.guesser_id in roundScore) roundScore[g.guesser_id] += 1; });
   const topScore = Math.max(0, ...Object.values(roundScore));
+
+  // Nobody guessed a single word correctly this round — the only way that
+  // happens is players leaving before the game really got going (a normal
+  // finish always has at least one correct guess, since that's what
+  // reduces the room to a winner). Without this, every remaining player
+  // ties at 0 and reads as "the winner," collecting the winner bonus,
+  // streak bonus, and completion reward for a match that never happened.
+  // Void it instead: no rewards, no stats, no streak change.
+  if (topScore === 0) return null;
+
   const isWinner = (roundScore[me.id] || 0) === topScore && players.length > 1;
   const myCorrect = guesses.filter(g => g.guesser_id === me.id && g.correct).length;
   const isHost = room.host_id === me.id;
