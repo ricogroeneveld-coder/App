@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { MysteryPlayer, MysteryRoom } from '@/api/db';
 import { leaveRoom } from '@/lib/roomLifecycle';
 import { useToast } from '@/components/ui/use-toast';
-import { Lock, Check, Clock, Pencil, ArrowLeft, Palette, MessageCircle } from 'lucide-react';
+import { Lock, Check, Clock, Pencil, ArrowLeft, Palette, MessageCircle, Timer } from 'lucide-react';
 import { WORD_LISTS, WORD_LISTS_NL, PREMIUM_WORD_LISTS, shortCategory } from '@/lib/wordLists';
 import { useLang } from '@/lib/LanguageContext';
 import { cleanText } from '@/lib/cleanText';
@@ -16,6 +16,8 @@ import RoomTabBar from './RoomTabBar';
 import QuickEquip from './QuickEquip';
 import useUnreadChat from './useUnreadChat';
 
+const WORD_ENTRY_TIMER_SECONDS = 60;
+
 export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }) {
   const { toast } = useToast();
   const { t, lang } = useLang();
@@ -25,11 +27,57 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
   const [submitting, setSubmitting] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [tab, setTab] = useState('word'); // 'word' | 'profile' | 'chat'
+  const [wordTimeLeft, setWordTimeLeft] = useState(WORD_ENTRY_TIMER_SECONDS);
+  const wordTimerRef = useRef(null);
+  const timedOutRef = useRef(false);
   const isHost = room.host_id === me?.id;
   const submitted = myPlayer?.word_submitted;
   const allSubmitted = players.length > 0 && players.every(p => p.word_submitted);
   const isCustom = room.category === 'Custom';
   const unreadChat = useUnreadChat(roomCode, me?.id, tab === 'chat');
+
+  // A player who doesn't lock in a word within a minute gets removed —
+  // otherwise one distracted player can stall everyone else indefinitely.
+  // With only 2 in the room, removing one leaves an unplayable 1-player
+  // game, so the whole attempt cancels back to the lobby instead.
+  useEffect(() => {
+    if (submitted) { clearInterval(wordTimerRef.current); setWordTimeLeft(null); return; }
+    setWordTimeLeft(WORD_ENTRY_TIMER_SECONDS);
+    wordTimerRef.current = setInterval(() => {
+      setWordTimeLeft(prev => {
+        if (prev === null) return null;
+        if (prev <= 1) {
+          clearInterval(wordTimerRef.current);
+          handleWordTimeout();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(wordTimerRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [submitted]);
+
+  const handleWordTimeout = async () => {
+    if (timedOutRef.current || submitted) return;
+    timedOutRef.current = true;
+    if (players.length <= 2) {
+      toast({ title: t.wordTimeoutLobby });
+      try {
+        // Reset everyone's word state too — a category change (or just a
+        // fresh attempt) shouldn't carry the other player's already-locked
+        // word into a restart where they never get asked to lock in again.
+        await Promise.all(players.map(p =>
+          MysteryPlayer.update(p.id, { secret_word: '', word_submitted: false })
+        ));
+        await MysteryRoom.update(room.id, { status: 'lobby' });
+      } catch (e) { /* ignore */ }
+      return;
+    }
+    toast({ title: t.wordTimeoutKicked, variant: 'destructive' });
+    try { await leaveRoom({ room, players, me, myPlayer, mode: 'delete' }); } catch (e) { /* ignore */ }
+    navigate('/');
+  };
 
   const wordListEn = WORD_LISTS[room.category] || PREMIUM_WORD_LISTS[room.category] || [];
   const wordListNl = lang === 'nl' ? (WORD_LISTS_NL[room.category] || wordListEn) : wordListEn;
@@ -128,7 +176,19 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
             icon tile; the whole picker is designed to a 667px budget */}
         <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} className="text-center mb-2.5 pt-1">
           <h2 className="text-lg font-extrabold tracking-tight leading-tight">{t.chooseSecretWord}</h2>
-          <p className="text-xs font-semibold text-white/[0.7]">{t.category}: <span className="text-violet-300">{shortCategory(room.category)}</span></p>
+          {/* The timer rides with the (much shorter) category line instead
+              of the title — the title alone is already close to the width
+              budget, and adding a badge there pushed it past the screen
+              edge instead of wrapping. */}
+          <div className="flex items-center justify-center gap-1.5">
+            <p className="text-xs font-semibold text-white/[0.7]">{t.category}: <span className="text-violet-300">{shortCategory(room.category)}</span></p>
+            {!submitted && wordTimeLeft !== null && (
+              <span className={`inline-flex items-center justify-center gap-1 h-5 px-2 rounded-full font-mono font-bold text-[11px] leading-none tabular-nums shrink-0 ${wordTimeLeft <= 10 ? 'bg-rose-500/15 text-rose-300' : 'bg-white/5 text-slate-300'}`}>
+                <Timer className="w-3 h-3 shrink-0" />
+                <span className="leading-none">0:{String(wordTimeLeft).padStart(2, '0')}</span>
+              </span>
+            )}
+          </div>
         </motion.div>
 
         {!submitted ? (

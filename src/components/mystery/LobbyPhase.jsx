@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MysteryPlayer, MysteryRoom } from '@/api/db';
 import { leaveRoom } from '@/lib/roomLifecycle';
@@ -33,6 +33,8 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [cardPlayer, setCardPlayer] = useState(null);
   const [tab, setTab] = useState('lobby'); // 'lobby' | 'profile' | 'chat'
+  const [starting, setStarting] = useState(false);
+  const [startCountdown, setStartCountdown] = useState(3);
   const profiles = usePeerProfiles(players);
   const isHost = room.host_id === me?.id;
   const meta = categoryMeta(selectedCategory);
@@ -67,10 +69,31 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
     MysteryRoom.update(room.id, { category: cat }).catch(() => {});
   };
 
-  const startGame = async () => {
-    const cat = selectedCategory;
-    if (!cat) { toast({ title: t.pickCategoryFirst, variant: 'destructive' }); return; }
+  // Tapping Start Game shows a 3-2-1 countdown (cancelable) instead of
+  // starting immediately — an accidental tap, or a last-second "wait, one
+  // more person is joining," shouldn't force everyone into Word Entry.
+  const startGame = () => {
+    if (!selectedCategory) { toast({ title: t.pickCategoryFirst, variant: 'destructive' }); return; }
     if (players.length < 2) { toast({ title: t.needTwoPlayers, variant: 'destructive' }); return; }
+    setStartCountdown(3);
+    setStarting(true);
+  };
+
+  const cancelStartCountdown = () => setStarting(false);
+
+  useEffect(() => {
+    if (!starting) return;
+    if (startCountdown <= 0) {
+      setStarting(false);
+      doStartGame();
+      return;
+    }
+    const timer = setTimeout(() => setStartCountdown(c => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [starting, startCountdown]);
+
+  const doStartGame = async () => {
+    const cat = selectedCategory;
     setLoading(true);
     try {
       await MysteryRoom.update(room.id, { status: 'word_entry', category: cat });
@@ -287,29 +310,58 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
             </motion.button>
           )}
 
-          {/* Start Game — exact reuse of the Home Create Game hero CTA */}
+          {/* Start Game — exact reuse of the Home Create Game hero CTA.
+              Tapping it doesn't start immediately: the same button frame
+              transforms in place into a 3-2-1 countdown that's itself the
+              cancel control, instead of popping a separate confirm dialog. */}
           {isHost && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="gold-breathe">
-              <button onClick={startGame} disabled={loading || !selectedCategory || players.length < 2}
-                className="gold-btn w-full h-16 rounded-[24px] px-3.5 flex items-center gap-2.5">
-                <span className="pointer-events-none absolute inset-y-0 left-[-45%] w-[45%]" style={{ background: 'linear-gradient(105deg, transparent 15%, rgba(255,255,255,0.45) 50%, transparent 85%)', animation: 'shimmerSweep 5s linear infinite', willChange: 'transform, opacity' }} />
-                <span className="relative w-10 h-10 rounded-2xl bg-gradient-to-b from-[#190c00] to-[#060300] ring-1 ring-[#ffcf7a]/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.45),0_2px_6px_rgba(0,0,0,0.55)] flex items-center justify-center shrink-0">
-                  <ArrowRight className="w-5 h-5 text-amber-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />
-                </span>
-                <span className="relative text-left flex-1 min-w-0">
-                  <span className="block text-sm font-extrabold tracking-tight text-[#2c1500] leading-tight drop-shadow-[0_1px_0_rgba(255,255,255,0.25)]">
-                    {loading ? t.starting : t.startGame}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className={starting ? '' : 'gold-breathe'}>
+              {starting ? (
+                <button onClick={cancelStartCountdown}
+                  className="gold-btn w-full h-16 rounded-[24px] px-3.5 flex items-center gap-2.5">
+                  <span className="relative w-10 h-10 rounded-2xl bg-gradient-to-b from-[#190c00] to-[#060300] ring-1 ring-[#ffcf7a]/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.45),0_2px_6px_rgba(0,0,0,0.55)] flex items-center justify-center shrink-0 overflow-hidden">
+                    <AnimatePresence mode="wait">
+                      <motion.span key={startCountdown} initial={{ scale: 1.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.6, opacity: 0 }} transition={{ duration: 0.18 }}
+                        className="text-lg font-extrabold text-amber-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]">
+                        {startCountdown}
+                      </motion.span>
+                    </AnimatePresence>
                   </span>
-                  <span className="block text-[11px] font-medium text-[#4a2c0c] leading-tight truncate">
-                    {!selectedCategory ? t.selectCategory
-                      : players.length < 2 ? t.needTwoPlayers
-                      : `${t.category}: ${shortCategory(selectedCategory)}`}
+                  <span className="relative text-left flex-1 min-w-0">
+                    <span className="block text-sm font-extrabold tracking-tight text-[#2c1500] leading-tight drop-shadow-[0_1px_0_rgba(255,255,255,0.25)]">
+                      {t.startingIn}
+                    </span>
+                    <span className="block text-[11px] font-medium text-[#4a2c0c] leading-tight truncate">
+                      {t.tapToCancel}
+                    </span>
                   </span>
-                </span>
-                <span className="relative w-9 h-9 rounded-full bg-gradient-to-b from-[#190c00] to-[#060300] ring-1 ring-[#ffcf7a]/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.45),0_2px_6px_rgba(0,0,0,0.55)] flex items-center justify-center shrink-0">
-                  <ChevronRight className="w-5 h-5 text-amber-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />
-                </span>
-              </button>
+                  <span className="relative w-9 h-9 rounded-full bg-gradient-to-b from-[#190c00] to-[#060300] ring-1 ring-[#ffcf7a]/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.45),0_2px_6px_rgba(0,0,0,0.55)] flex items-center justify-center shrink-0">
+                    <X className="w-5 h-5 text-amber-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />
+                  </span>
+                </button>
+              ) : (
+                <button onClick={startGame} disabled={loading || !selectedCategory || players.length < 2}
+                  className="gold-btn w-full h-16 rounded-[24px] px-3.5 flex items-center gap-2.5">
+                  <span className="pointer-events-none absolute inset-y-0 left-[-45%] w-[45%]" style={{ background: 'linear-gradient(105deg, transparent 15%, rgba(255,255,255,0.45) 50%, transparent 85%)', animation: 'shimmerSweep 5s linear infinite', willChange: 'transform, opacity' }} />
+                  <span className="relative w-10 h-10 rounded-2xl bg-gradient-to-b from-[#190c00] to-[#060300] ring-1 ring-[#ffcf7a]/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.45),0_2px_6px_rgba(0,0,0,0.55)] flex items-center justify-center shrink-0">
+                    <ArrowRight className="w-5 h-5 text-amber-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />
+                  </span>
+                  <span className="relative text-left flex-1 min-w-0">
+                    <span className="block text-sm font-extrabold tracking-tight text-[#2c1500] leading-tight drop-shadow-[0_1px_0_rgba(255,255,255,0.25)]">
+                      {loading ? t.starting : t.startGame}
+                    </span>
+                    <span className="block text-[11px] font-medium text-[#4a2c0c] leading-tight truncate">
+                      {!selectedCategory ? t.selectCategory
+                        : players.length < 2 ? t.needTwoPlayers
+                        : `${t.category}: ${shortCategory(selectedCategory)}`}
+                    </span>
+                  </span>
+                  <span className="relative w-9 h-9 rounded-full bg-gradient-to-b from-[#190c00] to-[#060300] ring-1 ring-[#ffcf7a]/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.45),0_2px_6px_rgba(0,0,0,0.55)] flex items-center justify-center shrink-0">
+                    <ChevronRight className="w-5 h-5 text-amber-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />
+                  </span>
+                </button>
+              )}
             </motion.div>
           )}
 
