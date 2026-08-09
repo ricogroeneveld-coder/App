@@ -99,7 +99,7 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto space-y-2 pb-2 pr-1 min-h-0" style={{ overscrollBehaviorY: 'none' }}>
         {messages.length === 0 && (
-          <p className="text-center text-slate-500 text-sm py-8">{t.chatEmpty}</p>
+          <p className="text-center text-slate-400 text-sm py-8">{t.chatEmpty}</p>
         )}
         <AnimatePresence initial={false}>
           {messages.map(msg => {

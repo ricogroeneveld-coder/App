@@ -312,7 +312,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
         </button>
 
         <div className={`${catFlex} min-w-0 self-stretch flex flex-col justify-center px-3 py-1.5 rounded-xl bg-gradient-to-b from-white/[0.06] to-black/[0.12] ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]`}>
-          <p className="text-[10px] uppercase tracking-wide text-slate-500 leading-none">{t.categorie}</p>
+          <p className="text-[10px] uppercase tracking-wide text-slate-400 leading-none">{t.categorie}</p>
           <p className="font-bold text-violet-300 truncate text-sm leading-tight mt-0.5">{shortCategory(room.category)}</p>
         </div>
 
@@ -330,7 +330,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
           className={`${wordFlex} self-stretch flex flex-col items-end justify-center px-2.5 py-1 rounded-xl bg-gradient-to-b from-white/[0.06] to-black/[0.12] ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-white/10 transition active:scale-[0.98]`}
           title={t.myWord}
         >
-          <p className="text-[10px] uppercase tracking-wide text-slate-500 leading-none">{t.myWord}</p>
+          <p className="text-[10px] uppercase tracking-wide text-slate-400 leading-none">{t.myWord}</p>
           <p className={`font-bold text-violet-300 ${myWordSize} leading-[1.15] mt-0.5 text-right w-full`}
             style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', overflowWrap: 'break-word' }}>
             {myWord}
@@ -574,7 +574,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
       >
         {[['questions', t.tabQuestions, MessageCircleQuestion],['notebook', t.tabNotebook, BookOpen],['players', t.tabPlayers, Users],['chat', t.tabChat, MessageCircle]].map(([id, label, Icon]) => (
           <button key={id} onClick={() => setTab(id)}
-            className={`relative flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-bold transition ${tab === id ? 'text-violet-300' : 'text-slate-500'}`}>
+            className={`relative flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-bold transition ${tab === id ? 'text-violet-300' : 'text-slate-400'}`}>
             {tab === id && (
               <span className="pointer-events-none absolute top-0 inset-x-6 h-0.5 rounded-full bg-gradient-to-r from-transparent via-violet-400 to-transparent" />
             )}

@@ -115,7 +115,7 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
                   placeholder={t.enterSecretWord} enterKeyHint="done"
                   className="w-full h-12 px-4 rounded-xl bg-gradient-to-b from-[#1e0d42]/80 to-[#0a0518]/90 shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1px_rgba(251,191,36,0.3)] text-white placeholder:text-slate-500 text-base focus:outline-none focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1.5px_rgba(251,191,36,0.6)] transition-shadow"
                 />
-                <p className="text-xs text-slate-500">{t.keepItSecret}</p>
+                <p className="text-xs text-slate-400">{t.keepItSecret}</p>
               </div>
             ) : (
               <div className="glass-card p-3 space-y-2.5">
@@ -147,7 +147,7 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
                     </button>
                   ))}
                   {filtered.length === 0 && (
-                    <p className="col-span-2 text-center text-slate-500 text-sm py-4">{t.noResults}</p>
+                    <p className="col-span-2 text-center text-slate-400 text-sm py-4">{t.noResults}</p>
                   )}
                 </div>
                 {filtered.length > 8 && (

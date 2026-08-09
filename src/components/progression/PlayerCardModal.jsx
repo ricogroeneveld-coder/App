@@ -92,7 +92,7 @@ export default function PlayerCardModal({ player, profile, onClose, onKick, meId
             ))}
           </div>
           {!profile && (
-            <p className="relative text-[11px] text-slate-500 font-medium mt-3 text-center">{t.noStatsYet}</p>
+            <p className="relative text-[11px] text-slate-400 font-medium mt-3 text-center">{t.noStatsYet}</p>
           )}
           {onKick && (
             <button onClick={onKick}

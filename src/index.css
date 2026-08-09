@@ -448,6 +448,20 @@
     .lobby-logo { max-width: 250px; }
   }
 
+  /* Reduce Motion: kill decorative keyframe animation (breathing medals,
+     shimmer sweeps, floats, pulses, twinkles) for users who ask for it.
+     Spinners are exempt — a frozen loader reads as a hang, and rotation
+     communicates state rather than decoration. framer-motion animations
+     are handled separately via MotionConfig reducedMotion="user". */
+  @media (prefers-reduced-motion: reduce) {
+    *:not(.animate-spin),
+    *:not(.animate-spin)::before,
+    *:not(.animate-spin)::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+    }
+  }
+
   /* Toast entrance — rises from the bottom edge with a soft settle */
   @keyframes toastIn {
     from { opacity: 0; transform: translateY(16px) scale(0.97); }

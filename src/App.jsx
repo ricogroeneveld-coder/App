@@ -1,6 +1,6 @@
 import { Toaster } from "@/components/ui/toaster"
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, MotionConfig } from 'framer-motion';
 import PageNotFound from './lib/PageNotFound';
 import { LanguageProvider } from '@/lib/LanguageContext';
 import { AuthProvider } from '@/lib/AuthContext';
@@ -120,15 +120,21 @@ function App() {
   if (!booted) return null; // dark launch background shows through
 
   return (
-    <LanguageProvider>
-      <AuthProvider>
-        <Router>
-          <ScrollToTop />
-          <AnimatedRoutes />
-        </Router>
-        <Toaster />
-      </AuthProvider>
-    </LanguageProvider>
+    // reducedMotion="user": every framer-motion animation collapses to a
+    // crossfade when the OS-level Reduce Motion setting is on (iOS
+    // Accessibility → Motion). CSS keyframes get the same treatment in
+    // index.css.
+    <MotionConfig reducedMotion="user">
+      <LanguageProvider>
+        <AuthProvider>
+          <Router>
+            <ScrollToTop />
+            <AnimatedRoutes />
+          </Router>
+          <Toaster />
+        </AuthProvider>
+      </LanguageProvider>
+    </MotionConfig>
   )
 }
 

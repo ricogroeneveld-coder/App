@@ -231,10 +231,10 @@ function WordSelector({ category, value, onChange, wrongGuesses }) {
         </div>
       )}
       {showList && !value && filtered.length > 0 && (
-        <p className="text-xs text-slate-500 text-center">{t.tapWordToGuess}</p>
+        <p className="text-xs text-slate-400 text-center">{t.tapWordToGuess}</p>
       )}
       {showList && search && filtered.length === 0 && (
-        <p className="text-xs text-slate-500 text-center py-2">{t.noMatch(search)}</p>
+        <p className="text-xs text-slate-400 text-center py-2">{t.noMatch(search)}</p>
       )}
     </div>
   );

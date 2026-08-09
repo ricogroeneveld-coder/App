@@ -164,7 +164,7 @@ export default function BrowseLobbies() {
             {lobbiesLoading ? (
               <div className="min-h-full flex flex-col items-center justify-center gap-3 py-12">
                 <Loader2 className="w-7 h-7 text-violet-400 animate-spin drop-shadow-[0_0_8px_rgba(157,92,255,0.5)]" />
-                <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider">{t.loading}</p>
+                <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">{t.loading}</p>
               </div>
             ) : publicLobbies.length === 0 ? (
               <div className="min-h-full flex flex-col items-center justify-center text-center py-14">
