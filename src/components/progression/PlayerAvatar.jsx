@@ -67,6 +67,7 @@ export function EmblemTile({ emblem, fontSize, breathe = false }) {
           style={{ background: 'radial-gradient(130% 65% at 32% -6%, rgba(255,255,255,0.42), rgba(255,255,255,0.08) 40%, transparent 58%)' }} />
         {emblem.art ? (
           <img src={emblem.art} alt={emblem.name} draggable={false}
+            loading="lazy" decoding="async"
             className={`relative ${breathe ? 'medal-breathe' : ''}`}
             style={{ width: '88%', height: '88%', objectFit: 'contain', filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.5))' }} />
         ) : (

@@ -189,8 +189,9 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
               <Users className="w-3.5 h-3.5 text-violet-300" />
               <span className="text-xs font-bold text-slate-300">{t.playersCount(players.length)}</span>
               <span className="ml-auto flex items-center gap-1.5 min-w-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" style={{ animation: 'livePulse 2s ease-in-out infinite' }} />
-                <span className="text-[10px] font-semibold text-slate-400 truncate">{t.waitingForPlayers}</span>
+                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${players.length >= 12 ? 'bg-amber-400' : 'bg-emerald-400'}`}
+                  style={players.length >= 12 ? undefined : { animation: 'livePulse 2s ease-in-out infinite' }} />
+                <span className="text-[10px] font-semibold text-slate-400 truncate">{players.length >= 12 ? t.lobbyFull : t.waitingForPlayers}</span>
               </span>
             </div>
             <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar space-y-1.5" style={{ overscrollBehaviorY: 'contain' }}>
@@ -230,6 +231,14 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
                   </motion.div>
                 );
               })}
+              {players.length === 1 && (
+                <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
+                  onClick={copyCode}
+                  className="w-full py-6 flex flex-col items-center gap-1.5 text-center rounded-2xl border border-dashed border-white/10 hover:border-violet-400/40 hover:bg-white/[0.03] transition-colors">
+                  <Copy className="w-4 h-4 text-violet-300" />
+                  <span className="text-xs font-semibold text-slate-400 px-6 leading-relaxed">{t.inviteHint}</span>
+                </motion.button>
+              )}
             </div>
           </motion.div>
         </div>
