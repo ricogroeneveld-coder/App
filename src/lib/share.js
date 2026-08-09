@@ -37,6 +37,66 @@ export async function shareRoomInvite(roomCode, t) {
 }
 
 /**
+ * Share a generated image (PNG Blob) through the native share sheet.
+ *
+ * Native iOS: WKWebView's navigator.share can't attach files, so the blob
+ * is written to the app's cache directory and handed to the @capacitor/share
+ * plugin (the real UIActivityViewController — Instagram, WhatsApp, iMessage,
+ * Save to Photos, everything the user has installed).
+ *
+ * Web: Web Share API level 2 where available; otherwise a plain download.
+ *
+ * Returns 'shared' | 'saved' | 'cancelled' | 'error' so the caller can
+ * toast (or stay silent) appropriately. A cancelled sheet is never an error.
+ */
+export async function shareImage(blob, filename, title) {
+  if (isNativeApp()) {
+    try {
+      const { Filesystem, Directory } = await import('@capacitor/filesystem');
+      const { Share } = await import('@capacitor/share');
+      const base64 = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result).split(',')[1]);
+        r.onerror = reject;
+        r.readAsDataURL(blob);
+      });
+      const { uri } = await Filesystem.writeFile({
+        path: filename, data: base64, directory: Directory.Cache,
+      });
+      await Share.share({ title, files: [uri] });
+      return 'shared';
+    } catch (e) {
+      // The plugin rejects when the user dismisses the sheet — that's a
+      // cancel, not a failure.
+      if (/cancel/i.test(e?.message || '')) return 'cancelled';
+      return 'error';
+    }
+  }
+
+  const file = new File([blob], filename, { type: 'image/png' });
+  if (navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title });
+      return 'shared';
+    } catch (e) {
+      if (e?.name === 'AbortError') return 'cancelled';
+      // fall through to download on any other failure
+    }
+  }
+  try {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    return 'saved';
+  } catch {
+    return 'error';
+  }
+}
+
+/**
  * Share a finished-game result via the OS share sheet (clipboard fallback,
  * same contract as shareRoomInvite). `text` comes pre-localized from the
  * caller — this module stays free of UI strings beyond the app name.

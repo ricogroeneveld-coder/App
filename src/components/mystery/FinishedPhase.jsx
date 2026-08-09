@@ -9,10 +9,12 @@ import { Trophy, Home, RotateCcw, Award, Palette, MessageCircle, Share } from 'l
 import { useLang } from '@/lib/LanguageContext';
 import { toDisplayWord } from '@/lib/wordLists';
 import GameBackground from '@/components/GameBackground';
-import { grantMatchRewards } from '@/lib/playerProfile';
+import { grantMatchRewards, getProfile } from '@/lib/playerProfile';
+import { cosmeticById } from '@/lib/cosmetics';
+import { categoryMeta, shortCategory } from '@/lib/wordLists';
 import { hapticSuccess } from '@/lib/haptics';
-import { shareText } from '@/lib/share';
 import { useToast } from '@/components/ui/use-toast';
+import ShareCardModal from './ShareCardModal';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import PlayerCardModal from '@/components/progression/PlayerCardModal';
 import RewardSummary from '@/components/progression/RewardSummary';
@@ -83,11 +85,37 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isWinner, room?.id]);
 
-  const shareResult = async () => {
-    const myRank = sorted.findIndex(p => p.user_id === me?.id) + 1;
-    const result = await shareText(t.shareResultText(isWinner, myRank, players.length));
-    if (result === 'copied') toast({ title: t.linkCopied });
-  };
+  // ── Share win card ────────────────────────────────────────────────
+  // A dedicated social graphic (see src/lib/shareCard.js), never a
+  // screenshot. Built from THIS round's real data; the newest emblem
+  // unlocked this match outranks the equipped one as the focal piece.
+  const [showShareCard, setShowShareCard] = useState(false);
+  const myRank = sorted.findIndex(p => p.user_id === me?.id) + 1;
+  const myCorrect = guesses.filter(g => g.guesser_id === me?.id && g.correct).length;
+  const opponentsCount = Math.max(players.length - 1, 1);
+  const isPerfect = isWinner && players.length > 1 && myCorrect >= players.length - 1;
+  const shareCardData = (() => {
+    const profile = getProfile();
+    const unlocked = (breakdown?.unlocks || []).map(cosmeticById).filter(Boolean);
+    const unlockedEmblem = unlocked.filter(c => c.type === 'emblem').pop();
+    const newestUnlock = unlocked[unlocked.length - 1];
+    const meta = room.category ? categoryMeta(room.category) : null;
+    const chips = [];
+    const streak = profile?.win_streak || 0;
+    if (isWinner && streak >= 2) chips.push(t.scStreakChip(streak));
+    return {
+      key: `${room?.id}:${guesses.length}:${myCorrect}:${isWinner ? 'w' : myRank}`,
+      variant: isPerfect ? 'perfect' : isWinner ? 'win' : 'place',
+      headline: isPerfect ? t.scPerfect : isWinner ? t.scVictory : t.scPlace(myRank),
+      scoreText: `${myCorrect}/${opponentsCount}`,
+      scoreLabel: t.scWordsGuessed,
+      name: myPlayer?.display_name || me?.full_name || '',
+      emblem: unlockedEmblem || cosmeticById(profile?.equipped?.emblem),
+      chips,
+      unlockChip: newestUnlock ? { text: `✨ ${newestUnlock.name}`, rarity: newestUnlock.rarity } : undefined,
+      categoryText: meta ? `${meta.emoji} ${shortCategory(room.category)}` : undefined,
+    };
+  })();
 
   const playAgain = async () => {
     setLoading(true);
@@ -231,10 +259,15 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
             className="flex-1 h-11 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 border border-white/10 font-semibold">
             <Home className="w-4 h-4 mr-2" /> {t.backToHome}
           </Button>
-          <Button onClick={shareResult} variant="ghost"
-            className="h-11 px-4 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 border border-white/10 font-semibold">
-            <Share className="w-4 h-4 mr-2" /> {t.shareResult}
-          </Button>
+          {/* Nothing worth showing off on a walkover round */}
+          {!noOneScored && (
+            <Button onClick={() => setShowShareCard(true)} variant="ghost"
+              className={`h-11 px-4 rounded-xl font-semibold border ${isWinner
+                ? 'text-amber-300 border-amber-400/40 bg-amber-500/10 hover:bg-amber-500/20 hover:text-amber-200'
+                : 'text-slate-400 border-white/10 hover:text-white hover:bg-white/5'}`}>
+              <Share className="w-4 h-4 mr-2" /> {t.shareResult}
+            </Button>
+          )}
         </div>
       </div>
       )}
@@ -255,6 +288,12 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
 
       {cardPlayer && (
         <PlayerCardModal player={cardPlayer} profile={profiles[cardPlayer.user_id]} meId={me?.id} roomCode={roomCode} onClose={() => setCardPlayer(null)} />
+      )}
+
+      {showShareCard && (
+        <ShareCardModal data={shareCardData}
+          fallbackText={t.shareResultText(isWinner, myRank, players.length)}
+          onClose={() => setShowShareCard(false)} />
       )}
 
       <RoomTabBar

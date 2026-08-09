@@ -100,6 +100,15 @@ jobs:
           cp "$PROFILE_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/"$PROFILE_UUID.mobileprovision"
           echo "PROFILE_NAME=$PROFILE_NAME" >> "$GITHUB_ENV"
           echo "Installed profile: $PROFILE_NAME ($PROFILE_UUID)"
+          # The archive is built unsigned, so the shipped app's entitlements
+          # come from THIS profile — a stale one silently strips iCloud and
+          # the backup feature dies without any build error. Fail loudly
+          # instead: after enabling a capability on the App ID, regenerate
+          # the profile and update the IOS_PROVISIONING_PROFILE secret.
+          if ! echo "$PROFILE_PLIST" | plutil -extract 'Entitlements.com\.apple\.developer\.ubiquity-kvstore-identifier' raw - >/dev/null 2>&1; then
+            echo "::error::Provisioning profile '$PROFILE_NAME' lacks the iCloud key-value entitlement. Tick iCloud on the App ID (developer.apple.com), regenerate + re-download the App Store profile, and update the IOS_PROVISIONING_PROFILE secret with its base64."
+            exit 1
+          fi
 
       - name: Archive (unsigned — signing happens at export)
         run: |
