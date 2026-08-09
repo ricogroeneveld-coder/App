@@ -183,8 +183,9 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
           <div className="flex items-center justify-center gap-1.5">
             <p className="text-xs font-semibold text-white/[0.7]">{t.category}: <span className="text-violet-300">{shortCategory(room.category)}</span></p>
             {!submitted && wordTimeLeft !== null && (
-              <span className={`inline-flex items-center gap-1 h-5 px-1.5 rounded-full font-mono font-bold text-[11px] tabular-nums shrink-0 ${wordTimeLeft <= 10 ? 'bg-rose-500/15 text-rose-300' : 'bg-white/5 text-slate-300'}`}>
-                <Timer className="w-3 h-3" />0:{String(wordTimeLeft).padStart(2, '0')}
+              <span className={`inline-flex items-center justify-center gap-1 h-5 px-2 rounded-full font-mono font-bold text-[11px] leading-none tabular-nums shrink-0 ${wordTimeLeft <= 10 ? 'bg-rose-500/15 text-rose-300' : 'bg-white/5 text-slate-300'}`}>
+                <Timer className="w-3 h-3 shrink-0" />
+                <span className="leading-none translate-y-px">0:{String(wordTimeLeft).padStart(2, '0')}</span>
               </span>
             )}
           </div>
