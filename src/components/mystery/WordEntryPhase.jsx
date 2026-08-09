@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { MysteryPlayer, MysteryRoom } from '@/api/db';
 import { useToast } from '@/components/ui/use-toast';
-import { Lock, Check, Clock, Search, Pencil, ArrowLeft } from 'lucide-react';
+import { Lock, Check, Clock, Pencil, ArrowLeft } from 'lucide-react';
 import { WORD_LISTS, WORD_LISTS_NL, PREMIUM_WORD_LISTS, shortCategory } from '@/lib/wordLists';
 import { useLang } from '@/lib/LanguageContext';
 import { cleanText } from '@/lib/cleanText';
@@ -17,7 +17,6 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
   const profiles = usePeerProfiles(players);
   const [selected, setSelected] = useState('');
   const [customInput, setCustomInput] = useState('');
-  const [search, setSearch] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const isHost = room.host_id === me?.id;
   const submitted = myPlayer?.word_submitted;
@@ -31,10 +30,6 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
   const nlToEn = lang === 'nl' && WORD_LISTS_NL[room.category]
     ? Object.fromEntries((WORD_LISTS_NL[room.category] || []).map((w, i) => [w, wordListEn[i] || w]))
     : null;
-  const filtered = useMemo(() =>
-    wordList.filter(w => w.toLowerCase().includes(search.toLowerCase())),
-    [wordList, search]
-  );
 
   const submitWord = async () => {
     const displayWord = isCustom ? cleanText(customInput.trim()) : selected;
@@ -115,33 +110,19 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
                 <p className="text-xs text-slate-400">{t.keepItSecret}</p>
               </div>
             ) : (
-              <div className="glass-card p-2.5 space-y-2">
-                {/* Search — slim, filters the cloud; typing an exact word
-                    still selects it via the pill it leaves visible */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                  <input
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    placeholder={t.search(shortCategory(room.category))} enterKeyHint="search"
-                    className="inset-input w-full h-9 pl-9 pr-4 text-base md:text-sm"
-                  />
-                </div>
-
-                {/* Word cloud — compact wrapping pills so ALL words fit on
-                    one screen with no scrolling (max list = 31 words) */}
-                <div className="flex flex-wrap gap-1 rounded-xl bg-black/20 ring-1 ring-white/5 p-1.5">
-                  {filtered.map(w => (
-                    <button key={w} onClick={() => { setSelected(w); setSearch(''); }}
-                      className={`px-2 py-1 rounded-full text-[11px] font-semibold transition active:scale-[0.96] ${selected === w
+              <div className="glass-card p-2.5">
+                {/* Aligned 3-column word grid — every word visible at once,
+                    equal-width cells so rows and columns line up (no search
+                    bar: with the full list on screen it earned nothing) */}
+                <div className="grid grid-cols-3 gap-1 rounded-xl bg-black/20 ring-1 ring-white/5 p-1.5">
+                  {wordList.map(w => (
+                    <button key={w} onClick={() => setSelected(w)}
+                      className={`px-1 py-1.5 rounded-lg text-[11px] font-semibold text-center leading-tight break-words transition active:scale-[0.96] ${selected === w
                         ? 'bg-gradient-to-b from-violet-400 to-violet-700 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_-2px_rgba(139,92,246,0.7)] ring-1 ring-violet-300/60'
                         : 'bg-white/5 ring-1 ring-white/10 text-slate-200 hover:bg-white/10'}`}>
                       {w}
                     </button>
                   ))}
-                  {filtered.length === 0 && (
-                    <p className="w-full text-center text-slate-400 text-sm py-4">{t.noResults}</p>
-                  )}
                 </div>
               </div>
             )}
