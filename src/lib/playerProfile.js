@@ -299,11 +299,17 @@ export async function grantMatchRewards({ room, players, guesses, me }) {
   players.forEach(p => { roundScore[p.user_id] = 0; });
   guesses.forEach(g => { if (g.correct && g.guesser_id in roundScore) roundScore[g.guesser_id] += 1; });
   const topScore = Math.max(0, ...Object.values(roundScore));
-  // Winning requires actually having guessed something: a round that ends
-  // with zero correct guesses (everyone else left, host abandoned) pays the
-  // completion reward but never winner/perfect/streak — otherwise two
-  // players could farm "wins" by taking turns leaving.
-  const isWinner = topScore > 0 && (roundScore[me.id] || 0) === topScore && players.length > 1;
+
+  // Nobody guessed a single word correctly this round — the only way that
+  // happens is players leaving before the game really got going (a normal
+  // finish always has at least one correct guess, since that's what
+  // reduces the room to a winner). Without this, every remaining player
+  // ties at 0 and reads as "the winner," collecting the winner bonus,
+  // streak bonus, and completion reward for a match that never happened.
+  // Void it instead: no rewards, no stats, no streak change.
+  if (topScore === 0) return null;
+
+  const isWinner = (roundScore[me.id] || 0) === topScore && players.length > 1;
   const myCorrect = guesses.filter(g => g.guesser_id === me.id && g.correct).length;
   const isHost = room.host_id === me.id;
   const perfect = isWinner && myCorrect >= players.length - 1 && players.length > 1;
@@ -324,15 +330,11 @@ export async function grantMatchRewards({ room, players, guesses, me }) {
   if (perfect) add('perfect', ECONOMY.perfect);
   if (isHost) add('host', ECONOMY.host);
 
-  // A walkover round (nobody guessed anything — opponents left) neither
-  // extends nor breaks a streak; only genuinely contested rounds count.
-  if (topScore > 0) {
-    cache.win_streak = isWinner ? (cache.win_streak || 0) + 1 : 0;
-    const streakIdx = Math.min(cache.win_streak, ECONOMY.streakBonus.length - 1);
-    if (isWinner && ECONOMY.streakBonus[streakIdx] > 0) {
-      add('streak', { picks: ECONOMY.streakBonus[streakIdx], xp: 0 });
-      breakdown.streak = cache.win_streak;
-    }
+  cache.win_streak = isWinner ? (cache.win_streak || 0) + 1 : 0;
+  const streakIdx = Math.min(cache.win_streak, ECONOMY.streakBonus.length - 1);
+  if (isWinner && ECONOMY.streakBonus[streakIdx] > 0) {
+    add('streak', { picks: ECONOMY.streakBonus[streakIdx], xp: 0 });
+    breakdown.streak = cache.win_streak;
   }
 
   addXp(breakdown.totalXp, breakdown);
