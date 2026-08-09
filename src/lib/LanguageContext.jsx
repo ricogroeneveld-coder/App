@@ -178,6 +178,14 @@ const translations = {
     shareResultText: (won, rank, total) => won
       ? "I just won a round of What's My Pick! 🏆 Think you can outguess me?"
       : `I finished #${rank} of ${total} in What's My Pick! Think you can do better?`,
+    // Share win card
+    scPerfect: 'PERFECT!',
+    scVictory: 'VICTORY!',
+    scPlace: (rank) => `#${rank} PLACE`,
+    scWordsGuessed: 'WORDS GUESSED',
+    scStreakChip: (n) => `🔥 ${n} WIN STREAK`,
+    shareCardCta: 'Share',
+    shareCardSaved: 'Image saved',
     newStockIn: (time) => `New stock in ${time}`,
     playerFallback: 'Player',
     pageNotFound: 'Page Not Found',
@@ -524,6 +532,14 @@ const translations = {
     shareResultText: (won, rank, total) => won
       ? 'Ik heb net een ronde What\'s My Pick! gewonnen 🏆 Denk je dat je mij kunt verslaan?'
       : `Ik werd #${rank} van ${total} in What's My Pick! Kun jij het beter?`,
+    // Share win card
+    scPerfect: 'PERFECT!',
+    scVictory: 'GEWONNEN!',
+    scPlace: (rank) => `#${rank}E PLAATS`,
+    scWordsGuessed: 'WOORDEN GERADEN',
+    scStreakChip: (n) => `🔥 ${n} OP RIJ`,
+    shareCardCta: 'Delen',
+    shareCardSaved: 'Afbeelding opgeslagen',
     newStockIn: (time) => `Nieuwe voorraad over ${time}`,
     playerFallback: 'Speler',
     pageNotFound: 'Pagina niet gevonden',
