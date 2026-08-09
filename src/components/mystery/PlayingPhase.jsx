@@ -60,6 +60,14 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
   tabRef.current = tab;
   useEffect(() => { if (tab === 'chat') setUnreadChat(0); }, [tab]);
 
+  // Toasts are fixed to the bottom of the viewport at a higher z-index than
+  // this screen's tab bar — without this, a toast renders on top of it. See
+  // --toast-bottom-offset in index.css.
+  useEffect(() => {
+    document.body.classList.add('has-bottom-tab-bar');
+    return () => document.body.classList.remove('has-bottom-tab-bar');
+  }, []);
+
   const activePlayers = players.filter(p => !p.is_eliminated && !p.word_revealed);
   // Asking rotation includes word_revealed players (they can still ask and guess others)
   const askingPlayers = players.filter(p => !p.is_eliminated);

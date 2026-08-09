@@ -280,8 +280,11 @@ export default function MysteryGame() {
     <>
       {phase}
       {connectionIssue && (
+        // Cleared below every phase's own header row (back/help buttons,
+        // Lobby's room-code pill, Playing's category/room/word strip) —
+        // sitting right at the safe-area edge collided with all of them.
         <div className="fixed inset-x-0 z-[60] flex justify-center pointer-events-none px-4"
-          style={{ top: 'max(calc(env(safe-area-inset-top) + 0.5rem), 1rem)' }}>
+          style={{ top: 'max(calc(env(safe-area-inset-top) + 3.75rem), 4rem)' }}>
           <div role="status" aria-label={t.connectionLost}
             className="pointer-events-auto flex items-center gap-2 h-9 px-3.5 rounded-full bg-amber-500/15 ring-1 ring-amber-400/40 backdrop-blur-md shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
             <WifiOff className="w-3.5 h-3.5 text-amber-300 shrink-0" />

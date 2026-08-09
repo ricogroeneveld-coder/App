@@ -6,7 +6,8 @@ import { cn } from "@/lib/utils";
 const ToastProvider = React.forwardRef(({ ...props }, ref) => (
   <div
     ref={ref}
-    className="pointer-events-none fixed bottom-0 z-[100] flex max-h-screen w-full flex-col p-4 pb-[max(env(safe-area-inset-bottom),1rem)] sm:right-0 sm:flex-col md:max-w-[420px]"
+    className="pointer-events-none fixed bottom-0 z-[100] flex max-h-screen w-full flex-col p-4 sm:right-0 sm:flex-col md:max-w-[420px]"
+    style={{ paddingBottom: 'var(--toast-bottom-offset)' }}
     {...props}
   />
 ));
@@ -15,7 +16,8 @@ ToastProvider.displayName = "ToastProvider";
 const ToastViewport = React.forwardRef(({ ...props }, ref) => (
   <div
     ref={ref}
-    className="pointer-events-none fixed bottom-0 z-[100] flex max-h-screen w-full flex-col p-4 pb-[max(env(safe-area-inset-bottom),1rem)] sm:right-0 sm:flex-col md:max-w-[420px]"
+    className="pointer-events-none fixed bottom-0 z-[100] flex max-h-screen w-full flex-col p-4 sm:right-0 sm:flex-col md:max-w-[420px]"
+    style={{ paddingBottom: 'var(--toast-bottom-offset)' }}
     {...props}
   />
 ));

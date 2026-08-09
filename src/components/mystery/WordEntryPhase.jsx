@@ -4,14 +4,17 @@ import { useNavigate } from 'react-router-dom';
 import { MysteryPlayer, MysteryRoom } from '@/api/db';
 import { leaveRoom } from '@/lib/roomLifecycle';
 import { useToast } from '@/components/ui/use-toast';
-import { Lock, Check, Clock, Pencil, ArrowLeft } from 'lucide-react';
+import { Lock, Check, Clock, Pencil, ArrowLeft, Palette, MessageCircle } from 'lucide-react';
 import { WORD_LISTS, WORD_LISTS_NL, PREMIUM_WORD_LISTS, shortCategory } from '@/lib/wordLists';
 import { useLang } from '@/lib/LanguageContext';
 import { cleanText } from '@/lib/cleanText';
 import GameBackground from '@/components/GameBackground';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import usePeerProfiles from '@/components/progression/usePeerProfiles';
-import RoomChat from './RoomChat';
+import ChatPanel from './ChatPanel';
+import RoomTabBar from './RoomTabBar';
+import QuickEquip from './QuickEquip';
+import useUnreadChat from './useUnreadChat';
 
 export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }) {
   const { toast } = useToast();
@@ -21,10 +24,12 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
   const [customInput, setCustomInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [tab, setTab] = useState('word'); // 'word' | 'profile' | 'chat'
   const isHost = room.host_id === me?.id;
   const submitted = myPlayer?.word_submitted;
   const allSubmitted = players.length > 0 && players.every(p => p.word_submitted);
   const isCustom = room.category === 'Custom';
+  const unreadChat = useUnreadChat(roomCode, me?.id, tab === 'chat');
 
   const wordListEn = WORD_LISTS[room.category] || PREMIUM_WORD_LISTS[room.category] || [];
   const wordListNl = lang === 'nl' ? (WORD_LISTS_NL[room.category] || wordListEn) : wordListEn;
@@ -114,9 +119,10 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
           </motion.div>
         )}
       </AnimatePresence>
+      {tab === 'word' && (
       <div
         className="w-full max-w-md relative flex-1 min-h-0 overflow-y-auto hide-scrollbar px-4 pt-2 pb-3"
-        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)' }}
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 4.75rem)' }}
       >
         {/* Compact header — every word must fit on ONE screen, so no big
             icon tile; the whole picker is designed to a 667px budget */}
@@ -221,8 +227,36 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
           </motion.div>
         )}
       </div>
+      )}
 
-      <RoomChat roomCode={roomCode} me={me} myPlayer={myPlayer} />
+      {/* Profile/Chat panes clear the fixed back button (top-left, 44px
+          tall) with their own top padding — the 'word' tab doesn't need
+          this because its centered header text never sits under it, but
+          QuickEquip's left-aligned section labels and chat's message list
+          both start flush left. */}
+      {tab === 'profile' && (
+        <div className="w-full max-w-md relative flex-1 min-h-0 overflow-y-auto hide-scrollbar px-4"
+          style={{ paddingTop: 'max(calc(env(safe-area-inset-top) + 3.5rem), 3.75rem)', paddingBottom: 'calc(env(safe-area-inset-bottom) + 4.75rem)' }}>
+          <QuickEquip />
+        </div>
+      )}
+
+      {tab === 'chat' && (
+        <div className="w-full max-w-md relative flex-1 min-h-0 flex flex-col px-4"
+          style={{ paddingTop: 'max(calc(env(safe-area-inset-top) + 3.5rem), 3.75rem)', paddingBottom: 'calc(env(safe-area-inset-bottom) + 4.75rem)' }}>
+          <ChatPanel roomCode={roomCode} me={me} myPlayer={myPlayer} onEmoteRain={() => {}} />
+        </div>
+      )}
+
+      <RoomTabBar
+        active={tab}
+        onChange={setTab}
+        items={[
+          { id: 'word', label: t.tabWordEntry, icon: Pencil },
+          { id: 'profile', label: t.tabProfile, icon: Palette },
+          { id: 'chat', label: t.tabChat, icon: MessageCircle, badge: unreadChat },
+        ]}
+      />
     </div>
   );
 }
