@@ -112,6 +112,22 @@ export function startCloudBackup() {
   });
 }
 
+// Read-only status for the always-visible Settings row — unlike
+// cloudBackupDiagnostics() below (which performs write/sign-in tests for
+// the hidden dev panel), this never mutates anything, so it's safe to run
+// on every normal player's Settings screen. Without this, a player whose
+// iCloud is disabled (or whose backup silently never wrote) had no way to
+// know a reinstall would wipe their progress until it actually happened.
+export async function backupStatus() {
+  if (!isNativeApp()) return 'web'; // backup only applies to the native build
+  try {
+    const { value } = await ICloudKV.get({ key: BACKUP_KEY });
+    return value ? 'ok' : 'none';
+  } catch {
+    return 'unavailable';
+  }
+}
+
 // On-device truth for the hidden diagnostics panel (Profile Settings →
 // 7 taps on the title): reports each link of the restore chain separately
 // so a broken toggle, entitlement, or write is visible instead of guessed.

@@ -67,6 +67,10 @@ export default function Home() {
     ensureDailyLogin().then(res => {
       if (res) toast({ title: `🎁 ${t.dailyReward}: +${res.picks} Picks` });
     });
+    // A brand-new player has no reason to know the rules modal exists behind
+    // the header icon — show it once, right after they've named themselves,
+    // instead of leaving it to be discovered by accident.
+    setShowHowToPlay(true);
   };
 
   const generateCode = () => {

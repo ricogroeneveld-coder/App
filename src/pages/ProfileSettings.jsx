@@ -5,12 +5,13 @@ import { MysteryPlayer, MysteryRoom } from '@/api/db';
 import { supabase } from '@/lib/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { ArrowLeft, Trash2, AlertTriangle, Globe, DoorOpen, Volume2, LogOut, LogIn, RotateCcw, Shield } from 'lucide-react';
+import { ArrowLeft, Trash2, AlertTriangle, Globe, DoorOpen, Volume2, Vibrate, LogOut, LogIn, RotateCcw, Shield } from 'lucide-react';
 import { getGuestIdentity, clearGuestIdentity } from '@/lib/guestIdentity';
 import { useAuth } from '@/lib/AuthContext';
 import { useLang } from '@/lib/LanguageContext';
 import { Switch } from '@/components/ui/switch';
 import { isSoundEnabled, setSoundEnabled, playCorrect } from '@/lib/sounds';
+import { isHapticsEnabled, setHapticsEnabled, vibrate } from '@/lib/haptics';
 import GameBackground from '@/components/GameBackground';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import BannerArt from '@/components/progression/BannerArt';
@@ -29,8 +30,10 @@ export default function ProfileSettings() {
   const [activeGame, setActiveGame] = useState(null);
   const [leavingGame, setLeavingGame] = useState(false);
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
+  const [hapticsOn, setHapticsOn] = useState(isHapticsEnabled());
   const [cosmeticProfile, setCosmeticProfile] = useState(getProfile());
   const [restoring, setRestoring] = useState(false);
+  const [iCloudStatus, setICloudStatus] = useState(null); // 'web' | 'ok' | 'none' | 'unavailable'
   // Hidden diagnostics: 7 taps on the page title reveal the iCloud-backup
   // health readout (read-only — grants nothing, safe to ship).
   const [diagTaps, setDiagTaps] = useState(0);
@@ -45,6 +48,11 @@ export default function ProfileSettings() {
     }
   };
   useEffect(() => { let live = true; loadProfile().then(p => { if (live) setCosmeticProfile(p); }); return () => { live = false; }; }, []);
+  useEffect(() => {
+    let live = true;
+    import('@/lib/cloudBackup').then(m => m.backupStatus()).then(s => { if (live) setICloudStatus(s); });
+    return () => { live = false; };
+  }, []);
   const isRegistered = !!currentUser;
 
   // Apple requires a visible "restore purchases" for non-consumable IAP.
@@ -53,7 +61,8 @@ export default function ProfileSettings() {
     setRestoring(true);
     try {
       const res = await restorePurchases();
-      if (res.ok) toast({ title: t.restoreDone });
+      if (res.ok) toast({ title: t.restoreDone(res.restored || 0) });
+      else if (res.reason === 'error') toast({ title: t.restoreFailed, variant: 'destructive' });
       else toast({ title: t.purchaseUnavailable });
     } finally {
       setRestoring(false);
@@ -65,6 +74,13 @@ export default function ProfileSettings() {
     setSoundEnabled(next);
     // Play a sample so the user hears what enabling sounds like.
     if (next) playCorrect();
+  };
+
+  const toggleHaptics = (next) => {
+    setHapticsOn(next);
+    setHapticsEnabled(next);
+    // Feel a sample tick so enabling has the same immediate feedback as sound.
+    if (next) vibrate(35);
   };
 
   const guest = getGuestIdentity();
@@ -285,6 +301,25 @@ export default function ProfileSettings() {
           />
         </motion.div>
 
+        {/* Haptics toggle */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="glass-panel rounded-[20px] p-4 flex items-center gap-3"
+        >
+          <Vibrate className="w-5 h-5 text-violet-400 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-white">{t.haptics}</p>
+            <p className="text-slate-400 text-sm">{t.hapticsDesc}</p>
+          </div>
+          <Switch
+            checked={hapticsOn}
+            onCheckedChange={toggleHaptics}
+            className="select-none-interactive"
+          />
+        </motion.div>
+
         {/* Purchases & privacy */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -303,6 +338,15 @@ export default function ProfileSettings() {
               {restoring ? '…' : t.restoreBtn}
             </button>
           </div>
+
+          {/* iCloud backup status — the only signal a normal player gets
+              that a reinstall would (or wouldn't) bring their progress
+              back, instead of finding out the hard way. */}
+          {iCloudStatus && iCloudStatus !== 'web' && (
+            <p className={`text-xs font-semibold pt-1 ${iCloudStatus === 'ok' ? 'text-emerald-400/80' : 'text-amber-400/90'}`}>
+              {iCloudStatus === 'ok' ? `✓ ${t.icloudBackedUp}` : `⚠ ${t.icloudNotBackedUp}`}
+            </p>
+          )}
           <a href="https://jinnieoclock.com/whatsmypick/" target="_blank" rel="noopener"
             className="flex items-center gap-3 pt-3 border-t border-white/10 text-sm font-semibold text-slate-300 hover:text-white transition min-h-[44px]">
             <Shield className="w-5 h-5 text-violet-400 flex-shrink-0" />

@@ -163,5 +163,9 @@ is unaffected).
 ## 7. Before every store build
 
 - `dist/` built from a clean `npm run build`
-- Supabase migrations 0001–0003 applied
-- Do NOT ship a device with the dev flag: visit any URL with `?dev=off`
+- Supabase migrations 0001–0005 applied
+- Don't set `VITE_ENABLE_DEV_TOOLS` for a store build — without it, the
+  `?dev=unlock` / `?dev=reset` URLs (test-mode unlock, profile reset,
+  simulated web purchases) are inert at the code level, not just hidden, so
+  there's nothing to remember to turn off per-device. If a device was
+  flagged by an older build, visiting `?dev=off` still clears it.

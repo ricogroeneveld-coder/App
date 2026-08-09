@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MysteryRoom, MysteryPlayer, MysteryQuestion, MysteryGuess } from '@/api/db';
-import { Loader2 } from 'lucide-react';
+import { Loader2, WifiOff } from 'lucide-react';
 import LobbyPhase from '@/components/mystery/LobbyPhase';
 import WordEntryPhase from '@/components/mystery/WordEntryPhase';
 import PlayingPhase from '@/components/mystery/PlayingPhase';
@@ -28,10 +28,20 @@ export default function MysteryGame() {
   // Bumped when the tab wakes up — re-runs the subscribe effect so dead
   // realtime channels are replaced and state is re-fetched.
   const [sessionEpoch, setSessionEpoch] = useState(0);
+  // True while any of the four room-state channels has reported dropped
+  // (CHANNEL_ERROR/TIMED_OUT/CLOSED) rather than SUBSCRIBED — without this,
+  // a lost realtime connection just goes silently stale: chat, questions,
+  // guesses, and the player list stop updating with no indication at all.
+  const [connectionIssue, setConnectionIssue] = useState(false);
   const rejoiningRef = useRef(false);
   // Whether we've had a player row during THIS visit — distinguishes a kick
   // (row existed, then vanished) from a refresh (arrived with no row).
   const hadRowRef = useRef(false);
+  // Mirrors `players` for the join/leave toast below, which needs the
+  // pre-change roster (to detect an elimination transition) without
+  // re-running the subscribe effect on every player-list update.
+  const playersRef = useRef([]);
+  useEffect(() => { playersRef.current = players; }, [players]);
 
   const roomCode = code?.toUpperCase();
 
@@ -69,10 +79,26 @@ export default function MysteryGame() {
   useEffect(() => {
     let unsubs = [];
     let debounceTimer = null;
+    let retryTimer = null;
 
     const debouncedLoad = () => {
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => { loadAll(); }, 400);
+    };
+
+    // Any channel dropping means all four are likely dead together (same
+    // socket) — flag it once and, since visibilitychange/online won't fire
+    // for a connection that dies while the tab stays open and in the
+    // foreground, self-heal with a short retry via the same sessionEpoch
+    // bump the wake-up handler uses.
+    const handleStatus = (status) => {
+      if (status === 'SUBSCRIBED') { setConnectionIssue(false); return; }
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        setConnectionIssue(true);
+        if (!retryTimer) {
+          retryTimer = setTimeout(() => { setSessionEpoch(n => n + 1); }, 3000);
+        }
+      }
     };
 
     (async () => {
@@ -82,16 +108,33 @@ export default function MysteryGame() {
         await loadAll();
         setLoading(false);
 
-        unsubs.push(MysteryRoom.subscribe(debouncedLoad));
-        unsubs.push(MysteryPlayer.subscribe(debouncedLoad));
-        unsubs.push(MysteryQuestion.subscribe(debouncedLoad));
-        unsubs.push(MysteryGuess.subscribe(debouncedLoad));
+        // A player stepping away to Chat/Settings has no other way to learn
+        // someone joined or left — the roster just silently re-renders.
+        // Skipped for our own row: we already know when we join or leave.
+        const handlePlayerEvent = (event) => {
+          debouncedLoad();
+          if (event.data?.room_code !== roomCode || event.data?.user_id === guest.id) return;
+          if (event.type === 'create') {
+            toast({ title: t.playerJoined(event.data.display_name) });
+          } else if (event.type === 'delete') {
+            toast({ title: t.playerLeft(event.data.display_name) });
+          } else if (event.type === 'update' && event.data?.is_eliminated) {
+            const prev = playersRef.current.find(p => p.id === event.data.id);
+            if (prev && !prev.is_eliminated) toast({ title: t.playerLeft(event.data.display_name) });
+          }
+        };
+
+        unsubs.push(MysteryRoom.subscribe(debouncedLoad, handleStatus));
+        unsubs.push(MysteryPlayer.subscribe(handlePlayerEvent, handleStatus));
+        unsubs.push(MysteryQuestion.subscribe(debouncedLoad, handleStatus));
+        unsubs.push(MysteryGuess.subscribe(debouncedLoad, handleStatus));
       } catch(e) {
         setLoading(false);
       }
     })();
     return () => {
       clearTimeout(debounceTimer);
+      clearTimeout(retryTimer);
       unsubs.forEach(u => u && u());
     };
   }, [roomCode, loadAll, sessionEpoch]);
@@ -227,10 +270,25 @@ export default function MysteryGame() {
 
   const commonProps = { room, players, questions, guesses, me, myPlayer, roomCode, reload: loadAll };
 
-  if (room.status === 'lobby') return <LobbyPhase {...commonProps} />;
-  if (room.status === 'word_entry') return <WordEntryPhase {...commonProps} />;
-  if (room.status === 'playing') return <PlayingPhase {...commonProps} />;
-  if (room.status === 'finished') return <FinishedPhase {...commonProps} />;
+  let phase = null;
+  if (room.status === 'lobby') phase = <LobbyPhase {...commonProps} />;
+  else if (room.status === 'word_entry') phase = <WordEntryPhase {...commonProps} />;
+  else if (room.status === 'playing') phase = <PlayingPhase {...commonProps} />;
+  else if (room.status === 'finished') phase = <FinishedPhase {...commonProps} />;
 
-  return null;
+  return (
+    <>
+      {phase}
+      {connectionIssue && (
+        <div className="fixed inset-x-0 z-[60] flex justify-center pointer-events-none px-4"
+          style={{ top: 'max(calc(env(safe-area-inset-top) + 0.5rem), 1rem)' }}>
+          <div role="status" aria-label={t.connectionLost}
+            className="pointer-events-auto flex items-center gap-2 h-9 px-3.5 rounded-full bg-amber-500/15 ring-1 ring-amber-400/40 backdrop-blur-md shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
+            <WifiOff className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+            <span className="text-xs font-semibold text-amber-200">{t.reconnecting}</span>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }

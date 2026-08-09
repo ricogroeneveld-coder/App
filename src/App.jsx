@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react';
 import { devUnlockAll, devResetProfile, ensureAuth } from '@/lib/playerProfile';
 import { configurePurchases } from '@/lib/payments';
 import { restoreIdentityFromCloud, startCloudBackup, watchForLateBackup } from '@/lib/cloudBackup';
-import { isNativeApp } from '@/lib/platform';
+import { isNativeApp, isDevToolsEnabled } from '@/lib/platform';
 // Add page imports here
 import Home from '@/pages/Home';
 import BrowseLobbies from '@/pages/BrowseLobbies';
@@ -63,18 +63,26 @@ function useForcedDarkTheme() {
 
 // Dev/test switch usable from ANY route — static hosts often 404 on deep
 // links, so ?dev=unlock must also work from the root URL. Any ?dev= visit
-// also marks this device as a dev device, which reveals the test-mode
-// toggle and sync diagnostics on the profile page (?dev=off hides them
-// again). Regular players never see developer UI.
+// marks this device as a dev device, which reveals the test-mode toggle and
+// sync diagnostics on the profile page (?dev=off hides them again).
+//
+// Gated behind isDevToolsEnabled() (VITE_ENABLE_DEV_TOOLS=1 at build time):
+// a real production build — anything shipped to the App Store or the public
+// web deployment — compiles with this permanently false, so ?dev= is inert
+// no matter who visits the URL. Only an internal build built with that env
+// var set can ever be flagged. ?dev=off still always works, so a device
+// flagged before this fix shipped can still be cleared.
 function useDevParam() {
+  const dev = new URLSearchParams(window.location.search).get('dev');
+  const toolsEnabled = isDevToolsEnabled();
   // Flag the device synchronously during render, before any child screens
   // read it — an effect would set it one render too late.
-  const dev = new URLSearchParams(window.location.search).get('dev');
   try {
     if (dev === 'off') localStorage.removeItem('wmp_dev');
-    else if (dev) localStorage.setItem('wmp_dev', '1');
+    else if (dev && toolsEnabled) localStorage.setItem('wmp_dev', '1');
   } catch { /* ignore */ }
   useEffect(() => {
+    if (!toolsEnabled) return;
     if (dev === 'unlock') devUnlockAll();
     else if (dev === 'reset') devResetProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -16,6 +16,7 @@ import { ALL_COSMETICS, cosmeticById, RARITIES, TYPE_LABELS, topEquippedRarity, 
 import { shortCategory } from '@/lib/wordLists';
 import { setGuestName, normalizeName, MAX_NAME_LENGTH } from '@/lib/guestIdentity';
 import { SEASON_NAME, todayKey, levelFromXp } from '@/lib/progression';
+import { isDevToolsEnabled } from '@/lib/platform';
 
 const TYPE_ORDER = ['emblem', 'banner', 'border', 'title', 'nameColor'];
 
@@ -386,8 +387,13 @@ export default function Profile() {
   const winRate = games > 0 ? Math.round(((profile.wins || 0) / games) * 100) : 0;
   const fav = favoriteCategory();
   const lvl = levelFromXp(profile.xp || 0);
-  // Developer UI (test-mode toggle, sync diagnostics) only on flagged devices
-  const devMode = (() => { try { return localStorage.getItem('wmp_dev') === '1'; } catch { return false; } })();
+  // Developer UI (test-mode toggle, sync diagnostics) only on flagged
+  // devices in a build compiled with dev tools enabled — never in a real
+  // production build, regardless of what's sitting in localStorage.
+  const devMode = (() => {
+    if (!isDevToolsEnabled()) return false;
+    try { return localStorage.getItem('wmp_dev') === '1'; } catch { return false; }
+  })();
 
   const onTapCosmetic = (c) => {
     const owned = profile.owned.includes(c.id);

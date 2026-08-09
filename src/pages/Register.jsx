@@ -11,6 +11,7 @@ import GoogleIcon from "@/components/GoogleIcon";
 import AppleIcon from "@/components/AppleIcon";
 import { toast } from "@/components/ui/use-toast";
 import { safeReturnTo } from "@/lib/authReturnTo";
+import { friendlyAuthError } from "@/lib/authErrors";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ export default function Register() {
     const { error } = await supabase.auth.signUp({ email, password });
     setLoading(false);
     if (error) {
-      setError(error.message || "Registration failed");
+      setError(friendlyAuthError(error, "Registration failed"));
       return;
     }
     setShowOtp(true);
@@ -46,7 +47,7 @@ export default function Register() {
     const { error } = await supabase.auth.verifyOtp({ email, token: otpCode, type: "signup" });
     setLoading(false);
     if (error) {
-      setError(error.message || "Invalid verification code");
+      setError(friendlyAuthError(error, "Invalid verification code"));
       return;
     }
     navigate(returnTo);
@@ -56,7 +57,7 @@ export default function Register() {
     setError("");
     const { error } = await supabase.auth.resend({ type: "signup", email });
     if (error) {
-      setError(error.message || "Failed to resend code");
+      setError(friendlyAuthError(error, "Failed to resend code"));
       return;
     }
     toast({
@@ -80,7 +81,7 @@ export default function Register() {
         subtitle={`We sent a code to ${email}`}
       >
         {error && (
-          <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+          <div role="alert" aria-live="assertive" className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
             {error}
           </div>
         )}
@@ -172,7 +173,7 @@ export default function Register() {
       </div>
 
       {error && (
-        <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+        <div role="alert" aria-live="assertive" className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
           {error}
         </div>
       )}

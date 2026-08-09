@@ -21,7 +21,7 @@
 
 import { Purchases } from '@revenuecat/purchases-capacitor';
 import { unlockPack, isPackUnlocked } from './premiumPacks';
-import { isNativeApp } from './platform';
+import { isNativeApp, isDevToolsEnabled } from './platform';
 
 export const PRODUCTS = {
   // Apple permanently blocks reuse of a deleted product ID, even after it
@@ -38,6 +38,7 @@ export const PRODUCTS = {
 const isNative = isNativeApp;
 
 function isDevDevice() {
+  if (!isDevToolsEnabled()) return false;
   try { return localStorage.getItem('wmp_dev') === '1'; } catch { return false; }
 }
 

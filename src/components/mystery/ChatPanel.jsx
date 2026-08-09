@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MysteryChat } from '@/api/db';
-import { Send } from 'lucide-react';
+import { Send, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLang } from '@/lib/LanguageContext';
 import { cleanText } from '@/lib/cleanText';
@@ -8,6 +8,16 @@ import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import usePeerProfiles from '@/components/progression/usePeerProfiles';
 
 const EMOTES = ['😂', '🔥', '👀', '💀', '🤔', '😱', '🎉', '👏', '😏', '🤯'];
+const EMOTE_LABELS = { '😂': 'Laughing', '🔥': 'Fire', '👀': 'Eyes', '💀': 'Skull', '🤔': 'Thinking', '😱': 'Shocked', '🎉': 'Party', '👏': 'Clapping', '😏': 'Smirking', '🤯': 'Mind blown' };
+// Near-bottom threshold (px) — within this, a new message still auto-scrolls;
+// further up, the reader is treated as browsing history and left alone.
+const AUTOSCROLL_THRESHOLD = 80;
+
+function formatTime(iso) {
+  if (!iso) return '';
+  try { return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+  catch { return ''; }
+}
 
 function extractEmote(text) {
   return EMOTES.find(e => text.includes(e)) || null;
@@ -19,8 +29,11 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [wakeEpoch, setWakeEpoch] = useState(0);
+  const [newBelow, setNewBelow] = useState(0);
   const bottomRef = useRef(null);
+  const scrollRef = useRef(null);
   const pendingIdRef = useRef(0);
+  const nearBottomRef = useRef(true);
   const profiles = usePeerProfiles(messages);
 
   // Re-fetch + re-subscribe when the tab wakes — the background-suspended
@@ -51,17 +64,36 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
     return unsub;
   }, [roomCode, wakeEpoch]);
 
+  const scrollToBottom = (behavior = 'smooth') => {
+    bottomRef.current?.scrollIntoView({ behavior });
+    setNewBelow(0);
+  };
+
+  // Only follow new messages while already near the bottom — a reader who's
+  // scrolled up to read history shouldn't get yanked away on every arrival.
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (nearBottomRef.current) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      setNewBelow(n => n + 1);
+    }
   }, [messages]);
 
-  const send = async () => {
-    const trimmed = cleanText(text.trim());
+  const handleScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    nearBottomRef.current = distanceFromBottom < AUTOSCROLL_THRESHOLD;
+    if (nearBottomRef.current) setNewBelow(0);
+  };
+
+  const sendText = async (trimmed, retryId) => {
     if (!trimmed || sending) return;
     setSending(true);
     const emote = extractEmote(trimmed);
-    // Optimistic update
-    const tempId = `pending-${++pendingIdRef.current}`;
+    // Optimistic update — a retry reuses the same bubble id instead of
+    // adding a duplicate.
+    const tempId = retryId || `pending-${++pendingIdRef.current}`;
     const optimisticMsg = {
       id: tempId,
       room_code: roomCode,
@@ -73,8 +105,9 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
       emote: emote || '',
       _pending: true,
     };
-    setMessages(prev => [...prev, optimisticMsg]);
-    setText('');
+    setMessages(prev => retryId
+      ? prev.map(m => m.id === retryId ? optimisticMsg : m)
+      : [...prev, optimisticMsg]);
     try {
       await MysteryChat.create({
         room_code: roomCode,
@@ -88,34 +121,57 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
       // Remove optimistic msg — real one will arrive via subscription
       setMessages(prev => prev.filter(m => m.id !== tempId));
     } catch (e) {
-      // Mark as failed
-      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, _failed: true } : m));
+      // Mark as failed — tapping the bubble (see render) retries it
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, _pending: false, _failed: true } : m));
     } finally {
       setSending(false);
     }
   };
 
+  const send = async () => {
+    const trimmed = cleanText(text.trim());
+    if (!trimmed || sending) return;
+    setText('');
+    await sendText(trimmed);
+  };
+
+  const retry = (msg) => sendText(msg.message, msg.id);
+
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto space-y-2 pb-2 pr-1 min-h-0" style={{ overscrollBehaviorY: 'none' }}>
+    <div className="flex flex-col h-full relative">
+      <div ref={scrollRef} onScroll={handleScroll}
+        role="log" aria-live="polite" aria-relevant="additions"
+        className="flex-1 overflow-y-auto space-y-2 pb-2 pr-1 min-h-0" style={{ overscrollBehaviorY: 'none' }}>
         {messages.length === 0 && (
           <p className="text-center text-slate-400 text-sm py-8">{t.chatEmpty}</p>
         )}
         <AnimatePresence initial={false}>
           {messages.map(msg => {
             const isMe = msg.user_id === me?.id;
+            const clickable = msg._failed;
             return (
               <motion.div key={msg.id}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : ''}`}>
                 <PlayerAvatar profile={profiles[msg.user_id]} name={msg.display_name} color={msg.color} size={24} />
-                <div className={`max-w-[75%] px-3 py-2 rounded-2xl text-sm transition-opacity ${
-                  msg._pending ? 'opacity-50' : msg._failed ? 'opacity-40 ring-1 ring-rose-500/50' : 'opacity-100'
+                <div
+                  onClick={clickable ? () => retry(msg) : undefined}
+                  role={clickable ? 'button' : undefined}
+                  tabIndex={clickable ? 0 : undefined}
+                  onKeyDown={clickable ? (e => (e.key === 'Enter' || e.key === ' ') && retry(msg)) : undefined}
+                  className={`max-w-[75%] px-3 py-2 rounded-2xl text-sm transition-opacity ${clickable ? 'cursor-pointer' : ''} ${
+                  msg._pending ? 'opacity-50' : msg._failed ? 'opacity-70 ring-1 ring-rose-500/50' : 'opacity-100'
                 } ${isMe ? 'bg-gradient-to-b from-violet-500 to-violet-700 text-white rounded-br-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_2px_6px_-2px_rgba(0,0,0,0.4)]' : 'bg-white/10 text-white rounded-bl-sm ring-1 ring-white/5'}`}>
                   {!isMe && <p className="text-[10px] font-semibold mb-0.5 opacity-60">{msg.display_name}</p>}
                   <p>{msg.message}</p>
-                  {msg._failed && <p className="text-[10px] text-rose-400 mt-0.5">{t.chatFailed}</p>}
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    {msg._failed
+                      ? <p className="text-[10px] text-rose-400">{t.chatFailed}</p>
+                      : !msg._pending && msg.created_date && (
+                        <p className="text-[9px] opacity-50">{formatTime(msg.created_date)}</p>
+                      )}
+                  </div>
                 </div>
               </motion.div>
             );
@@ -124,10 +180,25 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
         <div ref={bottomRef} />
       </div>
 
+      {/* Scroll-to-latest — only appears once the reader has scrolled up
+          and new messages have arrived below; auto-scroll never fires while
+          this is up, so it never yanks someone away from history. */}
+      <AnimatePresence>
+        {newBelow > 0 && (
+          <motion.button
+            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
+            onClick={() => scrollToBottom()}
+            className="absolute bottom-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 h-7 pl-2.5 pr-3 rounded-full bg-violet-600 text-white text-[11px] font-bold shadow-[0_2px_8px_rgba(0,0,0,0.4)] active:scale-[0.96] transition-transform">
+            <ChevronDown className="w-3.5 h-3.5" />
+            {t.newMessages(newBelow)}
+          </motion.button>
+        )}
+      </AnimatePresence>
+
       {/* Emote picker */}
       <div className="flex gap-2 py-2 overflow-x-auto">
         {EMOTES.map(e => (
-          <button key={e} onClick={() => setText(prev => prev + e)}
+          <button key={e} onClick={() => setText(prev => prev + e)} aria-label={EMOTE_LABELS[e] || e}
             className="w-9 h-9 flex items-center justify-center text-xl hover:scale-125 active:scale-95 transition-transform shrink-0">{e}</button>
         ))}
       </div>
