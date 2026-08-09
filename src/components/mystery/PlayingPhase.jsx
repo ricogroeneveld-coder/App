@@ -21,7 +21,7 @@ import BannerArt from '@/components/progression/BannerArt';
 import usePeerProfiles from '@/components/progression/usePeerProfiles';
 import { cosmeticById } from '@/lib/cosmetics';
 
-const QUESTION_TIMER_SECONDS = 120;
+const QUESTION_TIMER_SECONDS = 30;
 
 export default function PlayingPhase({ room, players, questions, guesses, me, myPlayer, roomCode, reload }) {
   const { toast } = useToast();
@@ -283,7 +283,11 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
     return unsub;
   }, [roomCode, me?.id]);
 
-  const timerColor = timeLeft !== null && timeLeft <= 30 ? 'text-rose-400' : 'text-amber-400';
+  // Was "<= 30" from when the full timer was 120s (a real last-third
+  // warning); now that the timer itself is 30s, that threshold would make
+  // it red from the very first tick — 10s keeps it a genuine final-stretch
+  // warning instead.
+  const timerColor = timeLeft !== null && timeLeft <= 10 ? 'text-rose-400' : 'text-amber-400';
 
   // My previous guesses
 
