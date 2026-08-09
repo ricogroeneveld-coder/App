@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { MysteryPlayer, MysteryQuestion, MysteryGuess, MysteryRoom } from '@/api/db';
+import { leaveRoom } from '@/lib/roomLifecycle';
 import { Trophy, Home, RotateCcw } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { toDisplayWord } from '@/lib/wordLists';
@@ -13,7 +14,7 @@ import PlayerCardModal from '@/components/progression/PlayerCardModal';
 import RewardSummary from '@/components/progression/RewardSummary';
 import usePeerProfiles from '@/components/progression/usePeerProfiles';
 
-export default function FinishedPhase({ players, guesses, room, me, roomCode }) {
+export default function FinishedPhase({ players, guesses, room, me, myPlayer, roomCode }) {
   const navigate = useNavigate();
   const { t, lang } = useLang();
   const [loading, setLoading] = useState(false);
@@ -79,6 +80,15 @@ export default function FinishedPhase({ players, guesses, room, me, roomCode }) 
     } finally {
       setLoading(false);
     }
+  };
+
+  const goHome = async () => {
+    try {
+      await leaveRoom({ room, players, me, myPlayer, mode: 'delete' });
+    } catch(e) {
+      // fall through — still navigate home even if cleanup failed
+    }
+    navigate('/');
   };
 
   return (
@@ -161,7 +171,7 @@ export default function FinishedPhase({ players, guesses, room, me, roomCode }) 
           <p className="text-center text-slate-400 text-sm font-medium mb-2.5">{t.waitingForHostRound}</p>
         )}
 
-        <Button onClick={() => navigate('/')} variant="ghost"
+        <Button onClick={goHome} variant="ghost"
           className="w-full h-11 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 border border-white/10 font-semibold">
           <Home className="w-4 h-4 mr-2" /> {t.backToHome}
         </Button>

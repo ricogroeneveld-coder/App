@@ -9,3 +9,13 @@
 export function isNativeApp() {
   return typeof window !== 'undefined' && !!window.Capacitor?.isNativePlatform?.();
 }
+
+// Gates the ?dev= URL mechanism (test-mode unlock, profile reset, simulated
+// web purchases) behind a build-time flag instead of trusting the URL
+// alone. Any build compiled without VITE_ENABLE_DEV_TOOLS=1 — including
+// every store/production build, per APPSTORE.md's pre-release checklist —
+// can never be flagged via ?dev=, no matter who visits the link. Set the
+// env var only for an internal QA build you're testing on a real device.
+export function isDevToolsEnabled() {
+  return import.meta.env.VITE_ENABLE_DEV_TOOLS === '1';
+}

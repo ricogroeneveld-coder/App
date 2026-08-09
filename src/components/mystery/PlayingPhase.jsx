@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MysteryQuestion, MysteryRoom, MysteryPlayer, MysteryChat } from '@/api/db';
+import { MysteryQuestion, MysteryRoom, MysteryChat } from '@/api/db';
+import { leaveRoom } from '@/lib/roomLifecycle';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import Notebook from '@/components/mystery/Notebook';
@@ -225,8 +226,8 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
   const leaveGame = async () => {
     try {
       if (myPlayer) {
-        await MysteryPlayer.update(myPlayer.id, { is_eliminated: true });
         const remaining = players.filter(p => p.id !== myPlayer.id && !p.is_eliminated);
+        await leaveRoom({ room, players, me, myPlayer, mode: 'eliminate' });
         if (remaining.length <= 1) {
           await MysteryRoom.update(room.id, { status: 'finished' });
         }

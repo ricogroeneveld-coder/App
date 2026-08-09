@@ -58,8 +58,14 @@ function createEntity(table) {
      * Realtime, not filtered server-side — call sites filter by room_code
      * themselves once the payload arrives, same as the old base44 events).
      * Returns an unsubscribe function.
+     *
+     * @param {(status: string, err?: Error) => void} [onStatus] - optional;
+     *   called with the underlying channel's status ('SUBSCRIBED',
+     *   'CHANNEL_ERROR', 'TIMED_OUT', 'CLOSED') whenever it changes, so a
+     *   caller can surface a dropped connection instead of silently going
+     *   stale.
      */
-    subscribe(callback) {
+    subscribe(callback, onStatus) {
       const channelName = `${table}-${Math.random().toString(36).slice(2)}`;
       const channel = supabase
         .channel(channelName)
@@ -70,7 +76,7 @@ function createEntity(table) {
           const data = type === 'delete' ? payload.old : payload.new;
           callback({ type, data });
         })
-        .subscribe();
+        .subscribe((status, err) => { onStatus?.(status, err); });
       return () => { supabase.removeChannel(channel); };
     },
   };

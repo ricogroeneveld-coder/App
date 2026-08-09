@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { MysteryPlayer, MysteryRoom } from '@/api/db';
+import { leaveRoom } from '@/lib/roomLifecycle';
 import { useToast } from '@/components/ui/use-toast';
 import { Lock, Check, Clock, Pencil, ArrowLeft } from 'lucide-react';
 import { WORD_LISTS, WORD_LISTS_NL, PREMIUM_WORD_LISTS, shortCategory } from '@/lib/wordLists';
@@ -18,6 +19,7 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
   const [selected, setSelected] = useState('');
   const [customInput, setCustomInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const isHost = room.host_id === me?.id;
   const submitted = myPlayer?.word_submitted;
   const allSubmitted = players.length > 0 && players.every(p => p.word_submitted);
@@ -58,13 +60,25 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
   };
 
   const navigate = useNavigate();
-  const goBack = async () => {
+  const goBack = () => {
+    // Host, before locking a word in, is just re-opening lobby setup — not
+    // leaving the room, so no confirmation needed. Everyone else (or a host
+    // who already submitted) is actually exiting the game.
     if (isHost && !submitted) {
-      try { await MysteryRoom.update(room.id, { status: 'lobby' }); }
-      catch(e) { toast({ title: t.errorTitle, description: e.message, variant: 'destructive' }); }
-    } else {
-      navigate('/');
+      MysteryRoom.update(room.id, { status: 'lobby' })
+        .catch(e => toast({ title: t.errorTitle, description: e.message, variant: 'destructive' }));
+      return;
     }
+    setShowLeaveConfirm(true);
+  };
+
+  const confirmLeave = async () => {
+    try {
+      await leaveRoom({ room, players, me, myPlayer, mode: 'delete' });
+    } catch(e) {
+      // fall through — still navigate home even if cleanup failed
+    }
+    navigate('/');
   };
 
   return (
@@ -80,6 +94,25 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
           <ArrowLeft className="w-5 h-5" />
         </button>
       </div>
+
+      <AnimatePresence>
+        {showLeaveConfirm && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
+              className="glass-card bg-slate-900/95 p-5 max-w-sm w-full">
+              <p className="font-extrabold text-lg mb-1">{t.leaveQuestion}</p>
+              <p className="text-slate-400 text-sm mb-4">{t.leaveBody}</p>
+              <div className="flex gap-2.5">
+                <button onClick={() => setShowLeaveConfirm(false)}
+                  className="flex-1 h-11 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 font-semibold">{t.cancel}</button>
+                <button onClick={confirmLeave}
+                  className="flex-1 h-11 rounded-xl bg-rose-500 hover:bg-rose-600 border-0 font-bold text-white">{t.leave}</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div
         className="w-full max-w-md relative flex-1 min-h-0 overflow-y-auto hide-scrollbar px-4 pt-2 pb-3"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)' }}

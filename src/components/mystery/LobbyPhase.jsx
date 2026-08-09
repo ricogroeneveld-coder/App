@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MysteryPlayer, MysteryRoom } from '@/api/db';
+import { leaveRoom } from '@/lib/roomLifecycle';
 import { useToast } from '@/components/ui/use-toast';
 import { Copy, Check, Users, Crown, ArrowRight, ChevronRight, Sparkles, ArrowLeft, HelpCircle, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -24,6 +25,7 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
   const [loading, setLoading] = useState(false);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [showCategorySelector, setShowCategorySelector] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [cardPlayer, setCardPlayer] = useState(null);
   const profiles = usePeerProfiles(players);
   const isHost = room.host_id === me?.id;
@@ -32,18 +34,7 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
   const leaveGame = async () => {
     try {
       const myPlayer = players.find(p => p.user_id === me?.id);
-      if (myPlayer) await MysteryPlayer.delete(myPlayer.id);
-      if (isHost) {
-        const remaining = players.filter(p => p.user_id !== me?.id);
-        if (remaining.length === 0) {
-          await MysteryRoom.delete(room.id);
-        } else {
-          await MysteryRoom.update(room.id, {
-            host_id: remaining[0].user_id,
-            host_name: remaining[0].display_name
-          });
-        }
-      }
+      await leaveRoom({ room, players, me, myPlayer, mode: 'delete' });
       navigate('/');
     } catch(e) {
       navigate('/');
@@ -87,10 +78,31 @@ export default function LobbyPhase({ room, players, me, roomCode }) {
 
       {/* Back button — identical to Home's header buttons */}
       <div className="absolute left-4 z-20" style={{ top: 'max(env(safe-area-inset-top), 0.75rem)' }}>
-        <button onClick={leaveGame} className="header-btn" aria-label={t.backLabel}>
+        <button onClick={() => setShowLeaveConfirm(true)} className="header-btn" aria-label={t.backLabel}>
           <ArrowLeft className="w-5 h-5" />
         </button>
       </div>
+
+      {/* Leave confirmation — same pattern as Playing, so exiting mid-setup
+          carries the same accidental-tap protection as exiting mid-round */}
+      <AnimatePresence>
+        {showLeaveConfirm && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
+              className="glass-card bg-slate-900/95 p-5 max-w-sm w-full">
+              <p className="font-extrabold text-lg mb-1">{t.leaveQuestion}</p>
+              <p className="text-slate-400 text-sm mb-4">{t.leaveBody}</p>
+              <div className="flex gap-2.5">
+                <button onClick={() => setShowLeaveConfirm(false)}
+                  className="flex-1 h-11 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 font-semibold">{t.cancel}</button>
+                <button onClick={leaveGame}
+                  className="flex-1 h-11 rounded-xl bg-rose-500 hover:bg-rose-600 border-0 font-bold text-white">{t.leave}</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* How to play button — identical to Home's header buttons */}
       <div className="absolute right-4 z-20" style={{ top: 'max(env(safe-area-inset-top), 0.75rem)' }}>
