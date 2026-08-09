@@ -110,7 +110,16 @@ jobs:
             exit 1
           fi
 
-      - name: Archive (unsigned — signing happens at export)
+      # SIGNED archive — this is load-bearing for entitlements. An unsigned
+      # archive gets its entitlements reconstructed from the provisioning
+      # profile at export, and the profile carries iCloud's kv-store id as a
+      # wildcard (TEAMID.*) which iOS rejects at runtime — backups silently
+      # died that way. Signing here makes Xcode process App/App.entitlements
+      # and embed the concrete value. The manual signing identity/profile
+      # live in the App target's Release config in project.pbxproj (scoped
+      # there, not as CLI overrides, which would leak onto SPM resource
+      # bundle targets that can't carry a profile).
+      - name: Archive (signed with the installed profile)
         run: |
           xcodebuild archive \
             -project ios/App/App.xcodeproj \
@@ -118,11 +127,16 @@ jobs:
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath "$RUNNER_TEMP/App.xcarchive" \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
             CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
             MARKETING_VERSION="1.0"
+          # Verify the archived app really carries the concrete kv-store
+          # entitlement before spending time on export/upload.
+          APP_PATH="$RUNNER_TEMP/App.xcarchive/Products/Applications/App.app"
+          if ! codesign -d --entitlements - "$APP_PATH" 2>/dev/null | grep -q "ubiquity-kvstore-identifier"; then
+            echo "::error::Archived app is missing the iCloud kv-store entitlement — check App.entitlements and the profile."
+            exit 1
+          fi
+          codesign -d --entitlements - "$APP_PATH" 2>/dev/null | grep -A1 "ubiquity" || true
 
       - name: Export and upload to TestFlight
         env:
