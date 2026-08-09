@@ -36,7 +36,11 @@ export default function QuickEquip() {
         return (
           <div key={type}>
             <p className="section-label mb-1.5 px-1">{TYPE_LABELS[type]}</p>
-            <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1 px-1" style={{ overscrollBehaviorX: 'contain' }}>
+            {/* overflow-x-auto implicitly makes overflow-y 'auto' too (per the
+                CSS overflow spec, and WebKit enforces this) — without top
+                padding here, that clips the ring/glow on every card's top
+                edge instead of just scrolling horizontally. */}
+            <div className="flex gap-2 overflow-x-auto hide-scrollbar pt-1.5 pb-1 px-1" style={{ overscrollBehaviorX: 'contain' }}>
               {items.map(c => {
                 const equipped = c.id === equippedId;
                 const rar = RARITIES[c.rarity];
