@@ -346,6 +346,19 @@
     filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.4));
   }
 
+  /* Beta-tester name — emerald shine with a breathing green glow. */
+  @keyframes betaGlow {
+    0%, 100% { filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.6)); }
+    50% { filter: drop-shadow(0 0 11px rgba(134, 239, 172, 0.85)); }
+  }
+  .name-beta {
+    background-image: linear-gradient(180deg, #d9ffe8 0%, #4ade80 45%, #059669 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: betaGlow 5s ease-in-out infinite;
+  }
+
   @keyframes founderPulse {
     0%, 100% { filter: drop-shadow(0 0 6px rgba(255, 203, 69, 0.55)); }
     50% { filter: drop-shadow(0 0 10px rgba(157, 92, 255, 0.65)); }

@@ -6,9 +6,9 @@ import { LanguageProvider } from '@/lib/LanguageContext';
 import { AuthProvider } from '@/lib/AuthContext';
 import ScrollToTop from './components/ScrollToTop';
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { devUnlockAll, devResetProfile, ensureAuth } from '@/lib/playerProfile';
+import { devUnlockAll, devResetProfile, ensureAuth, grantBetaCosmetics } from '@/lib/playerProfile';
 import { configurePurchases } from '@/lib/payments';
-import { restoreIdentityFromCloud, startCloudBackup, watchForLateBackup } from '@/lib/cloudBackup';
+import { restoreIdentityFromCloud, startCloudBackup, watchForLateBackup, isTestFlightBuild } from '@/lib/cloudBackup';
 import { isNativeApp, isDevToolsEnabled } from '@/lib/platform';
 // Core play path stays eager (Home + joining a game via link must never wait
 // on a second network fetch); everything else code-splits out of the main
@@ -125,6 +125,9 @@ function App() {
       // watching while the player sits at the name gate; a late arrival
       // restores and reloads seamlessly.
       watchForLateBackup();
+      // TestFlight builds gift the Beta Tester cosmetic set — after the
+      // iCloud restore settles, so the grant lands on the restored profile.
+      isTestFlightBuild().then(tf => { if (tf) grantBetaCosmetics(); });
     });
     return () => { live = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps

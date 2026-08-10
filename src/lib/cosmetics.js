@@ -4,6 +4,7 @@
 //         { type: 'shop', price } purchasable with Picks
 //         { type: 'level', level } auto-granted at that level
 //         { type: 'challenge' } granted by season challenges
+//         { type: 'beta' } auto-granted on TestFlight builds only
 //
 // Art direction: kawaii mobile-game collectibles. Emblems are expressive
 // characters on vivid, glossy radial tiles — every tile has its own color
@@ -68,6 +69,7 @@ export const EMBLEMS = [
   { id: 'em_oni',       type: 'emblem', name: 'Oni Mask',    emoji: '👺', rarity: 'legendary', source: { type: 'shop', price: 2000 },  tile: tile('#ff9d76', '#d92c1c', '#4d0703') },
   { id: 'em_crown', collection: 'col_royal',     type: 'emblem', name: 'Royalty',     emoji: '👑', rarity: 'legendary', source: { type: 'shop', price: 2000 },  tile: tile('#ffdf75', '#cd8306', '#4b2a00') },
   { id: 'em_trophy',    type: 'emblem', name: 'Champion',    emoji: '🏆', rarity: 'legendary', source: { type: 'level', level: 20 },   tile: tile('#ffd75e', '#c47b08', '#402400') },
+  { id: 'em_wrench', collection: 'col_beta',     type: 'emblem', name: 'The Fixer',   emoji: '🔧', rarity: 'legendary', source: { type: 'beta' },               tile: tile('#b6f7c1', '#159a4a', '#053118') },
   { id: 'em_star',      type: 'emblem', name: 'Superstar',   emoji: '🌟', rarity: 'legendary', source: { type: 'level', level: 25 },   tile: starTile('#fff0a8', '#e3a008', '#4d3000') },
   // Mythics — the chase
   { id: 'em_phoenix', collection: 'col_inferno',   type: 'emblem', name: 'Phoenix',     emoji: '🔥', rarity: 'mythic',    source: { type: 'shop', price: 5000 },  tile: tile('#ffc46b', '#f04c13', '#560b06') },
@@ -143,6 +145,9 @@ export const BANNERS = [
   { id: 'bn_winter', collection: 'col_winter',   type: 'banner', name: 'Winter Wonder',  rarity: 'legendary', source: { type: 'shop', price: 2000 }, shine: true,
     css: `${dots([[16, 20, 1.5, 0.9], [40, 44, 1, 0.7], [66, 22, 1.5, 0.8], [86, 52, 1, 0.7]])}, linear-gradient(170deg, #164e63 0%, #0c2f42 55%, #041521 100%)`,
     motifs: [{ e: '🎄', x: '74%', y: '30%', s: 22, o: 0.95 }, { e: '⛄', x: '12%', y: '44%', s: 16, o: 0.85 }, { e: '❄️', x: '46%', y: '16%', s: 11, o: 0.7, r: 18 }] },
+  { id: 'bn_beta', collection: 'col_beta',   type: 'banner', name: 'The Workshop',   rarity: 'legendary', source: { type: 'beta' }, shine: true,
+    css: `${dots([[20, 26, 1.5, 0.6], [72, 58, 1, 0.5], [46, 40, 1, 0.45]])}, radial-gradient(90% 110% at 75% 100%, rgba(74,222,128,0.4), transparent 60%), radial-gradient(70% 90% at 20% 0%, rgba(255,203,69,0.18), transparent 55%), linear-gradient(150deg, #14532d 0%, #052e16 55%, #01130a 100%)`,
+    motifs: [{ e: '🔧', x: '74%', y: '22%', s: 22, o: 0.95, r: -12 }, { e: '⚙️', x: '14%', y: '46%', s: 16, o: 0.85, r: 20 }, { e: '🛠️', x: '48%', y: '64%', s: 13, o: 0.7, r: -8 }] },
   { id: 'bn_dragon', collection: 'col_dragon',   type: 'banner', name: 'Dragon Realm',   rarity: 'mythic', source: { type: 'shop', price: 5000 }, shine: true,
     css: `${dots([[20, 28, 1.5, 0.5]])}, radial-gradient(90% 110% at 80% 100%, rgba(16,185,129,0.4), transparent 60%), linear-gradient(150deg, #064e3b 0%, #022c22 55%, #01120c 100%)`,
     motifs: [{ e: '🐉', x: '66%', y: '16%', s: 34, o: 0.95, r: -6 }, { e: '✦', x: '18%', y: '30%', s: 12, o: 0.8 }] },
@@ -189,6 +194,8 @@ export const BORDERS = [
     frame: { ring: 'conic-gradient(#ffcb45, #9d5cff, #ffcb45, #9d5cff, #ffcb45)', glow: '0 0 15px 0 rgba(255,203,69,0.7)', spin: true, sparkle: true } },
   { id: 'bd_royal', collection: 'col_royal',    type: 'border', name: 'Regalia',       rarity: 'legendary', source: { type: 'shop', price: 2000 },
     frame: { ring: 'conic-gradient(#ffcb45, #6d28d9 25%, #ffe9a8 50%, #4c1d95 75%, #ffcb45)', glow: '0 0 15px 0 rgba(157,92,255,0.7)', spin: true, sparkle: true } },
+  { id: 'bd_beta', collection: 'col_beta', type: 'border', name: 'Gilded Emerald', rarity: 'legendary', source: { type: 'beta' },
+    frame: { ring: 'conic-gradient(#a7f3d0, #10b981 20%, #ffd36b 40%, #047857 60%, #ffcb45 80%, #a7f3d0)', glow: '0 0 15px 0 rgba(52,211,153,0.75)', spin: true, sparkle: true } },
   { id: 'bd_dragonscale', collection: 'col_dragon', type: 'border', name: 'Dragonscale', rarity: 'mythic',   source: { type: 'shop', price: 5000 },
     frame: { ring: 'conic-gradient(#6ee7b7, #065f46 20%, #a7f3d0 40%, #047857 60%, #ffd36b 80%, #6ee7b7)', glow: '0 0 16px 1px rgba(52,211,153,0.75)', spin: true, pulse: true, sparkle: true } },
   { id: 'bd_mythic',   type: 'border', name: 'Rainbow Aura',  rarity: 'mythic',    source: { type: 'shop', price: 5000 },
@@ -225,6 +232,7 @@ export const NAME_COLORS = [
   { id: 'nc_mythic',   type: 'nameColor', name: 'Rainbow',       rarity: 'mythic',    source: { type: 'shop', price: 5000 }, cls: 'name-rainbow' },
   { id: 'nc_sakura',   type: 'nameColor', name: 'Rose Gold',     rarity: 'epic',      source: { type: 'shop', price: 800 },  cls: 'name-rosegold', collection: 'col_sakura' },
   { id: 'nc_celestial',type: 'nameColor', name: 'Celestial',     rarity: 'epic',      source: { type: 'shop', price: 800 },  cls: 'name-celestial', collection: 'col_galaxy' },
+  { id: 'nc_beta', collection: 'col_beta', type: 'nameColor', name: 'Beta Glow', rarity: 'legendary', source: { type: 'beta' }, cls: 'name-beta' },
   // Collection completion rewards — never sold, only earned.
   { id: 'nc_founder',  type: 'nameColor', name: 'Founder Glow',  rarity: 'mythic',    source: { type: 'reward' }, cls: 'name-founder' },
 ];
@@ -239,11 +247,17 @@ export const REWARD_TITLES = [
   { id: 't_frostwalker',type: 'title', name: 'Frost Walker',  rarity: 'epic',      source: { type: 'reward' } },
   { id: 't_neonrunner', type: 'title', name: 'Neon Runner',   rarity: 'epic',      source: { type: 'reward' } },
   { id: 't_reborn',     type: 'title', name: 'Reborn',        rarity: 'legendary', source: { type: 'reward' } },
+  { id: 't_beta',       type: 'title', name: 'BETA TESTER',   rarity: 'legendary', source: { type: 'reward' } },
 ];
 
 // Collectible collections — matching sets across cosmetic types. Completing
 // one grants an exclusive reward. Founder is limited to Season 1 forever.
 export const COLLECTIONS = [
+  // TestFlight-exclusive gift set (source type 'beta') — auto-granted to
+  // beta builds at startup (grantBetaCosmetics), never purchasable, and its
+  // album stays hidden until you own a piece of it.
+  { id: 'col_beta',    name: 'Beta Tester', emoji: '🔧', cover: 'bn_beta', reward: 't_beta',     limited: true,
+    lore: 'You broke it before the world could play it.' },
   { id: 'col_founder', name: 'Founder',  emoji: '🏆', cover: 'bn_gold',   reward: 'nc_founder',   limited: true,
     lore: 'Season 1 only. These will never return.' },
   { id: 'col_sakura',  name: 'Sakura',   emoji: '🌸', cover: 'bn_sakura', reward: 't_hanami',
