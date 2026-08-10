@@ -125,13 +125,18 @@ function App() {
       // watching while the player sits at the name gate; a late arrival
       // restores and reloads seamlessly.
       watchForLateBackup();
-      // TestFlight builds gift the Beta Tester cosmetic set — after the
-      // iCloud restore settles, so the grant lands on the restored profile.
-      isTestFlightBuild().then(tf => { if (tf) grantBetaCosmetics(); });
     });
     return () => { live = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  useEffect(() => {
+    // TestFlight builds gift the Beta Tester cosmetic set. Runs once boot
+    // settles: immediately on existing installs (booted starts true — they
+    // never enter the iCloud restore path above), after the restore race on
+    // fresh installs so the grant lands on the restored profile. Idempotent.
+    if (!booted) return;
+    isTestFlightBuild().then(tf => { if (tf) grantBetaCosmetics(); });
+  }, [booted]);
   if (!booted) return null; // dark launch background shows through
 
   return (
