@@ -235,6 +235,27 @@ function grantCollectionRewards(breakdown) {
   return completed;
 }
 
+// ── Beta tester gift ───────────────────────────────────────────────────────
+
+// TestFlight builds auto-grant the Beta Tester set at startup (App.jsx
+// checks the sandbox receipt via isTestFlightBuild). Granting the four set
+// pieces completes col_beta, which awards its BETA TESTER title through the
+// normal collection-reward flow. Idempotent — re-runs change nothing, and
+// the items keep working on App Store builds afterwards (ownership lives in
+// the profile, not the build).
+const BETA_SET = ['em_wrench', 'bn_beta', 'bd_beta', 'nc_beta'];
+export function grantBetaCosmetics() {
+  getProfile();
+  let changed = false;
+  for (const id of BETA_SET) {
+    if (!cache.owned.includes(id)) { cache.owned.push(id); changed = true; }
+  }
+  if (!changed) return false;
+  grantCollectionRewards(null);
+  save();
+  return true;
+}
+
 // ── Daily login ────────────────────────────────────────────────────────────
 
 export async function ensureDailyLogin() {

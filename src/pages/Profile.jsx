@@ -25,6 +25,7 @@ function sourceLabel(c, t) {
   if (c.source.type === 'level') return `${t.level} ${c.source.level}`;
   if (c.source.type === 'challenge') return SEASON_NAME;
   if (c.source.type === 'reward') return t.collectionReward;
+  if (c.source.type === 'beta') return t.betaExclusive;
   return '';
 }
 
@@ -422,6 +423,8 @@ export default function Profile() {
       toast({ title: `${t.unlockAtLevel} ${c.source.level}` });
     } else if (c.source.type === 'reward') {
       toast({ title: t.completeCollectionHint });
+    } else if (c.source.type === 'beta') {
+      toast({ title: t.betaExclusive });
     } else {
       toast({ title: `${SEASON_NAME} — ${t.challenges}` });
     }
@@ -478,8 +481,11 @@ export default function Profile() {
   // Level/challenge/collection-reward items can't be bought, but players
   // should still see what's out there to chase — the Collection tab only
   // shows owned items now, so this is their one preview spot.
+  // Beta-set pieces (and their reward title) are TestFlight gifts — never a
+  // chase for App Store players, so they stay out of the preview entirely.
   const earnItems = sortByRarity(ALL_COSMETICS.filter(c =>
-    c.source.type !== 'shop' && c.source.type !== 'starter' && !profile.owned.includes(c.id)));
+    c.source.type !== 'shop' && c.source.type !== 'starter' && c.source.type !== 'beta' &&
+    c.id !== 't_beta' && !profile.owned.includes(c.id)));
   const ch = challengeState();
 
   return (
@@ -644,7 +650,12 @@ export default function Profile() {
               <div className="mb-4">
                 <p className="section-label mb-2">{t.collectionsLabel}</p>
                 <div className="grid grid-cols-2 gap-2">
-                  {COLLECTIONS.map(col => (
+                  {COLLECTIONS.filter(col =>
+                    // The beta album only exists for players who hold a
+                    // piece of it — App Store players never see the set.
+                    col.id !== 'col_beta' ||
+                    collectionItems(col.id).some(i => profile.owned.includes(i.id))
+                  ).map(col => (
                     <CollectionCover key={col.id} col={col} owned={profile.owned}
                       onOpen={() => setOpenCollection(col.id)} />
                   ))}

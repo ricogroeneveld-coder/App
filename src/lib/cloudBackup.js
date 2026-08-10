@@ -13,6 +13,20 @@ import { isNativeApp } from './platform';
 
 const ICloudKV = registerPlugin('ICloudKV');
 const BACKUP_KEY = 'wmp_identity_backup_v1';
+
+// TestFlight (and Xcode/dev) installs carry a sandbox App Store receipt;
+// real App Store installs don't. Lives here because this module owns the
+// ICloudKV plugin handle (Capacitor allows one registerPlugin per name).
+// Web and plugin failures simply report false.
+export async function isTestFlightBuild() {
+  if (!isNativeApp()) return false;
+  try {
+    const { value } = await ICloudKV.isTestFlight();
+    return value === true;
+  } catch {
+    return false;
+  }
+}
 // Same storage keys as guestIdentity.js — referenced directly to keep this
 // module import-cycle-free (guestIdentity dynamically imports us).
 const KEY_ID = 'mystery_guest_id';

@@ -12,6 +12,7 @@ public class ICloudKVPlugin: CAPPlugin, CAPBridgedPlugin {
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "get", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "set", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "isTestFlight", returnType: CAPPluginReturnPromise),
     ]
 
     // After a reinstall the local KV store starts EMPTY and iCloud pushes the
@@ -40,6 +41,14 @@ public class ICloudKVPlugin: CAPPlugin, CAPBridgedPlugin {
         } else {
             call.resolve([:])
         }
+    }
+
+    // TestFlight (and Xcode/dev) installs carry a sandbox App Store receipt;
+    // a real App Store install's receipt is named "receipt". Lets JS
+    // auto-grant the Beta Tester cosmetic set to beta players.
+    @objc func isTestFlight(_ call: CAPPluginCall) {
+        let sandbox = Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
+        call.resolve(["value": sandbox])
     }
 
     @objc func set(_ call: CAPPluginCall) {
