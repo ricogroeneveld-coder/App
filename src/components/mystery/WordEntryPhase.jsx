@@ -37,6 +37,7 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
   const [selected, setSelected] = useState('');
   const [customInput, setCustomInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [starting, setStarting] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [tab, setTab] = useState('word'); // 'word' | 'profile' | 'chat'
   const [wordTimeLeft, setWordTimeLeft] = useState(WORD_ENTRY_TIMER_SECONDS);
@@ -217,6 +218,13 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
   };
 
   const startPlaying = async () => {
+    // Single in-flight guard. Without it, a host whose screen hadn't switched
+    // to the playing phase yet (backgrounded tab, slow realtime) would tap
+    // Start again; the first call had already succeeded, so the second was
+    // rejected as 'stale' and reported as "waiting for others" — an error for
+    // a game that had in fact started.
+    if (starting) return;
+    setStarting(true);
     try {
       // Re-verify against LIVE state that everyone locked a word in — a player
       // can auto-join in the gap before the host taps, and starting with an
@@ -237,12 +245,23 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
       // NEW-GAME-9), and status can no longer be forced by a client (migration 0012).
       const res = await MysteryRoom.setStatus(roomCode, 'word_entry', 'playing', { questionerId: firstAsker?.user_id || null });
       if (res && res.ok === false) {
-        toast({ title: t.waitingForOthers, variant: 'destructive' });
+        // 'stale' means the room already moved on. If it moved to 'playing',
+        // the start SUCCEEDED (this is a duplicate tap, or a peer started it)
+        // — say nothing and let the phase switch. Only a genuine "someone
+        // hasn't locked in" gets the waiting message.
+        if (res.reason === 'stale' && res.status === 'playing') return;
+        toast({
+          title: res.reason === 'not_all_submitted' ? t.waitingForOthers : t.errorTitle,
+          description: res.reason === 'not_all_submitted' ? undefined : t.tryAgain,
+          variant: 'destructive',
+        });
         return;
       }
       track('game_started', { players: roster.length, category: room.category });
     } catch(e) {
       toast({ title: t.errorTitle, description: e.message, variant: 'destructive' });
+    } finally {
+      setStarting(false);
     }
   };
 
@@ -432,10 +451,10 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
 
         {isHost && allSubmitted && (
           <motion.div initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} className="mt-3">
-            <button onClick={startPlaying}
-              className="gold-btn w-full h-14 rounded-[20px] flex items-center justify-center gap-2">
+            <button onClick={startPlaying} disabled={starting}
+              className="gold-btn w-full h-14 rounded-[20px] flex items-center justify-center gap-2 disabled:opacity-60">
               <span className="relative text-sm font-extrabold tracking-tight text-[#2c1500] drop-shadow-[0_1px_0_rgba(255,255,255,0.25)]">
-                {t.everyoneReady}
+                {starting ? t.starting : t.everyoneReady}
               </span>
             </button>
           </motion.div>
