@@ -209,14 +209,13 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
         </button>
       </div>
 
-      {/* How to play modal — identical to Home's modal */}
+      {/* How to play modal — accessible Dialog (focus trap, Escape, scroll lock) */}
       {showHowToPlay && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
-          <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}
-            className="glass-card w-full max-w-md bg-slate-900/95 p-6 max-h-[85vh] overflow-y-auto">
+        <Dialog onClose={() => setShowHowToPlay(false)} placement="bottom" titleId="lobby-howto-title"
+          panelClassName="glass-card bg-slate-900/95 p-6 max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold text-white">{t.howToPlay}</h2>
-              <button onClick={() => setShowHowToPlay(false)} className="p-2.5 -m-1 rounded-xl hover:bg-white/10 text-slate-400" aria-label={t.gotIt}>
+              <h2 id="lobby-howto-title" className="text-lg font-bold text-white">{t.howToPlay}</h2>
+              <button onClick={() => setShowHowToPlay(false)} className="w-11 h-11 -m-1 rounded-xl hover:bg-white/10 text-slate-400 flex items-center justify-center" aria-label={t.gotIt}>
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -235,8 +234,7 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
               className="violet-solid-btn mt-6 w-full h-11 text-sm">
               {t.gotIt}
             </button>
-          </motion.div>
-        </div>
+        </Dialog>
       )}
 
       {/* Category selector — full-screen overlay */}
@@ -457,7 +455,10 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
       {cardPlayer && (
         <PlayerCardModal player={cardPlayer} profile={profiles[cardPlayer.user_id]} meId={me?.id} roomCode={roomCode} onClose={() => setCardPlayer(null)}
           onKick={isHost && cardPlayer.user_id !== me?.id ? async () => {
-            try { await MysteryPlayer.delete(cardPlayer.id); } catch (e) { console.error(e); }
+            // UX-4: surface a failed kick instead of swallowing it — a silent
+            // failure looks identical to success and the ghost player stays.
+            try { await MysteryPlayer.delete(cardPlayer.id); }
+            catch (e) { toast({ title: t.errorTitle, description: t.tryAgain, variant: 'destructive' }); }
             setCardPlayer(null);
           } : undefined} />
       )}

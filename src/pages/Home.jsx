@@ -8,6 +8,7 @@ import { getGuestIdentity, setGuestName, hasGuestName, MAX_NAME_LENGTH } from '@
 import { Link } from 'react-router-dom';
 import { useLang } from '@/lib/LanguageContext';
 import GameBackground from '@/components/GameBackground';
+import { Dialog } from '@/components/ui/dialog';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import { loadProfile, getProfile, subscribeProfile, ensureDailyLogin } from '@/lib/playerProfile';
 import { ALL_COSMETICS, cosmeticById } from '@/lib/cosmetics';
@@ -221,14 +222,13 @@ export default function Home() {
         </Link>
       </div>
 
-      {/* How to play modal */}
+      {/* How to play modal — accessible Dialog (focus trap, Escape, scroll lock) */}
       {showHowToPlay && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
-          <motion.div initial={{ opacity:0, y:40 }} animate={{ opacity:1, y:0 }}
-            className="glass-card w-full max-w-md bg-slate-900/95 p-6 max-h-[85vh] overflow-y-auto">
+        <Dialog onClose={closeHowToPlay} placement="bottom" titleId="howto-title"
+          panelClassName="glass-card bg-slate-900/95 p-6 max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold text-white">{t.howToPlay}</h2>
-              <button onClick={closeHowToPlay} className="p-2.5 -m-1 rounded-xl hover:bg-white/10 text-slate-400" aria-label={t.gotIt}>
+              <h2 id="howto-title" className="text-lg font-bold text-white">{t.howToPlay}</h2>
+              <button onClick={closeHowToPlay} className="w-11 h-11 -m-1 rounded-xl hover:bg-white/10 text-slate-400 flex items-center justify-center" aria-label={t.gotIt}>
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -247,8 +247,7 @@ export default function Home() {
               className="violet-solid-btn mt-6 w-full h-11 text-sm">
               {t.gotIt}
             </button>
-          </motion.div>
-        </div>
+        </Dialog>
       )}
 
       {/* Game visibility sheet — choosing an option creates the lobby */}
@@ -423,9 +422,9 @@ export default function Home() {
               <input value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase())}
                 onKeyDown={e => e.key === 'Enter' && handleJoin()}
                 placeholder={t.roomCodePlaceholder} maxLength={6} enterKeyHint="go" autoCapitalize="characters" autoCorrect="off" autoComplete="off" spellCheck={false}
-                className="relative flex-1 min-w-0 h-10 rounded-xl bg-gradient-to-b from-[#1e0d42]/80 to-[#0a0518]/90 shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1px_rgba(183,148,255,0.3)] px-2 outline-none text-white text-base tracking-wide uppercase placeholder:text-white/40 placeholder:tracking-normal placeholder:text-xs focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1.5px_rgba(56,189,248,0.7),0_0_10px_-2px_rgba(56,189,248,0.5)] transition-shadow" />
+                className="relative flex-1 min-w-0 h-11 rounded-xl bg-gradient-to-b from-[#1e0d42]/80 to-[#0a0518]/90 shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1px_rgba(183,148,255,0.3)] px-2 outline-none text-white text-base tracking-wide uppercase placeholder:text-white/40 placeholder:tracking-normal placeholder:text-xs focus:shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1.5px_rgba(56,189,248,0.7),0_0_10px_-2px_rgba(56,189,248,0.5)] transition-shadow" />
               <button onClick={handleJoin} disabled={loading !== null}
-                className="relative h-10 px-2 shrink-0 rounded-xl bg-gradient-to-b from-sky-300 via-sky-400 to-sky-700 shadow-[0_1px_2px_rgba(0,0,0,0.4),0_4px_10px_-2px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.35)] hover:brightness-110 text-white font-bold text-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-60 overflow-hidden">
+                className="relative h-11 px-3 shrink-0 rounded-xl bg-gradient-to-b from-sky-300 via-sky-400 to-sky-700 shadow-[0_1px_2px_rgba(0,0,0,0.4),0_4px_10px_-2px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.35)] hover:brightness-110 text-white font-bold text-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-60 overflow-hidden">
                 <span className="pointer-events-none absolute inset-x-0.5 top-0.5 h-1/2 rounded-t-[10px] bg-gradient-to-b from-white/40 to-transparent" />
                 <span className="relative">{t.join}</span>
               </button>

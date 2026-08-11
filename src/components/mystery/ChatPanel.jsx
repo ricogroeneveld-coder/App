@@ -321,11 +321,11 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
         )}
       </AnimatePresence>
 
-      {/* Emote picker */}
-      <div className="flex gap-2 py-2 overflow-x-auto">
+      {/* Emote picker — 44px hit targets (UX-2), localized labels (A11Y-3) */}
+      <div className="flex gap-1 py-2 overflow-x-auto">
         {EMOTES.map(e => (
-          <button key={e} onClick={() => setText(prev => prev + e)} aria-label={EMOTE_LABELS[e] || e}
-            className="w-9 h-9 flex items-center justify-center text-xl hover:scale-125 active:scale-95 transition-transform shrink-0">{e}</button>
+          <button key={e} onClick={() => setText(prev => prev + e)} aria-label={(t.emoteLabels && t.emoteLabels[e]) || EMOTE_LABELS[e] || e}
+            className="w-11 h-11 flex items-center justify-center text-xl hover:scale-125 active:scale-95 transition-transform shrink-0">{e}</button>
         ))}
       </div>
 
@@ -335,10 +335,10 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
           onChange={e => setText(e.target.value.slice(0, MAX_MESSAGE_LENGTH))}
           onKeyDown={e => e.key === 'Enter' && send()}
           placeholder={t.chatPlaceholder} enterKeyHint="send" maxLength={MAX_MESSAGE_LENGTH}
-          className="inset-input flex-1 h-10 px-3 text-base md:text-sm"
+          className="inset-input flex-1 h-11 px-3 text-base md:text-sm"
         />
-        <button onClick={send} disabled={!text.trim() || sending} aria-label="Send"
-          className="violet-solid-btn w-10 h-10 flex items-center justify-center disabled:opacity-40 shrink-0">
+        <button onClick={send} disabled={!text.trim() || sending} aria-label={t.send}
+          className="violet-solid-btn w-11 h-11 flex items-center justify-center disabled:opacity-40 shrink-0">
           <Send className="w-4 h-4 text-white" />
         </button>
       </div>
