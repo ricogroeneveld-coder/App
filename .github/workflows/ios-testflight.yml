@@ -14,6 +14,14 @@
 #   VITE_SUPABASE_ANON_KEY — the project's anon/public key (same page)
 #   VITE_REVENUECAT_IOS_KEY — RevenueCat → Project → API Keys → the "Apple App
 #                             Store" public app key (starts with "appl_")
+# Optional:
+#   VITE_SITE_BASE         — only needed if the privacy/support/terms pages move.
+#                             They're published at the base baked into
+#                             src/lib/links.js (currently
+#                             https://www.jinnieoclock.com/whatsmypick), which is
+#                             what the in-app links and the App Store Connect
+#                             privacy URL use. Set this secret to override that
+#                             base — include the full path, not just the domain.
 #
 # Signing is fully MANUAL and explicit: a real Distribution certificate is
 # imported into a CI keychain and a real App Store provisioning profile is
@@ -56,6 +64,9 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_REVENUECAT_IOS_KEY: ${{ secrets.VITE_REVENUECAT_IOS_KEY }}
+          # Optional override for where the privacy/support/terms pages are
+          # published. Unset is fine — links.js carries the correct base.
+          VITE_SITE_BASE: ${{ secrets.VITE_SITE_BASE }}
           # Optional — crash reporting. Leave the secret unset and the build
           # ships zero Sentry code (see src/main.jsx).
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
@@ -136,7 +147,15 @@ jobs:
             echo "::error::Archived app is missing the iCloud kv-store entitlement — check App.entitlements and the profile."
             exit 1
           fi
-          codesign -d --entitlements - "$APP_PATH" 2>/dev/null | grep -A1 "ubiquity" || true
+          # Push notifications (LAUNCH-2): without aps-environment the app never
+          # gets an APNs token and notify-turn silently sends nothing. Fail loudly
+          # if the capability didn't make it into the signed app — tick Push
+          # Notifications on the App ID and regenerate the provisioning profile.
+          if ! codesign -d --entitlements - "$APP_PATH" 2>/dev/null | grep -q "aps-environment"; then
+            echo "::error::Archived app is missing the aps-environment (push) entitlement. Enable Push Notifications on the App ID (developer.apple.com), regenerate + re-download the App Store profile, and update the IOS_PROVISIONING_PROFILE secret."
+            exit 1
+          fi
+          codesign -d --entitlements - "$APP_PATH" 2>/dev/null | grep -A1 "ubiquity\|aps-environment" || true
 
       - name: Export and upload to TestFlight
         env:

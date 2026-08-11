@@ -103,8 +103,17 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
       .then(msgs => {
         if (!live) return;
         const ordered = (msgs || []).slice().reverse();
-        messagesRef.current = ordered;
-        setMessages(ordered);
+        // CHAT-3 / NET-4: MERGE the snapshot into current state instead of a
+        // full replace. A full replace wiped un-sent optimistic/_failed bubbles
+        // on every wake and could drop a realtime message that landed between
+        // the query and this resolve. mergeMessage dedupes by id and keeps
+        // local-only bubbles that have no server row yet.
+        setMessages(prev => {
+          let merged = prev;
+          for (const row of ordered) merged = mergeMessage(merged, row);
+          messagesRef.current = merged;
+          return merged;
+        });
       })
       .catch(() => { /* keep whatever we already have on a transient failure */ });
     return () => { live = false; };
@@ -203,7 +212,7 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
       ? prev.map(m => m.id === retryId ? optimisticMsg : m)
       : [...prev, optimisticMsg]);
     try {
-      await MysteryChat.create({
+      const row = await MysteryChat.create({
         room_code: roomCode,
         user_id: me?.id,
         display_name: myPlayer?.display_name || me?.full_name || t.playerFallback,
@@ -212,8 +221,15 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
         has_emote: !!emote,
         emote: emote || ''
       });
-      // Remove optimistic msg — real one will arrive via subscription
-      setMessages(prev => prev.filter(m => m.id !== tempId));
+      // CHAT-1: reconcile from the row the insert RETURNS — don't just drop the
+      // optimistic bubble and wait for the realtime echo. On a stalled socket the
+      // echo may never come, and the sender's own saved message would vanish
+      // (then get resent as a duplicate). mergeMessage dedupes if the echo lands too.
+      setMessages(prev => {
+        const next = mergeMessage(prev.filter(m => m.id !== tempId), row);
+        messagesRef.current = next;
+        return next;
+      });
     } catch (e) {
       // Mark as failed — tapping the bubble (see render) retries it
       setMessages(prev => prev.map(m => m.id === tempId ? { ...m, _pending: false, _failed: true } : m));
@@ -255,7 +271,10 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
             // could push raw slurs straight to everyone. Filter again at RENDER
             // time (message body + display name) so received text is masked too.
             const safeName = cleanText(msg.display_name) || msg.display_name;
-            const safeMessage = cleanText(msg.message);
+            // CHAT-5: cap on display too — send-side MAX_MESSAGE_LENGTH is
+            // bypassable by a crafted client, so an oversized message can't be
+            // allowed to blow out the layout for everyone.
+            const safeMessage = cleanText(msg.message).slice(0, MAX_MESSAGE_LENGTH);
             return (
               <motion.div key={msg.id}
                 initial={{ opacity: 0, y: 8 }}
@@ -302,11 +321,11 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
         )}
       </AnimatePresence>
 
-      {/* Emote picker */}
-      <div className="flex gap-2 py-2 overflow-x-auto">
+      {/* Emote picker — 44px hit targets (UX-2), localized labels (A11Y-3) */}
+      <div className="flex gap-1 py-2 overflow-x-auto">
         {EMOTES.map(e => (
-          <button key={e} onClick={() => setText(prev => prev + e)} aria-label={EMOTE_LABELS[e] || e}
-            className="w-9 h-9 flex items-center justify-center text-xl hover:scale-125 active:scale-95 transition-transform shrink-0">{e}</button>
+          <button key={e} onClick={() => setText(prev => prev + e)} aria-label={(t.emoteLabels && t.emoteLabels[e]) || EMOTE_LABELS[e] || e}
+            className="w-11 h-11 flex items-center justify-center text-xl hover:scale-125 active:scale-95 transition-transform shrink-0">{e}</button>
         ))}
       </div>
 
@@ -316,10 +335,10 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
           onChange={e => setText(e.target.value.slice(0, MAX_MESSAGE_LENGTH))}
           onKeyDown={e => e.key === 'Enter' && send()}
           placeholder={t.chatPlaceholder} enterKeyHint="send" maxLength={MAX_MESSAGE_LENGTH}
-          className="inset-input flex-1 h-10 px-3 text-base md:text-sm"
+          className="inset-input flex-1 h-11 px-3 text-base md:text-sm"
         />
-        <button onClick={send} disabled={!text.trim() || sending} aria-label="Send"
-          className="violet-solid-btn w-10 h-10 flex items-center justify-center disabled:opacity-40 shrink-0">
+        <button onClick={send} disabled={!text.trim() || sending} aria-label={t.send}
+          className="violet-solid-btn w-11 h-11 flex items-center justify-center disabled:opacity-40 shrink-0">
           <Send className="w-4 h-4 text-white" />
         </button>
       </div>

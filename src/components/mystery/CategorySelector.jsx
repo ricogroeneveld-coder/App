@@ -4,6 +4,7 @@ import { ArrowLeft, Check, ChevronRight, Lock, Sparkles } from 'lucide-react';
 import { CATEGORIES, CATEGORY_EMOJIS, PACKS, shortCategory } from '@/lib/wordLists';
 import { isPackUnlocked } from '@/lib/premiumPacks';
 import { purchasePack, purchasesAvailable, getPackPrices } from '@/lib/payments';
+import { track } from '@/lib/analytics';
 import { useToast } from '@/components/ui/use-toast';
 import { useLang } from '@/lib/LanguageContext';
 import { Dialog } from '@/components/ui/dialog';
@@ -51,7 +52,10 @@ export default function CategorySelector({ selectedCategory, onSelect, onClose }
 
   const openPack = (pack) => {
     setActivePack(pack);
-    setView(isPackUnlocked(pack.id) ? 'packCategories' : 'packPreview');
+    const locked = !isPackUnlocked(pack.id);
+    // ANA-2: paywall impression — the top of the conversion funnel.
+    if (locked) track('pack_viewed', { pack: pack.id });
+    setView(locked ? 'packPreview' : 'packCategories');
   };
 
   const handleBack = () => {
@@ -154,7 +158,7 @@ export default function CategorySelector({ selectedCategory, onSelect, onClose }
               <div className="w-20 h-20 mx-auto rounded-[24px] bg-gradient-to-b from-[#2a1150] to-[#0d0620] ring-1 ring-violet-400/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_5px_12px_-8px_rgba(0,0,0,0.45)] flex items-center justify-center text-5xl mb-3">
                 {activePack.emoji}
               </div>
-              <h1 className="text-xl font-extrabold tracking-tight text-white mb-1">{activePack.name}</h1>
+              <h1 id="category-selector-title" className="text-xl font-extrabold tracking-tight text-white mb-1">{activePack.name}</h1>
               <p className="text-xs font-semibold text-white/[0.7] mb-4">
                 {t.unlocksLabel} {activePack.categories.length} {t.moreCategories.toLowerCase()}
               </p>
@@ -194,7 +198,7 @@ export default function CategorySelector({ selectedCategory, onSelect, onClose }
           {view === 'packCategories' && activePack && (
             <motion.div key="packcats" initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.2 }}>
               <div className="text-center mb-4">
-                <h1 className="text-xl font-extrabold tracking-tight text-white">{activePack.emoji} {activePack.name}</h1>
+                <h1 id="category-selector-title" className="text-xl font-extrabold tracking-tight text-white">{activePack.emoji} {activePack.name}</h1>
                 <p className="text-xs font-semibold text-white/[0.7] tracking-wide mt-0.5">{t.chooseCategorySub}</p>
               </div>
               <div className="grid grid-cols-2 gap-2">

@@ -6,6 +6,7 @@ import { Dialog } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
 import { renderShareCard, canvasToBlob } from '@/lib/shareCard';
 import { shareImage, shareText } from '@/lib/share';
+import { track } from '@/lib/analytics';
 import { vibrate } from '@/lib/haptics';
 
 // One generated card per results screen — regenerating on every open would
@@ -57,13 +58,16 @@ export default function ShareCardModal({ data, fallbackText, onClose }) {
     vibrate(20);
     try {
       const result = await shareImage(cached.blob, 'whats-my-pick-result.png', "What's My Pick!");
+      // ANA-2: the viral loop — how often a finished game actually gets shared.
+      if (result === 'shared' || result === 'saved') track('share_completed', { kind: 'image' });
       if (result === 'saved') toast({ title: t.shareCardSaved });
       else if (result === 'error') {
         // Image share genuinely unavailable — text share still works.
         const textResult = await shareText(fallbackText);
+        if (textResult === 'shared') track('share_completed', { kind: 'text' });
         if (textResult === 'copied') toast({ title: t.linkCopied });
       }
-      // 'shared' and 'cancelled' need no feedback — the sheet said it all.
+      // 'cancelled' needs no feedback — the sheet said it all.
     } finally {
       setSharing(false);
     }

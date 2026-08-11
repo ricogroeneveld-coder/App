@@ -24,6 +24,10 @@ export default function BrowseLobbies() {
   const [loading, setLoading] = useState(null);
   const [publicLobbies, setPublicLobbies] = useState([]);
   const [lobbiesLoading, setLobbiesLoading] = useState(true);
+  // UX-3: distinguish a network failure from a genuinely empty list, so the
+  // empty state ("No open lobbies") can't masquerade as an offline dead-end.
+  const [loadError, setLoadError] = useState(false);
+  const hasLoadedRef = useRef(false);
   const [pullY, setPullY] = useState(0);
   const [isPulling, setIsPulling] = useState(false);
   const touchStartY = useRef(null);
@@ -54,18 +58,26 @@ export default function BrowseLobbies() {
     } catch (e) { /* keep last counts on a transient failure */ }
   };
 
-  const fetchLobbies = async () => {
-    setLobbiesLoading(true);
+  // UX-5: a background refetch (fired by the realtime subscription) must NOT
+  // flip `lobbiesLoading` — doing so flashed the whole list to a centered
+  // spinner and lost scroll position on every public-room event app-wide. Only
+  // the initial load and an explicit pull-to-refresh show the spinner.
+  const fetchLobbies = async (background = false) => {
+    if (!background) setLobbiesLoading(true);
     try {
       const rooms = await MysteryRoom.filter({ status: 'lobby', is_public: true }, '-created_date', 20);
       setPublicLobbies(rooms || []);
       const codes = (rooms || []).map(r => r.room_code);
       codesRef.current = codes;
       await fetchCounts(codes);
+      hasLoadedRef.current = true;
+      setLoadError(false);
     } catch (e) {
-      setPublicLobbies([]);
+      // Keep whatever we already have; surface a retry instead of a false
+      // "no lobbies" (UX-3).
+      setLoadError(true);
     } finally {
-      setLobbiesLoading(false);
+      if (!background) setLobbiesLoading(false);
     }
   };
 
@@ -116,7 +128,7 @@ export default function BrowseLobbies() {
     // so a pending timer can't fire a refetch after unmount / wakeEpoch swap.
     const debouncedFetch = () => {
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => { if (!disposed) fetchLobbies(); }, 500);
+      debounceTimer = setTimeout(() => { if (!disposed) fetchLobbies(true); }, 500);
     };
     fetchLobbies();
     // Server-side filter: only public rooms' events reach this screen.
@@ -184,10 +196,10 @@ export default function BrowseLobbies() {
             <p className="text-xs font-medium text-slate-400 truncate">{t.openLobbiesDesc}</p>
           </div>
           <button
-            onClick={fetchLobbies}
+            onClick={() => fetchLobbies()}
             disabled={lobbiesLoading}
             className="header-btn ml-auto shrink-0 disabled:opacity-40"
-            aria-label={t.loading}
+            aria-label={t.refresh}
           >
             <RefreshCw className={`w-4 h-4 ${lobbiesLoading ? 'animate-spin' : ''}`} />
           </button>
@@ -220,6 +232,16 @@ export default function BrowseLobbies() {
               <div className="min-h-full flex flex-col items-center justify-center gap-3 py-12">
                 <Loader2 className="w-7 h-7 text-violet-400 animate-spin drop-shadow-[0_0_8px_rgba(157,92,255,0.5)]" />
                 <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">{t.loading}</p>
+              </div>
+            ) : loadError && publicLobbies.length === 0 ? (
+              // UX-3: a fetch failure is a connection problem with a retry, not
+              // a genuinely empty list.
+              <div className="min-h-full flex flex-col items-center justify-center text-center py-14 gap-3">
+                <div className="w-16 h-16 rounded-[20px] bg-gradient-to-b from-[#2a1150] to-[#0d0620] ring-1 ring-violet-400/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_5px_12px_-8px_rgba(0,0,0,0.45)] flex items-center justify-center">
+                  <Globe className="w-7 h-7 text-violet-300" />
+                </div>
+                <p className="text-slate-400 text-sm font-medium">{t.connectionProblem}</p>
+                <button onClick={() => fetchLobbies()} className="violet-solid-btn h-10 px-5 text-sm">{t.retry}</button>
               </div>
             ) : publicLobbies.length === 0 ? (
               <div className="min-h-full flex flex-col items-center justify-center text-center py-14">

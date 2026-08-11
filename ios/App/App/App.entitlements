@@ -4,6 +4,13 @@
 <dict>
 	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
 	<string>$(TeamIdentifierPrefix)$(CFBundleIdentifier)</string>
+	<!-- Push notifications (LAUNCH-2). Without this the turn/re-engagement
+	     push feature registers but never receives a token, so notify-turn
+	     silently sends nothing. "production" is the APNs environment for
+	     TestFlight/App Store builds (which is what the CI archive produces);
+	     flip to "development" only for local dev-signed device runs. Requires
+	     the Push Notifications capability on the App ID and a regenerated
+	     provisioning profile (see the CI guard). -->
 	<key>aps-environment</key>
 	<string>production</string>
 </dict>

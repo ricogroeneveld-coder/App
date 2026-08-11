@@ -72,6 +72,33 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
   const multiRound = players.some(p => (p.score || 0) !== roundScore[p.user_id]);
   const isHost = room.host_id === me?.id;
 
+  // STUCK-4: if the host's app died at the results screen, host_id is never
+  // handed off (beforeunload cleanup only runs in the lobby), so Play Again —
+  // which is host-gated — becomes unreachable for everyone. Track presence and,
+  // if the host stays absent, let the earliest-joined present player claim host
+  // so a rematch is possible again.
+  const [presentIds, setPresentIds] = useState(null);
+  useEffect(() => {
+    if (!me?.id) return;
+    const channel = supabase.channel(`finished-presence-${roomCode}`, { config: { presence: { key: me.id } } });
+    channel
+      .on('presence', { event: 'sync' }, () => setPresentIds(new Set(Object.keys(channel.presenceState()))))
+      .subscribe((status) => { if (status === 'SUBSCRIBED') channel.track({}).catch(() => {}); });
+    return () => { supabase.removeChannel(channel); };
+  }, [roomCode, me?.id]);
+  useEffect(() => {
+    if (!presentIds || !me?.id || presentIds.has(room.host_id)) return;
+    const heir = players.filter(p => presentIds.has(p.user_id))
+      .sort((a, b) => new Date(a.created_date).getTime() - new Date(b.created_date).getTime())[0];
+    if (!heir || heir.user_id !== me.id) return;
+    // Small delay so a host reconnecting (presence resyncs) cancels the claim.
+    const timer = setTimeout(() => {
+      MysteryRoom.update(room.id, { host_id: me.id, host_name: myPlayer?.display_name }).catch(() => {});
+    }, 6000);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [presentIds, room.host_id, players, me?.id]);
+
   // Winner celebration: one confetti burst + a success haptic. Honors the
   // OS Reduce Motion setting (framer's MotionConfig can't reach a canvas).
   useEffect(() => {
@@ -128,8 +155,11 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
       // directly since 0007 (SEC-2) — so a client-side reset now hits
       // "permission denied". Fall back to the old path only if the RPC isn't
       // deployed (older projects where the column wasn't revoked).
-      const { error } = await supabase.rpc('play_again_mystery', { p_room: roomCode });
-      if (error) {
+      const { data, error } = await supabase.rpc('play_again_mystery', { p_room: roomCode });
+      if (!error) {
+        // 0012 returns { ok, reason }; only a finished room can be reset.
+        if (data && data.ok === false) { setLoading(false); return; }
+      } else {
         const missing = error.code === 'PGRST202' || error.code === '42883'
           || /does not exist|could not find the function/i.test(error.message || '');
         if (!missing) throw error;

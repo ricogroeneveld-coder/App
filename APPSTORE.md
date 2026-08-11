@@ -101,8 +101,21 @@ Picks/cosmetics need NO IAP setup — they are earned by playing only.
 - **Data collected:** Name (display name), User Content (chat, game words),
   Identifiers (auto-generated player ID), Purchases (if using RevenueCat).
 - **Linked to identity:** No (guest IDs are random). **Tracking:** No.
-- **Privacy policy URL:** `https://<your-domain>/privacy.html`
-  (shipped in this repo at `public/privacy.html` — edit the contact line).
+- **Privacy policy URL:** `https://www.jinnieoclock.com/whatsmypick/privacy.html`
+  (shipped in this repo at `public/privacy.html`; the base lives in
+  `src/lib/links.js`, overridable at build time with `VITE_SITE_BASE` if the
+  pages ever move — keep the two in sync).
+
+## 3a. Age rating — set 12+
+
+Answer the App Store Connect rating questionnaire so the app lands on
+**12+**, not 4+. The app has public lobbies with **live, unmoderated-in-
+real-time chat between strangers**, which is what drives the rating
+(declare "Infrequent/Mild Mature/Suggestive Themes" as applicable and, more
+importantly, the user-generated-content/chat capability). Rating it 4+ with
+open chat is a common rejection — and it would contradict `public/privacy.html`,
+whose "Children" section states the app is 12+ and not directed to under-13s.
+If you change the rating, update that section to match.
 
 ## 4. UGC compliance (guideline 1.2) — already implemented
 

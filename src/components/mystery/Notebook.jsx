@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Trophy, Lightbulb } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
@@ -12,6 +12,13 @@ export default function Notebook({ players, questions, guesses, me, myPlayer }) 
   const opponents = players.filter(p => p.user_id !== me?.id);
   const [pageIdx, setPageIdx] = useState(0);
   const touchStartX = useRef(null);
+
+  // Clamp the page when the opponents list shrinks (a player leaves/is removed
+  // while this tab is open) so we never dereference opponents[pageIdx] past the
+  // end and white-screen the Notebook to the ErrorBoundary (GAME-N2).
+  useEffect(() => {
+    if (pageIdx > opponents.length - 1) setPageIdx(Math.max(0, opponents.length - 1));
+  }, [opponents.length, pageIdx]);
 
   const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
   const handleTouchEnd = (e) => {

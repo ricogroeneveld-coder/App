@@ -361,7 +361,14 @@ async function grantMatchRewardsInner({ room, players, guesses, me, roundKey }) 
   //      groups rarely exceed this; farmers hit it immediately.
   const competitive = players.length >= 3;
   const REPLAY_CAP_PER_HOUR = 10;
+  // A GLOBAL cap too (ECON-1): the per-room cap alone was dodgeable by rotating
+  // rooms (or minting a fresh guest id per room). No honest player finishes
+  // this many *reward-granting* games in an hour, so cross-room farming dries
+  // up while real play is never touched.
+  const GLOBAL_CAP_PER_HOUR = 15;
   const hourAgo = now - 60 * 60 * 1000;
+  const grantedThisHour = Object.values(granted).filter(ts => ts > hourAgo).length;
+  if (grantedThisHour >= GLOBAL_CAP_PER_HOUR) return null;
   const roomRoundsThisHour = Object.entries(granted)
     .filter(([k, ts]) => k.startsWith(`${room.id}:`) && ts > hourAgo).length;
   if (roomRoundsThisHour >= REPLAY_CAP_PER_HOUR) return null;
@@ -441,10 +448,12 @@ async function grantMatchRewardsInner({ room, players, guesses, me, roundKey }) 
   breakdown.after = { level: after.level, into: after.into, need: after.need };
   breakdown.picksBalance = cache.picks;
 
-  // Cap the granted map
+  // Cap the granted map. Keep enough recent rounds that the hourly global
+  // anti-farm cap (ECON-1) can actually see them — a 20-entry cap would make a
+  // >20 threshold unreachable.
   granted[roundKey] = now;
   const keys = Object.keys(granted);
-  if (keys.length > 20) for (const k of keys.slice(0, keys.length - 20)) delete granted[k];
+  if (keys.length > 60) for (const k of keys.slice(0, keys.length - 60)) delete granted[k];
 
   save();
   return breakdown;

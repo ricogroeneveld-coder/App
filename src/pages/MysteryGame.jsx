@@ -11,6 +11,7 @@ import GameBackground from '@/components/GameBackground';
 import { useToast } from '@/components/ui/use-toast';
 import { useLang } from '@/lib/LanguageContext';
 import { track } from '@/lib/analytics';
+import { breakStreakOnLeave } from '@/lib/playerProfile';
 
 const PLAYER_COLORS = ['#6366f1','#ec4899','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ef4444','#14b8a6','#f97316','#06b6d4','#84cc16','#a855f7'];
 
@@ -236,6 +237,18 @@ export default function MysteryGame() {
     window.addEventListener('beforeunload', cleanup);
     return () => window.removeEventListener('beforeunload', cleanup);
   }, [room, me, players]);
+
+  // ECON-2/ECON-9: closing the tab mid-match forfeits the win streak too —
+  // otherwise a player keeps a streak alive by rage-quitting (tab close, not
+  // just the in-app Leave button) any match they're losing before the results
+  // screen resets it. localStorage persists synchronously on unload; the next
+  // load syncs it up.
+  useEffect(() => {
+    if (!room || room.status !== 'playing') return;
+    const onLeave = () => breakStreakOnLeave();
+    window.addEventListener('beforeunload', onLeave);
+    return () => window.removeEventListener('beforeunload', onLeave);
+  }, [room]);
 
   if (loading) return (
     <div
