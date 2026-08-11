@@ -106,16 +106,23 @@ Picks/cosmetics need NO IAP setup — they are earned by playing only.
   `src/lib/links.js`, overridable at build time with `VITE_SITE_BASE` if the
   pages ever move — keep the two in sync).
 
-## 3a. Age rating — set 12+
+## 3a. Age rating
 
-Answer the App Store Connect rating questionnaire so the app lands on
-**12+**, not 4+. The app has public lobbies with **live, unmoderated-in-
-real-time chat between strangers**, which is what drives the rating
-(declare "Infrequent/Mild Mature/Suggestive Themes" as applicable and, more
-importantly, the user-generated-content/chat capability). Rating it 4+ with
-open chat is a common rejection — and it would contradict `public/privacy.html`,
-whose "Children" section states the app is 12+ and not directed to under-13s.
-If you change the rating, update that section to match.
+Answer App Store Connect's rating questionnaire **honestly and let it decide
+the tier** — don't target a number. The answers that matter here are the ones
+about **chat / messaging between users** and **user-generated content**:
+declare both, since the app has public lobbies where strangers chat. Also
+declare the moderation controls that exist (filtering, report, mute/block,
+host-removal) — the current questionnaire weighs those, which is why declaring
+chat does not by itself force a higher tier.
+
+Whatever tier it returns is the correct one. Note Apple revised the tiers in
+2025 (4+ / 9+ / 13+ / 16+ / 18+), so older guidance referring to "12+" is out
+of date.
+
+`public/privacy.html`'s "Children" section is deliberately written **without a
+tier number** so it can't contradict whatever the questionnaire returns. If you
+ever add a number there, keep it in sync with App Store Connect.
 
 ## 4. UGC compliance (guideline 1.2) — already implemented
 
