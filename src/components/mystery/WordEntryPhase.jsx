@@ -183,11 +183,10 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
     try {
       // Always store the English word so AI/guessing logic works correctly
       const word = nlToEn ? (nlToEn[displayWord] || displayWord) : displayWord;
-      // The secret goes to the write-only mystery_secrets table — it is never
-      // sent to other clients or over Realtime (SEC-1). mystery_players only
-      // records readiness; the word becomes public just when we're revealed.
-      await MysterySecret.set(roomCode, me.id, word);
-      await MysteryPlayer.update(myPlayer.id, { word_submitted: true });
+      // Write the secret (to the write-only mystery_secrets table, never sent
+      // to other clients / Realtime — SEC-1) and mark ready, in one hardened
+      // call that can't be blocked by an RLS misconfig (submit_mystery_word RPC).
+      await MysterySecret.submit(roomCode, me.id, word);
       // Keep MY own word on THIS device so the in-game "My Word" reminder still
       // works — the secret is no longer stored on my player row (SEC-1), and a
       // player must still be able to see their own pick (survives reload).
