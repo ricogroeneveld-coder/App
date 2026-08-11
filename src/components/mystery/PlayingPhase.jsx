@@ -469,7 +469,9 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
         const remaining = players.filter(p => p.id !== myPlayer.id && !p.is_eliminated);
         await leaveRoom({ room, players, me, myPlayer, mode: 'eliminate' });
         if (remaining.length <= 1) {
-          await MysteryRoom.update(room.id, { status: 'finished' });
+          // The server re-checks the finish condition, so this can't force-finish
+          // a room that still has players in play (migration 0012).
+          await MysteryRoom.setStatus(roomCode, 'playing', 'finished');
         }
       }
       navigate('/');

@@ -135,12 +135,15 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
     const cat = selectedCategory;
     setLoading(true);
     try {
-      await MysteryRoom.update(room.id, {
-        status: 'word_entry', category: cat,
-        // Shared word-entry deadline — every client counts down against this
-        // and players who already locked in enforce it (see WordEntryPhase).
-        question_deadline: new Date(Date.now() + 60 * 1000).toISOString(),
-      });
+      // Category is a normal (still client-writable) column; the status
+      // transition + the shared word-entry deadline are minted server-side by
+      // the validated RPC (migration 0012), so a skewed host clock can't
+      // shorten the window for everyone (GAME-N6).
+      await MysteryRoom.update(room.id, { category: cat });
+      const res = await MysteryRoom.setStatus(roomCode, 'lobby', 'word_entry');
+      if (res && res.ok === false) {
+        toast({ title: t.errorTitle, description: res.reason === 'need_players' ? t.needTwoPlayers : t.tryAgain, variant: 'destructive' });
+      }
     } catch(e) {
       toast({ title: t.errorTitle, description: e.message, variant: 'destructive' });
     } finally {

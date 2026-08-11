@@ -128,8 +128,11 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
       // directly since 0007 (SEC-2) — so a client-side reset now hits
       // "permission denied". Fall back to the old path only if the RPC isn't
       // deployed (older projects where the column wasn't revoked).
-      const { error } = await supabase.rpc('play_again_mystery', { p_room: roomCode });
-      if (error) {
+      const { data, error } = await supabase.rpc('play_again_mystery', { p_room: roomCode });
+      if (!error) {
+        // 0012 returns { ok, reason }; only a finished room can be reset.
+        if (data && data.ok === false) { setLoading(false); return; }
+      } else {
         const missing = error.code === 'PGRST202' || error.code === '42883'
           || /does not exist|could not find the function/i.test(error.message || '');
         if (!missing) throw error;

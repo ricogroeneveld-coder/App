@@ -88,6 +88,19 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [submitted, deadlineMs]);
 
+  // Hand the room off to a survivor whenever the current host is no longer in
+  // the roster — idempotent and retryable, so a partially-failed enforcement
+  // pass (deletes landed, host update didn't) can't permanently strand the
+  // room on a dangling host_id (STUCK-2 / GAME-N7).
+  const reassignHostIfMissing = async (roster) => {
+    const list = roster || [];
+    if (!list.length) return;
+    if (list.some(p => p.user_id === room.host_id)) return;
+    const heir = [...list].sort((a, b) =>
+      new Date(a.created_date).getTime() - new Date(b.created_date).getTime())[0];
+    await MysteryRoom.update(room.id, { host_id: heir.user_id, host_name: heir.display_name });
+  };
+
   // Deadline enforcement by players who already submitted: if a stalled
   // player's device is asleep, remove them on their behalf once the deadline
   // is comfortably past (staggered; re-checked against fresh state).
@@ -104,26 +117,24 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
       try {
         const fresh = await MysteryPlayer.filter({ room_code: roomCode });
         const stalled = (fresh || []).filter(p => !p.word_submitted);
-        if (!stalled.length) return;
+        if (!stalled.length) {
+          // Nothing to enforce, but the host may have been removed by a prior
+          // (partially-failed) pass — reassign if the room now lacks its host
+          // so a dangling host_id can't strand the room (GAME-N7).
+          await reassignHostIfMissing(fresh);
+          enforced = true;
+          return;
+        }
         if ((fresh.length - stalled.length) < 2) {
-          // Not enough locked-in players left for a game — reset everyone
-          // back to the lobby (same rule as the self-timeout path).
-          await Promise.all((fresh || []).map(p =>
-            MysteryPlayer.update(p.id, { word_submitted: false })
-          ));
-          await MysterySecret.clearRoom(roomCode).catch(() => {});
-          await MysteryRoom.update(room.id, { status: 'lobby', question_deadline: null });
+          // Not enough locked-in players left for a game — reset everyone back
+          // to the lobby (clears secrets + word_submitted server-side, 0012).
+          await MysteryRoom.setStatus(roomCode, 'word_entry', 'lobby');
         } else {
-          // Remove the stalled players — and if the host was one of them, hand
-          // the room off to a survivor so the game isn't stranded (STUCK-2).
-          const survivors = (fresh || []).filter(p => p.word_submitted);
+          // Remove the stalled players, then hand the room off to a survivor if
+          // the host is no longer present (STUCK-2 / crash-safe, GAME-N7).
           await Promise.all(stalled.map(p => MysteryPlayer.delete(p.id)));
-          if (stalled.some(p => p.user_id === room.host_id) && survivors.length) {
-            await MysteryRoom.update(room.id, {
-              host_id: survivors[0].user_id,
-              host_name: survivors[0].display_name,
-            });
-          }
+          const survivors = (fresh || []).filter(p => p.word_submitted);
+          await reassignHostIfMissing(survivors);
         }
         enforced = true;
       } catch { /* another enforcer got it, or we're offline — theirs counts */ }
@@ -144,14 +155,9 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
     if (players.length <= 2) {
       toast({ title: t.wordTimeoutLobby });
       try {
-        // Reset everyone's word state too — a category change (or just a
-        // fresh attempt) shouldn't carry the other player's already-locked
-        // word into a restart where they never get asked to lock in again.
-        await Promise.all(players.map(p =>
-          MysteryPlayer.update(p.id, { word_submitted: false })
-        ));
-        await MysterySecret.clearRoom(roomCode).catch(() => {});
-        await MysteryRoom.update(room.id, { status: 'lobby', question_deadline: null });
+        // Back to the lobby — the RPC clears secrets + word_submitted server-side
+        // so a fresh attempt doesn't carry a stale locked-in word (0012).
+        await MysteryRoom.setStatus(roomCode, 'word_entry', 'lobby');
       } catch (e) { /* ignore */ }
       return;
     }
@@ -214,13 +220,14 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
       // (GAME-1); the first asker is the earliest-joined player.
       const firstAsker = [...roster].sort((a, b) =>
         new Date(a.created_date).getTime() - new Date(b.created_date).getTime())[0];
-      await MysteryRoom.update(room.id, {
-        status: 'playing', current_questioner_index: 0,
-        current_questioner_id: firstAsker?.user_id || null,
-        round_number: 1,
-        // First asker's shared turn deadline (see PlayingPhase).
-        question_deadline: new Date(serverNow() + 30 * 1000).toISOString(),
-      });
+      // The transition + deadline are minted + re-validated server-side (the RPC
+      // re-checks all-submitted under a row lock, closing the auto-join TOCTOU —
+      // NEW-GAME-9), and status can no longer be forced by a client (migration 0012).
+      const res = await MysteryRoom.setStatus(roomCode, 'word_entry', 'playing', { questionerId: firstAsker?.user_id || null });
+      if (res && res.ok === false) {
+        toast({ title: t.waitingForOthers, variant: 'destructive' });
+        return;
+      }
       track('game_started', { players: roster.length, category: room.category });
     } catch(e) {
       toast({ title: t.errorTitle, description: e.message, variant: 'destructive' });
@@ -233,7 +240,7 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
     // leaving the room, so no confirmation needed. Everyone else (or a host
     // who already submitted) is actually exiting the game.
     if (isHost && !submitted) {
-      MysteryRoom.update(room.id, { status: 'lobby' })
+      MysteryRoom.setStatus(roomCode, 'word_entry', 'lobby')
         .catch(e => toast({ title: t.errorTitle, description: e.message, variant: 'destructive' }));
       return;
     }

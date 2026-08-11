@@ -1,4 +1,8 @@
 import { supabase } from '@/lib/supabaseClient';
+import { serverNow } from '@/lib/serverTime';
+
+const rpcMissing = (error) => error && (error.code === 'PGRST202' || error.code === '42883'
+  || /does not exist|could not find the function/i.test(error.message || ''));
 
 // Thin wrapper around Supabase's client that mimics the small slice of the
 // base44 entities SDK this app used (`filter`, `create`, `update`, `delete`,
@@ -113,6 +117,39 @@ function createEntity(table) {
 }
 
 export const MysteryRoom = createEntity('mystery_rooms');
+
+// Room status changes ONLY through the validated server RPC (migration 0012):
+// the client can no longer write `status` directly, so force-finish (which
+// leaked every secret via the reveal trigger), premature start, and mid-game
+// reset are impossible. The RPC mints phase deadlines server-side too, so a
+// skewed device clock can't shorten them for everyone (GAME-N6).
+//   from/to ∈ 'lobby' | 'word_entry' | 'playing' | 'finished'
+//   opts.questionerId — first asker's user_id (only for → 'playing')
+// Returns { ok, reason }. Falls back to a best-effort direct write only if the
+// RPC isn't deployed yet (in which case status isn't revoked either).
+MysteryRoom.setStatus = async (roomCode, from, to, opts = {}) => {
+  const { data, error } = await supabase.rpc('mystery_set_status', {
+    p_room: roomCode, p_from: from, p_to: to, p_questioner_id: opts.questionerId ?? null,
+  });
+  if (!error) return data || { ok: true };
+  if (!rpcMissing(error)) throw error;
+  // Pre-0012 fallback: status isn't revoked yet, so replicate the RPC's writes.
+  const rooms = await MysteryRoom.filter({ room_code: roomCode });
+  const r = rooms?.[0];
+  if (!r) return { ok: false, reason: 'no_room' };
+  if (to === 'word_entry') {
+    await MysteryRoom.update(r.id, { status: 'word_entry', question_deadline: new Date(serverNow() + 60000).toISOString() });
+  } else if (to === 'playing') {
+    await MysteryRoom.update(r.id, { status: 'playing', current_questioner_id: opts.questionerId ?? null, current_questioner_index: 0, round_number: 1, question_deadline: new Date(serverNow() + 30000).toISOString() });
+  } else if (to === 'lobby') {
+    await supabase.from('mystery_secrets').delete().eq('room_code', roomCode).then(() => {}, () => {});
+    await supabase.from('mystery_players').update({ word_submitted: false, secret_word: '' }).eq('room_code', roomCode);
+    await MysteryRoom.update(r.id, { status: 'lobby', question_deadline: null });
+  } else if (to === 'finished') {
+    await MysteryRoom.update(r.id, { status: 'finished' });
+  }
+  return { ok: true };
+};
 export const MysteryPlayer = createEntity('mystery_players');
 export const MysteryQuestion = createEntity('mystery_questions');
 export const MysteryGuess = createEntity('mystery_guesses');
@@ -129,13 +166,18 @@ export const MysterySecret = {
   // direct writes if the RPC isn't deployed yet (needs the mystery_secrets
   // insert policy present).
   async submit(roomCode, userId, word) {
-    const { error } = await supabase.rpc('submit_mystery_word', {
+    const { data, error } = await supabase.rpc('submit_mystery_word', {
       p_room: roomCode, p_user: userId, p_word: word,
     });
-    if (!error) return;
-    const missing = error.code === 'PGRST202' || error.code === '42883'
-      || /does not exist|could not find the function/i.test(error.message || '');
-    if (!missing) throw error;
+    if (!error) {
+      // 0012 returns { ok, reason }; a rejection (room already started, or an
+      // empty/unguessable word) should surface, not silently no-op.
+      if (data && data.ok === false) {
+        throw new Error(data.reason || 'submit_failed');
+      }
+      return;
+    }
+    if (!rpcMissing(error)) throw error;
     await MysterySecret.set(roomCode, userId, word);
     const { error: pErr } = await supabase.from('mystery_players')
       .update({ word_submitted: true }).eq('room_code', roomCode).eq('user_id', userId);

@@ -47,6 +47,14 @@ export default function GuessModal({ target, players, guesses, me, myPlayer, roo
         p_guessed: guessWord.trim(),
       });
       if (error) throw error;
+      // The server can reject a guess it won't count (cooldown not elapsed,
+      // room not in play, self-target, already revealed). Surface it instead
+      // of showing a phantom "wrong" (migration 0012).
+      if (data && data.ok === false) {
+        toast({ title: data.reason === 'cooldown' ? t.guessCooldown : t.tryAgain });
+        setSubmitting(false);
+        return;
+      }
       const isCorrect = !!data?.correct;
       track('guess_made', { correct: isCorrect });
       if (isCorrect) {
