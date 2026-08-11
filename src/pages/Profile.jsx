@@ -189,9 +189,15 @@ function CosmeticCard({ c, owned, equipped, onTap, justUnlocked, sourceText = un
  */
 function HeroFeatured({ c, profile, onTap, featuredLabel }) {
   const rar = RARITIES[c.rarity];
-  const myEmblem = cosmeticById(profile.equipped?.emblem);
-  const bannerBg = c.type === 'banner' ? c : cosmeticById(profile.equipped?.banner);
+  // Show ONLY what is actually for sale. This used to paint the player's own
+  // equipped banner behind the item (and their own emblem inside a border
+  // preview), so a featured emblem appeared on a background the buyer already
+  // owned — it read as if the background were part of the purchase. A banner on
+  // sale is its own backdrop; everything else gets a neutral one.
+  const bannerBg = c.type === 'banner' ? c : null;
   const affordable = (profile.picks || 0) >= c.source.price;
+  // Name the thing being bought, e.g. "EPIC EMBLEM · TODAY'S PICK".
+  const typeName = (TYPE_LABELS[c.type] || '').replace(/s$/, '');
   return (
     <motion.button onClick={() => onTap(c)} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
       className={`relative w-full h-28 mb-2 rounded-2xl overflow-hidden text-left ring-1 ${rar.ring} ${rar.cardGlow} transition-transform duration-150 active:scale-[0.98] hover:-translate-y-0.5`}>
@@ -208,9 +214,9 @@ function HeroFeatured({ c, profile, onTap, featuredLabel }) {
         {c.type === 'border' && (
           <span className="shrink-0" style={{ filter: 'drop-shadow(0 6px 10px rgba(0,0,0,0.55))' }}>
             <AvatarFrame frame={c.frame} size={64}>
-              {myEmblem
-                ? <EmblemTile emblem={myEmblem} fontSize={28} />
-                : <span className="w-full h-full bg-black/50 flex items-center justify-center text-2xl">🙂</span>}
+              {/* Neutral placeholder, never the player's own emblem — the frame
+                  is what's on sale, not what's inside it. */}
+              <span className="w-full h-full bg-black/50 flex items-center justify-center text-2xl">🙂</span>
             </AvatarFrame>
           </span>
         )}
@@ -224,7 +230,7 @@ function HeroFeatured({ c, profile, onTap, featuredLabel }) {
         )}
         <span className="flex-1 min-w-0">
           <span className={`block text-[10px] font-extrabold uppercase tracking-[0.14em] ${rar.text}`}>
-            {rar.label} · {featuredLabel}
+            {rar.label}{typeName ? ` ${typeName}` : ''} · {featuredLabel}
           </span>
           <span className="block text-lg font-extrabold text-white leading-tight truncate drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)]">{c.name}</span>
           <span className={`inline-flex items-center mt-1.5 px-2.5 py-1 rounded-full text-xs font-extrabold tabular-nums shadow-[0_2px_6px_-2px_rgba(0,0,0,0.6)] ${affordable
