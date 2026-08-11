@@ -12,7 +12,7 @@ import {
   loadProfile, getProfile, subscribeProfile, purchaseCosmetic, equipCosmetic,
   challengeState, favoriteCategory, devUnlockAll, devResetProfile, remoteStatus,
 } from '@/lib/playerProfile';
-import { ALL_COSMETICS, cosmeticById, RARITIES, TYPE_LABELS, topEquippedRarity, COLLECTIONS, collectionItems, collectionProgress, sortByRarity } from '@/lib/cosmetics';
+import { ALL_COSMETICS, cosmeticById, RARITIES, TYPE_LABELS, topEquippedRarity, COLLECTIONS, collectionItems, collectionProgress, sortByRarity, isHiddenCosmetic } from '@/lib/cosmetics';
 import { shortCategory } from '@/lib/wordLists';
 import { setGuestName, normalizeName, MAX_NAME_LENGTH } from '@/lib/guestIdentity';
 import { SEASON_NAME, todayKey, msUntilNextDay, levelFromXp } from '@/lib/progression';
@@ -445,7 +445,7 @@ export default function Profile() {
     return res;
   };
 
-  const shopItems = ALL_COSMETICS.filter(c => c.source.type === 'shop');
+  const shopItems = ALL_COSMETICS.filter(c => c.source.type === 'shop' && !isHiddenCosmetic(c.id));
   // The whole shop rotates every 24h: a deterministic date-seeded shuffle
   // picks one row (3 items) per section, so every visit after midnight shows
   // a fresh stock. Anything not in today's stock stays buyable from the
@@ -485,7 +485,7 @@ export default function Profile() {
   // chase for App Store players, so they stay out of the preview entirely.
   const earnItems = sortByRarity(ALL_COSMETICS.filter(c =>
     c.source.type !== 'shop' && c.source.type !== 'starter' && c.source.type !== 'beta' &&
-    c.id !== 't_beta' && !profile.owned.includes(c.id)));
+    c.id !== 't_beta' && !isHiddenCosmetic(c.id) && !profile.owned.includes(c.id)));
   const ch = challengeState();
 
   return (
@@ -594,7 +594,10 @@ export default function Profile() {
                   exclusively in the Shop (daily rotation) — the counter still
                   shows collection progress against the full catalog. */}
               {TYPE_ORDER.map(type => {
-                const all = sortByRarity(ALL_COSMETICS.filter(c => c.type === type));
+                // Owned hidden items still show; unowned ones don't count
+                // toward the total, so the counter stays honestly reachable.
+                const all = sortByRarity(ALL_COSMETICS.filter(c => c.type === type &&
+                  (!isHiddenCosmetic(c.id) || profile.owned.includes(c.id))));
                 const items = all.filter(c => profile.owned.includes(c.id));
                 const key = `col_${type}`;
                 const isCollapsed = !!collapsed[key];
@@ -651,10 +654,12 @@ export default function Profile() {
                 <p className="section-label mb-2">{t.collectionsLabel}</p>
                 <div className="grid grid-cols-2 gap-2">
                   {COLLECTIONS.filter(col =>
-                    // The beta album only exists for players who hold a
-                    // piece of it — App Store players never see the set.
-                    col.id !== 'col_beta' ||
-                    collectionItems(col.id).some(i => profile.owned.includes(i.id))
+                    // Hidden collections (Royal, Founder) are stashed for a
+                    // later release; the beta album only exists for players
+                    // who hold a piece of it.
+                    !col.hidden &&
+                    (col.id !== 'col_beta' ||
+                    collectionItems(col.id).some(i => profile.owned.includes(i.id)))
                   ).map(col => (
                     <CollectionCover key={col.id} col={col} owned={profile.owned}
                       onOpen={() => setOpenCollection(col.id)} />

@@ -281,7 +281,7 @@ export const COLLECTIONS = [
   // album stays hidden until you own a piece of it.
   { id: 'col_beta',    name: 'Beta Tester', emoji: '🔧', cover: 'bn_beta', reward: 't_beta',     limited: true,
     lore: 'You broke it before the world could play it.' },
-  { id: 'col_founder', name: 'Founder',  emoji: '🏆', cover: 'bn_gold',   reward: 'nc_founder',   limited: true,
+  { id: 'col_founder', name: 'Founder',  emoji: '🏆', cover: 'bn_gold',   reward: 'nc_founder',   limited: true, hidden: true,
     lore: 'Season 1 only. These will never return.' },
   { id: 'col_sakura',  name: 'Sakura',   emoji: '🌸', cover: 'bn_sakura', reward: 't_hanami',
     lore: 'Petals fall for those who notice.' },
@@ -289,7 +289,7 @@ export const COLLECTIONS = [
     lore: 'Old scales keep older secrets.' },
   { id: 'col_galaxy',  name: 'Galaxy',   emoji: '🌌', cover: 'bn_galaxy', reward: 't_chosen',
     lore: 'Somewhere out there, your word is hiding.' },
-  { id: 'col_royal',   name: 'Royal',    emoji: '👑', cover: 'bn_royal',  reward: 't_puzzleking',
+  { id: 'col_royal',   name: 'Royal',    emoji: '👑', cover: 'bn_royal',  reward: 't_puzzleking', hidden: true,
     lore: 'Crowns are earned one guess at a time.' },
   { id: 'col_winter',  name: 'Winter',   emoji: '❄️', cover: 'bn_winter', reward: 't_frostwalker',
     lore: 'Cold hands, warm streaks.' },
@@ -325,6 +325,17 @@ export const ALL_COSMETICS = [...EMBLEMS, ...BANNERS, ...BORDERS, ...TITLES, ...
 const byId = Object.fromEntries(ALL_COSMETICS.map(c => [c.id, c]));
 export function cosmeticById(id) { return byId[id] || null; }
 
+// Collections stashed for a later moment (`hidden: true`): their albums,
+// items, previews, and grants all disappear from the UI and progression —
+// flip the flag off to re-release the set unchanged. Items a player
+// already owns still show in their locker.
+const hiddenCols = new Set(COLLECTIONS.filter(c => c.hidden).map(c => c.id));
+const HIDDEN_IDS = new Set([
+  ...ALL_COSMETICS.filter(c => c.collection && hiddenCols.has(c.collection)).map(c => c.id),
+  ...COLLECTIONS.filter(c => c.hidden).map(c => c.reward),
+]);
+export function isHiddenCosmetic(id) { return HIDDEN_IDS.has(id); }
+
 // Highest rarity among a player's equipped cosmetics — drives the overall
 // presentation of their profile card (ring, glow), so a Legendary loadout
 // reads as Legendary before you read a single word.
@@ -358,7 +369,8 @@ export function collectionProgress(colId, owned) {
 }
 
 export function levelUnlocks(level) {
-  return ALL_COSMETICS.filter(c => c.source.type === 'level' && c.source.level === level);
+  return ALL_COSMETICS.filter(c =>
+    c.source.type === 'level' && c.source.level === level && !isHiddenCosmetic(c.id));
 }
 
 // Grids always list common → rare → epic → legendary → mythic.
