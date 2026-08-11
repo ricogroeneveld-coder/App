@@ -55,10 +55,15 @@ export const WEEKLY = [
   { id: 'w_win5',   stat: 'wins',  target: 5,  picks: 120, name: 'Win 5 games' },
 ];
 
+// Season 1 pays PICKS ONLY. The Founder collection (em_galaxy / t_founder /
+// bd_champion) is stashed for a later release (col_founder is hidden), so
+// those unlocks are intentionally NOT attached here — the season must never
+// imply a cosmetic reward it can't actually grant (ECON-3). Re-attach the
+// `unlock` fields when the Founder set is un-stashed.
 export const SEASON = [
-  { id: 's_play40',  stat: 'plays',   target: 40, picks: 300, name: 'Complete 40 games',   unlock: 'em_galaxy' },
-  { id: 's_guess25', stat: 'guesses', target: 25, picks: 250, name: '25 correct guesses',  unlock: 't_founder' },
-  { id: 's_win15',   stat: 'wins',    target: 15, picks: 400, name: 'Win 15 games',        unlock: 'bd_champion' },
+  { id: 's_play40',  stat: 'plays',   target: 40, picks: 300, name: 'Complete 40 games' },
+  { id: 's_guess25', stat: 'guesses', target: 25, picks: 250, name: '25 correct guesses' },
+  { id: 's_win15',   stat: 'wins',    target: 15, picks: 400, name: 'Win 15 games' },
 ];
 
 export const SEASON_ID = 'S1';
