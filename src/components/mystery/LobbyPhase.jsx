@@ -288,7 +288,9 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
                         <span aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/55 via-black/25 to-black/45" />
                       </>
                     )}
-                    <span className="relative shrink-0" style={{ filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.5))' }}>
+                    {/* flex: an inline span reserves baseline space below the avatar,
+                        pushing it visibly above the row's true center */}
+                    <span className="relative shrink-0 flex" style={{ filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.5))' }}>
                       <PlayerAvatar profile={pProfile} name={p.display_name} color={p.color} size={40} />
                     </span>
                     <span className="relative flex-1 min-w-0 flex flex-col justify-center">

@@ -62,7 +62,7 @@ export default function PlayerCardModal({ player, profile, onClose, onKick = und
         <div className="relative px-5 -mt-9">
           <span aria-hidden className="absolute left-5 top-10 w-20 h-4 rounded-full"
             style={{ background: 'radial-gradient(50% 50% at 50% 50%, rgba(0,0,0,0.55), transparent 70%)', filter: 'blur(3px)' }} />
-          <div className="relative inline-block" style={{ filter: 'drop-shadow(0 10px 14px rgba(0,0,0,0.55))' }}>
+          <div className="relative inline-flex" style={{ filter: 'drop-shadow(0 10px 14px rgba(0,0,0,0.55))' }}>
             <PlayerAvatar profile={profile} name={player.display_name} color={player.color} size={68} />
             {profile && (
               <span className="absolute -bottom-1 -right-1.5 min-w-[22px] h-[22px] px-1 rounded-full bg-gradient-to-b from-violet-400 to-violet-700 flex items-center justify-center text-[11px] font-extrabold text-white leading-none shadow-[0_2px_5px_rgba(0,0,0,0.6)]"
