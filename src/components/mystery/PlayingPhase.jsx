@@ -538,7 +538,11 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
           down with length and may wrap to two lines; ellipsis only kicks in
           past that. */}
       {(() => {
-        const myWord = showMyWord ? (toDisplayWord(myPlayer?.secret_word, lang) || '—') : '••••••';
+        // My own word lives in localStorage (SEC-1 keeps it off the player row
+        // until reveal); fall back to the row's value once I've been revealed.
+        let myOwnWord = myPlayer?.secret_word || '';
+        if (!myOwnWord) { try { myOwnWord = localStorage.getItem(`wmp_myword_${roomCode}`) || ''; } catch { /* ignore */ } }
+        const myWord = showMyWord ? (toDisplayWord(myOwnWord, lang) || '—') : '••••••';
         const myWordSize = !showMyWord || myWord.length <= 8 ? 'text-sm'
           : myWord.length <= 14 ? 'text-xs'
           : myWord.length <= 20 ? 'text-[11px]'

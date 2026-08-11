@@ -98,6 +98,12 @@ grant update (
   is_eliminated, color, last_guess_at_question_count, created_date, updated_date
 ) on public.mystery_players to anon, authenticated;
 
+-- Guesses may only be created by submit_mystery_guess() — otherwise a client
+-- could insert a row with correct=true directly and inflate the round winner /
+-- rewards (which count mystery_guesses.correct). SELECT/DELETE stay open
+-- (history display + playAgain cleanup); the definer RPC does the inserts.
+revoke insert on public.mystery_guesses from anon, authenticated;
+
 -- ─────────────────────────────────────────────────────────────────────────
 -- Turn identity that survives roster changes (GAME-1)
 -- ─────────────────────────────────────────────────────────────────────────

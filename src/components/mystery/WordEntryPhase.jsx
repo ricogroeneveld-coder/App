@@ -188,6 +188,10 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
       // records readiness; the word becomes public just when we're revealed.
       await MysterySecret.set(roomCode, me.id, word);
       await MysteryPlayer.update(myPlayer.id, { word_submitted: true });
+      // Keep MY own word on THIS device so the in-game "My Word" reminder still
+      // works — the secret is no longer stored on my player row (SEC-1), and a
+      // player must still be able to see their own pick (survives reload).
+      try { localStorage.setItem(`wmp_myword_${roomCode}`, word); } catch { /* ignore */ }
     } catch(e) {
       toast({ title: t.errorTitle, description: e.message, variant: 'destructive' });
     } finally {
