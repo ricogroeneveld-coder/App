@@ -382,7 +382,11 @@ async function grantMatchRewardsInner({ room, players, guesses, me, roundKey }) 
   // (mirrors FinishedPhase's winner logic).
   const roundScore = {};
   players.forEach(p => { roundScore[p.user_id] = 0; });
-  guesses.forEach(g => { if (g.correct && g.guesser_id in roundScore) roundScore[g.guesser_id] += 1; });
+  // Count every correct guess, even from a player whose row is gone (they left
+  // for Home after the game ended). Gating on current membership meant a
+  // departing winner zeroed topScore, which VOIDS the whole payout below — so
+  // the players who stayed silently lost the rewards they had earned.
+  guesses.forEach(g => { if (g.correct) roundScore[g.guesser_id] = (roundScore[g.guesser_id] || 0) + 1; });
   const topScore = Math.max(0, ...Object.values(roundScore));
 
   // Nobody guessed a single word correctly this round — the only way that

@@ -55,13 +55,27 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
   // "Total" alongside.
   const roundScore = {};
   players.forEach(p => { roundScore[p.user_id] = 0; });
-  guesses.forEach(g => { if (g.correct && g.guesser_id in roundScore) roundScore[g.guesser_id] += 1; });
+  // Count EVERY correct guess, including from a player whose row is gone (they
+  // went Home, or were removed). Gating on current membership meant a departing
+  // winner erased their own win, dropping topScore to 0 so a completed game
+  // rendered as "Game Ended Early".
+  guesses.forEach(g => { if (g.correct) roundScore[g.guesser_id] = (roundScore[g.guesser_id] || 0) + 1; });
   const sorted = [...players].sort((a, b) =>
-    (roundScore[b.user_id] - roundScore[a.user_id]) || ((b.score || 0) - (a.score || 0)));
-  const topScore = roundScore[sorted[0]?.user_id] || 0;
+    ((roundScore[b.user_id] || 0) - (roundScore[a.user_id] || 0)) || ((b.score || 0) - (a.score || 0)));
+  // Max across everyone who scored, not just those still in the roster —
+  // otherwise a departed winner drags this back to 0 and the completed game
+  // reads as a walkover.
+  const topScore = Math.max(0, ...Object.values(roundScore));
   // A round can end with zero correct guesses (everyone else left) — nobody
   // "wins" a walkover, so skip the trophy/tie copy and celebrations.
-  const winners = topScore > 0 ? sorted.filter(p => roundScore[p.user_id] === topScore) : [];
+  const nameFor = (uid) => players.find(p => p.user_id === uid)?.display_name
+    || guesses.find(g => g.guesser_id === uid)?.guesser_name
+    || t.playerFallback;
+  const winners = topScore > 0
+    ? Object.keys(roundScore)
+        .filter(uid => roundScore[uid] === topScore)
+        .map(uid => ({ user_id: uid, display_name: nameFor(uid) }))
+    : [];
   const isWinner = winners.some(p => p.user_id === me?.id);
   // Nobody guessed a single word this round — the only way that happens is
   // players leaving before the game really got going. Without this, a 0-0
@@ -193,7 +207,10 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
 
   const goHome = async () => {
     try {
-      await leaveRoom({ room, players, me, myPlayer, mode: 'delete' });
+      // 'preserve': the others may still be on the results screen, which is
+      // rendered from the roster — deleting my row would erase my guesses from
+      // their scoreboard (see roomLifecycle).
+      await leaveRoom({ room, players, me, myPlayer, mode: 'preserve' });
     } catch(e) {
       // fall through — still navigate home even if cleanup failed
     }
