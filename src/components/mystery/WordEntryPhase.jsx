@@ -205,6 +205,26 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
     }
   };
 
+  // A word-entry room needs at least 2 players. If the roster drops below that
+  // — the host removed the only other player, or everyone else left — whoever
+  // is left is STRANDED: they can lock a word in, but Start requires 2 players,
+  // and nobody can join to make up the number because joins only target rooms
+  // in the 'lobby' state. Send the room back to the lobby, where it's joinable
+  // again (the RPC also clears the locked-in words, so the next round starts
+  // clean). Whoever remains performs it; with <2 players there's only one
+  // writer, so no race. The short delay avoids bouncing on a transient roster.
+  useEffect(() => {
+    if (room.status !== 'word_entry' || !myPlayer) return;
+    if (players.length >= 2) return;
+    const timer = setTimeout(() => {
+      MysteryRoom.setStatus(roomCode, 'word_entry', 'lobby')
+        .then(() => toast({ title: t.backToLobbyNeedPlayers }))
+        .catch(() => {});
+    }, 1500);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [room.status, players.length, myPlayer?.id, roomCode]);
+
   // Host drops a player who never locked a word in (usually one who
   // backgrounded during word entry). Without this the host had no way to
   // proceed and no indication why — the start button simply never appeared.
