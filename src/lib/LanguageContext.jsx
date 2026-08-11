@@ -411,7 +411,7 @@ const translations = {
 
     // Practice vs bot (prototype)
     practiceMode: 'Practice vs Bot',
-    practiceModeDesc: 'Solo & offline — sharpen your guessing',
+    practiceModeDesc: 'Solo & offline',
     practiceSubtitle: 'A 1-on-1 against a bot that answers honestly about its secret word. Take turns asking questions — guess its word before it guesses yours!',
     practiceNoRewards: 'Practice games earn no Picks or XP',
     practicePickWord: 'Pick your secret word',
@@ -849,7 +849,7 @@ const translations = {
 
     // Practice vs bot (prototype)
     practiceMode: 'Oefenen tegen de bot',
-    practiceModeDesc: 'Solo & offline — oefen je raadskills',
+    practiceModeDesc: 'Solo & offline',
     practiceSubtitle: 'Een 1-tegen-1 tegen een bot die eerlijk antwoordt over zijn geheime woord. Stel om de beurt vragen — raad zijn woord voordat hij het jouwe raadt!',
     practiceNoRewards: 'Oefenspellen leveren geen Picks of XP op',
     practicePickWord: 'Kies je geheime woord',
