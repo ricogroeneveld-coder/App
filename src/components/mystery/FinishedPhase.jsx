@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import { Button } from '@/components/ui/button';
 import { MysteryPlayer, MysteryQuestion, MysteryGuess, MysteryRoom, MysterySecret } from '@/api/db';
+import { supabase } from '@/lib/supabaseClient';
 import { leaveRoom } from '@/lib/roomLifecycle';
 import { track } from '@/lib/analytics';
 import { Trophy, Home, RotateCcw, Award, Palette, MessageCircle, Share } from 'lucide-react';
@@ -122,36 +123,36 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
   const playAgain = async () => {
     setLoading(true);
     try {
-      // Reset all players: clear elimination, word, submitted state — keep scores
-      await Promise.all(players.map(p =>
-        MysteryPlayer.update(p.id, {
-          secret_word: '',
-          word_submitted: false,
-          word_revealed: false,
-          is_eliminated: false,
-          last_guess_at_question_count: 0
-        })
-      ));
-      // Delete all questions and guesses for this room
-      const [qs, gs] = await Promise.all([
-        MysteryQuestion.filter({ room_code: roomCode }),
-        MysteryGuess.filter({ room_code: roomCode })
-      ]);
-      await Promise.all([
-        ...qs.map(q => MysteryQuestion.delete(q.id)),
-        ...gs.map(g => MysteryGuess.delete(g.id))
-      ]);
-      // Clear last round's secrets so no stale word carries into the rematch.
-      await MysterySecret.clearRoom(roomCode).catch(() => {});
-      // Reset room to lobby so host can pick category again
-      await MysteryRoom.update(room.id, {
-        status: 'lobby',
-        round_number: 1,
-        current_questioner_index: 0,
-        current_questioner_id: null,
-        category: '',
-        question_deadline: null
-      });
+      // The whole reset runs in a SECURITY DEFINER RPC (migration 0011): the
+      // per-player reset touches word_revealed, which clients can't write
+      // directly since 0007 (SEC-2) — so a client-side reset now hits
+      // "permission denied". Fall back to the old path only if the RPC isn't
+      // deployed (older projects where the column wasn't revoked).
+      const { error } = await supabase.rpc('play_again_mystery', { p_room: roomCode });
+      if (error) {
+        const missing = error.code === 'PGRST202' || error.code === '42883'
+          || /does not exist|could not find the function/i.test(error.message || '');
+        if (!missing) throw error;
+        await Promise.all(players.map(p =>
+          MysteryPlayer.update(p.id, {
+            secret_word: '', word_submitted: false, word_revealed: false,
+            is_eliminated: false, last_guess_at_question_count: 0
+          })
+        ));
+        const [qs, gs] = await Promise.all([
+          MysteryQuestion.filter({ room_code: roomCode }),
+          MysteryGuess.filter({ room_code: roomCode })
+        ]);
+        await Promise.all([
+          ...qs.map(q => MysteryQuestion.delete(q.id)),
+          ...gs.map(g => MysteryGuess.delete(g.id))
+        ]);
+        await MysterySecret.clearRoom(roomCode).catch(() => {});
+        await MysteryRoom.update(room.id, {
+          status: 'lobby', round_number: 1, current_questioner_index: 0,
+          current_questioner_id: null, category: '', question_deadline: null
+        });
+      }
       track('play_again');
     } catch(e) {
       toast({ title: t.errorTitle, description: e.message, variant: 'destructive' });

@@ -481,14 +481,13 @@ export default function Profile() {
     }
     return [type, sortByRarity(picks)];
   }));
-  // Level/challenge/collection-reward items can't be bought, but players
-  // should still see what's out there to chase — the Collection tab only
-  // shows owned items now, so this is their one preview spot.
-  // Beta-set pieces (and their reward title) are TestFlight gifts — never a
-  // chase for App Store players, so they stay out of the preview entirely.
-  const earnItems = sortByRarity(ALL_COSMETICS.filter(c =>
-    c.source.type !== 'shop' && c.source.type !== 'starter' && c.source.type !== 'beta' &&
-    c.id !== 't_beta' && !isHiddenCosmetic(c.id) && !profile.owned.includes(c.id)));
+  // "Earn by Playing" = the LEVEL unlocks, ordered low → high level so the
+  // next milestone shows first. Collection-set rewards (source 'reward') are
+  // earned by completing a set, not by levelling, so they live in the
+  // Collection albums, not here. Beta gifts stay out entirely.
+  const earnItems = ALL_COSMETICS
+    .filter(c => c.source.type === 'level' && !isHiddenCosmetic(c.id) && !profile.owned.includes(c.id))
+    .sort((a, b) => a.source.level - b.source.level);
   const ch = challengeState();
 
   return (

@@ -46,15 +46,11 @@ export default function QuickEquip() {
         return (
           <div key={type}>
             <p className="section-label mb-1.5 px-1">{TYPE_LABELS[type]}</p>
-            {/* overflow-x-auto implicitly makes overflow-y 'auto' too (per the
-                CSS overflow spec, and WebKit enforces this) — without top
-                padding here, that clips the ring/glow on every card's top
-                edge instead of just scrolling horizontally. */}
-            {/* Right-edge fade + trailing padding so a scrollable row reads as
-                "swipe for more" instead of looking hard-cropped at the screen
-                edge (QE2). */}
-            <div className="flex gap-2 overflow-x-auto hide-scrollbar pt-1.5 pb-1 pl-1 pr-6"
-              style={{ overscrollBehaviorX: 'contain', WebkitMaskImage: 'linear-gradient(to right, #000 88%, transparent)', maskImage: 'linear-gradient(to right, #000 88%, transparent)' }}>
+            {/* Wrap onto multiple lines instead of a horizontal scroll, so
+                every owned item is visible at once — no edge-cropping, nothing
+                hidden behind a swipe (QE2). pt-1.5 leaves room for each card's
+                ring/glow so it isn't clipped at the top. */}
+            <div className="flex flex-wrap gap-2 pt-1.5 pb-1 px-1">
               {items.map(c => {
                 const equipped = c.id === equippedId;
                 const rar = RARITIES[c.rarity];
