@@ -155,8 +155,16 @@ export default function BannerArt({ banner, className = '', style = {}, motifSca
   return (
     <span aria-hidden className={`block overflow-hidden pointer-events-none ${className}`}
       style={{ background: b.css || 'linear-gradient(120deg, #1c0b3a 0%, #0d0620 100%)', ...style }}>
-      {(BANNER_LAYERS[b.id] || []).map((l, i) => <SceneLayer key={`l${i}`} l={l} />)}
-      {(b.motifs || []).map((m, i) => (
+      {/* Painted scene art replaces the CSS scene layers and emoji motifs
+          entirely (they're baked into the image); the CSS gradient stays
+          behind it as the loading fallback. Ambient FX, lighting overlays,
+          vignette, and the shine sweep still apply on top. */}
+      {b.art && (
+        <img src={b.art} alt="" draggable={false}
+          className="absolute inset-0 w-full h-full object-cover" />
+      )}
+      {!b.art && (BANNER_LAYERS[b.id] || []).map((l, i) => <SceneLayer key={`l${i}`} l={l} />)}
+      {!b.art && (b.motifs || []).map((m, i) => (
         <span key={i} className="absolute select-none"
           style={{
             left: m.x, top: m.y, fontSize: m.s * motifScale, lineHeight: 1,

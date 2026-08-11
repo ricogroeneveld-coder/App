@@ -286,6 +286,17 @@ for (const e of EMBLEMS) {
   if (art) e.art = art;
 }
 
+// Illustrated banner scenes — same pattern: drop `<id>.webp` (1200×400,
+// see docs/BANNER-ART-BRIEF.md) into src/assets/banners/ and the banner
+// renders the painted scene instead of its CSS gradient + emoji motifs.
+// Banners without a file keep the CSS path, so the set can grow one
+// image at a time.
+const BANNER_ART = import.meta.glob('../assets/banners/*.webp', { eager: true, import: 'default' });
+for (const b of BANNERS) {
+  const art = BANNER_ART[`../assets/banners/${b.id}.webp`];
+  if (art) b.art = art;
+}
+
 export const ALL_COSMETICS = [...EMBLEMS, ...BANNERS, ...BORDERS, ...TITLES, ...REWARD_TITLES, ...NAME_COLORS];
 
 const byId = Object.fromEntries(ALL_COSMETICS.map(c => [c.id, c]));
