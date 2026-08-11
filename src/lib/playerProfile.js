@@ -398,10 +398,23 @@ async function grantMatchRewardsInner({ room, players, guesses, me, roundKey }) 
   // Void it instead: no rewards, no stats, no streak change.
   if (topScore === 0) return null;
 
-  // A "win" for reward/stat purposes requires a competitive (>=3 player) game
-  // so a 2-tab self-farm can't mint the winner/perfect/streak stack (ECON-1).
+  // Two different questions, previously conflated:
+  //
+  //  isWinner     — should this pay the COMPOUNDING bonuses (winner picks,
+  //                 perfect, streak)? Only in a competitive (>=3 player) game,
+  //                 so a 2-tab self-farm can't mint that stack (ECON-1).
+  //  countsAsWin  — did the player actually win the round? True whenever they
+  //                 top a real game, 1v1 included.
+  //
+  // Gating BOTH on >=3 players meant the most common casual setup — two
+  // friends — could win and be told they hadn't: no Wins stat, "Win a game"
+  // never completed, and the win streak was reset BY WINNING. The results
+  // screen said "You Win" while the rewards disagreed. The win challenges are
+  // one-off per day/week/season and tiny next to per-round income, so crediting
+  // them for a genuine 1v1 win costs nothing the farm guard was protecting.
   const isTopScorer = (roundScore[me.id] || 0) === topScore && players.length > 1;
   const isWinner = isTopScorer && competitive;
+  const countsAsWin = isTopScorer;
   const myCorrect = guesses.filter(g => g.guesser_id === me.id && g.correct).length;
   const isHost = room.host_id === me.id;
   const perfect = isWinner && myCorrect >= players.length - 1;
@@ -422,7 +435,11 @@ async function grantMatchRewardsInner({ room, players, guesses, me, roundKey }) 
   if (perfect) add('perfect', ECONOMY.perfect);
   if (isHost) add('host', ECONOMY.host);
 
-  cache.win_streak = isWinner ? (cache.win_streak || 0) + 1 : 0;
+  // Competitive win extends the streak; a genuine LOSS ends it. Winning a 1v1
+  // does neither — it shouldn't feed the farmable streak bonus, but it must not
+  // punish the player by wiping a streak they didn't lose.
+  if (isWinner) cache.win_streak = (cache.win_streak || 0) + 1;
+  else if (!countsAsWin) cache.win_streak = 0;
   const streakIdx = Math.min(cache.win_streak, ECONOMY.streakBonus.length - 1);
   if (isWinner && ECONOMY.streakBonus[streakIdx] > 0) {
     add('streak', { picks: ECONOMY.streakBonus[streakIdx], xp: 0 });
@@ -433,7 +450,7 @@ async function grantMatchRewardsInner({ room, players, guesses, me, roundKey }) 
 
   // Stats
   cache.games_played += 1;
-  if (isWinner) cache.wins += 1;
+  if (countsAsWin) cache.wins += 1;   // a 1v1 win is still a win on your record
   cache.correct_guesses += myCorrect;
   if (room.category) {
     const cc = cache.category_counts || (cache.category_counts = {});
@@ -441,7 +458,7 @@ async function grantMatchRewardsInner({ room, players, guesses, me, roundKey }) 
   }
 
   bumpChallenges({
-    plays: 1, wins: isWinner ? 1 : 0, guesses: myCorrect,
+    plays: 1, wins: countsAsWin ? 1 : 0, guesses: myCorrect,
     hosts: isHost ? 1 : 0, bigGames: players.length >= 4 ? 1 : 0,
   }, breakdown);
   for (const c of breakdown.challenges) { breakdown.totalPicks += c.picks; }
