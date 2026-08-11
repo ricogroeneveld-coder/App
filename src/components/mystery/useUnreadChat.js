@@ -7,6 +7,10 @@ import { isMuted } from '@/lib/mutes';
 // lobby → word entry → playing → finished instead of resetting to 0 on
 // every transition. Rooms are short-lived; the map dies with the session.
 const counts = new Map();
+// CHAT-2: newest message timestamp (ms) this session has accounted for, per
+// room. Realtime doesn't replay rows missed while the socket was suspended, so
+// on wake we query for anything newer than this and fold it into the badge.
+const lastSeen = new Map();
 
 // ── NET-3: one shared chat subscription per room ──────────────────────────
 // The unread badge (this hook) and the open ChatPanel used to EACH open their
@@ -129,17 +133,52 @@ export default function useUnreadChat(roomCode, myId, isChatOpen, onEmote) {
   };
 
   useEffect(() => {
-    if (isChatOpen) set(roomCode, 0);
+    // Opening chat clears the badge AND marks everything up to now as seen, so
+    // a later wake-reconcile doesn't recount messages the reader already saw.
+    if (isChatOpen) { set(roomCode, 0); lastSeen.set(roomCode, Date.now()); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isChatOpen, roomCode]);
 
+  // CHAT-2: on wake, count messages that arrived while the socket was suspended
+  // (the live handler never saw them). Bounded to a single query, not a
+  // resubscribe (reconnection stays owned by the shared subscriber, NET-3).
+  useEffect(() => {
+    const reconcile = async () => {
+      if (document.visibilityState !== 'visible') return;
+      if (isChatOpenRef.current) { set(roomCode, 0); lastSeen.set(roomCode, Date.now()); return; }
+      try {
+        const since = lastSeen.get(roomCode) || 0;
+        const rows = await MysteryChat.filter({ room_code: roomCode }, '-created_date', 60);
+        const missed = (rows || []).filter(m =>
+          new Date(m.created_date).getTime() > since && m.user_id !== myId && !isMuted(m.user_id));
+        const newest = (rows || []).reduce((mx, m) => Math.max(mx, new Date(m.created_date).getTime()), since);
+        lastSeen.set(roomCode, newest);
+        if (missed.length) set(roomCode, (counts.get(roomCode) || 0) + missed.length);
+      } catch { /* transient — try again on the next wake */ }
+    };
+    document.addEventListener('visibilitychange', reconcile);
+    window.addEventListener('pageshow', reconcile);
+    window.addEventListener('online', reconcile);
+    return () => {
+      document.removeEventListener('visibilitychange', reconcile);
+      window.removeEventListener('pageshow', reconcile);
+      window.removeEventListener('online', reconcile);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomCode, myId]);
+
   useEffect(() => {
     setUnread(counts.get(roomCode) || 0);
+    if (!lastSeen.has(roomCode)) lastSeen.set(roomCode, Date.now());
     // Reconnection/wake is owned by the shared subscriber (NET-3); this hook
     // just registers a handler.
     const unsub = subscribeRoomChat(roomCode, (event) => {
       if (event.type !== 'create' || event.data?.room_code !== roomCode) return;
       if (isMuted(event.data.user_id)) return;
+      // Advance the seen-watermark for every live message so the wake-reconcile
+      // never double-counts one we already processed here.
+      const ts = event.data.created_date ? new Date(event.data.created_date).getTime() : Date.now();
+      if (ts > (lastSeen.get(roomCode) || 0)) lastSeen.set(roomCode, ts);
       if (onEmoteRef.current) {
         const emote = EMOTES.find(e => event.data.message?.includes(e));
         if (emote) {
