@@ -120,12 +120,20 @@ jobs:
             echo "::error::Provisioning profile '$PROFILE_NAME' lacks the iCloud key-value entitlement. Tick iCloud on the App ID (developer.apple.com), regenerate + re-download the App Store profile, and update the IOS_PROVISIONING_PROFILE secret with its base64."
             exit 1
           fi
-          # Same check for push. A profile snapshots its entitlements when it is
-          # ISSUED, so enabling Push on the App ID does not update a profile that
-          # already exists — it must be regenerated and the secret replaced.
-          # Checking here (rather than only after the archive) turns a confusing
-          # 90-second Xcode signing failure into an instant, specific message.
-          if ! echo "$PROFILE_PLIST" | plutil -extract 'Entitlements.aps-environment' raw - >/dev/null 2>&1; then
+          # Push: App.entitlements is the source of truth for INTENT. If it asks
+          # for aps-environment, the profile must carry it or signing fails — a
+          # profile snapshots its entitlements when ISSUED, so enabling Push on
+          # the App ID does not update an already-existing profile; it must be
+          # regenerated and this secret replaced. Checking here (rather than only
+          # after the archive) turns a confusing 90-second Xcode signing failure
+          # into an instant, specific message. If the entitlement is commented
+          # out, push is deliberately off and we only warn — so a push-less build
+          # can never be mistaken for a working one.
+          # (Parse the plist rather than grepping — a commented-out <key> is
+          #  still text in the file, but plutil correctly ignores it.)
+          if ! plutil -extract 'aps-environment' raw ios/App/App/App.entitlements >/dev/null 2>&1; then
+            echo "::warning::PUSH NOTIFICATIONS ARE DISABLED in this build — aps-environment is commented out in ios/App/App/App.entitlements, so registerPush() will never receive a token and notify-turn will send nothing. Re-enable by following the steps in that file."
+          elif ! echo "$PROFILE_PLIST" | plutil -extract 'Entitlements.aps-environment' raw - >/dev/null 2>&1; then
             echo "Entitlement keys actually present in '$PROFILE_NAME':"
             echo "$PROFILE_PLIST" | plutil -extract Entitlements xml1 -o - - | grep -o '<key>[^<]*</key>' | sed 's/<\/*key>//g' | sed 's/^/  - /' || true
             echo "::error::Provisioning profile '$PROFILE_NAME' lacks the aps-environment entitlement. Push IS enabled on the App ID (or this would also report a missing capability), but THIS profile predates that change. Go to developer.apple.com -> Profiles, REGENERATE the App Store profile for com.whatsmypick.app (edit + save is not always enough — delete and recreate if aps-environment still doesn't appear), download it, then update the IOS_PROVISIONING_PROFILE secret with 'base64 -i <file>'."
