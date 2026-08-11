@@ -123,6 +123,24 @@ export const MysteryChat = createEntity('mystery_chats');
 // client. Write-only from the browser: a player sets/updates/clears their own
 // word; correctness is judged server-side by the submit_mystery_guess RPC.
 export const MysterySecret = {
+  // Lock a player's word in. Prefers the SECURITY DEFINER RPC (migration 0010),
+  // which writes the secret AND flips word_submitted while bypassing RLS — so a
+  // policy misconfig on mystery_secrets can't block lock-in. Falls back to the
+  // direct writes if the RPC isn't deployed yet (needs the mystery_secrets
+  // insert policy present).
+  async submit(roomCode, userId, word) {
+    const { error } = await supabase.rpc('submit_mystery_word', {
+      p_room: roomCode, p_user: userId, p_word: word,
+    });
+    if (!error) return;
+    const missing = error.code === 'PGRST202' || error.code === '42883'
+      || /does not exist|could not find the function/i.test(error.message || '');
+    if (!missing) throw error;
+    await MysterySecret.set(roomCode, userId, word);
+    const { error: pErr } = await supabase.from('mystery_players')
+      .update({ word_submitted: true }).eq('room_code', roomCode).eq('user_id', userId);
+    if (pErr) throw pErr;
+  },
   async set(roomCode, userId, word) {
     const { error } = await supabase
       .from('mystery_secrets')
