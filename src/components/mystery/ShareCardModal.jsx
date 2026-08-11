@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { X, Share, Loader2 } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
+import { Dialog } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
 import { renderShareCard, canvasToBlob } from '@/lib/shareCard';
 import { shareImage, shareText } from '@/lib/share';
@@ -69,42 +70,35 @@ export default function ShareCardModal({ data, fallbackText, onClose }) {
   };
 
   return (
-    <AnimatePresence>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-6"
-        onClick={onClose}>
-        <motion.div initial={{ opacity: 0, scale: 0.88, y: 18 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ type: 'spring', duration: 0.5 }}
-          onClick={e => e.stopPropagation()}
-          className="w-full max-w-xs flex flex-col items-center">
-          {/* The card — presented like the collectible it is */}
-          <div className="relative w-full rounded-[24px] overflow-hidden ring-1 ring-white/20 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.8),0_0_40px_-12px_rgba(157,92,255,0.5)]"
-            style={{ aspectRatio: '3 / 4' }}>
-            {url ? (
-              <motion.img initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}
-                src={url} alt={t.shareResult} className="w-full h-full object-cover" draggable={false} />
-            ) : (
-              <div className="w-full h-full bg-[#0d0716] flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-violet-400 animate-spin drop-shadow-[0_0_8px_rgba(157,92,255,0.5)]" />
-              </div>
-            )}
-            <button onClick={onClose} aria-label={t.close}
-              className="absolute right-2 top-2 p-2.5 rounded-xl bg-black/35 backdrop-blur-sm hover:bg-black/50 text-white/85 transition">
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          <button onClick={doShare} disabled={!url || sharing}
-            className="gold-btn w-full h-14 mt-4 rounded-[20px] flex items-center justify-center gap-2 disabled:opacity-60">
-            {sharing
-              ? <Loader2 className="relative w-4 h-4 text-[#2c1500] animate-spin" />
-              : <Share className="relative w-4 h-4 text-[#2c1500]" />}
-            <span className="relative text-sm font-extrabold tracking-tight text-[#2c1500] drop-shadow-[0_1px_0_rgba(255,255,255,0.25)]">
-              {t.shareCardCta}
-            </span>
+    <Dialog onClose={onClose} placement="center" title={t.shareResult}
+      className="bg-black/75 backdrop-blur-md p-6"
+      panelClassName="max-w-xs flex flex-col items-center bg-transparent">
+        {/* The card — presented like the collectible it is */}
+        <div className="relative w-full rounded-[24px] overflow-hidden ring-1 ring-white/20 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.8),0_0_40px_-12px_rgba(157,92,255,0.5)]"
+          style={{ aspectRatio: '3 / 4' }}>
+          {url ? (
+            <motion.img initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}
+              src={url} alt={t.shareResult} className="w-full h-full object-cover" draggable={false} />
+          ) : (
+            <div className="w-full h-full bg-[#0d0716] flex items-center justify-center">
+              <Loader2 className="w-8 h-8 text-violet-400 animate-spin drop-shadow-[0_0_8px_rgba(157,92,255,0.5)]" />
+            </div>
+          )}
+          <button onClick={onClose} aria-label={t.close}
+            className="absolute right-2 top-2 p-2.5 rounded-xl bg-black/35 backdrop-blur-sm hover:bg-black/50 text-white/85 transition">
+            <X className="w-5 h-5" />
           </button>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+        </div>
+
+        <button onClick={doShare} disabled={!url || sharing}
+          className="gold-btn w-full h-14 mt-4 rounded-[20px] flex items-center justify-center gap-2 disabled:opacity-60">
+          {sharing
+            ? <Loader2 className="relative w-4 h-4 text-[#2c1500] animate-spin" />
+            : <Share className="relative w-4 h-4 text-[#2c1500]" />}
+          <span className="relative text-sm font-extrabold tracking-tight text-[#2c1500] drop-shadow-[0_1px_0_rgba(255,255,255,0.25)]">
+            {t.shareCardCta}
+          </span>
+        </button>
+    </Dialog>
   );
 }

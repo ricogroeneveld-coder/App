@@ -6,6 +6,7 @@ import { isPackUnlocked } from '@/lib/premiumPacks';
 import { purchasePack, purchasesAvailable, getPackPrices } from '@/lib/payments';
 import { useToast } from '@/components/ui/use-toast';
 import { useLang } from '@/lib/LanguageContext';
+import { Dialog } from '@/components/ui/dialog';
 import GameBackground from '@/components/GameBackground';
 
 function SelectionCard({ emoji, label, selected, onClick }) {
@@ -81,9 +82,10 @@ export default function CategorySelector({ selectedCategory, onSelect, onClose }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 h-dvh overflow-hidden text-white"
+    <Dialog onClose={handleBack} placement="center" titleId="category-selector-title"
+      dismissOnBackdrop={false}
+      className="p-0"
+      panelClassName="relative h-dvh max-w-none overflow-hidden text-white"
       style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)', paddingBottom: 'max(env(safe-area-inset-bottom), 0.5rem)' }}
     >
       <GameBackground />
@@ -101,7 +103,7 @@ export default function CategorySelector({ selectedCategory, onSelect, onClose }
           {view === 'categories' && (
             <motion.div key="categories" initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.2 }}>
               <div className="text-center mb-4">
-                <h1 className="text-xl font-extrabold tracking-tight text-white">{t.chooseCategory}</h1>
+                <h1 id="category-selector-title" className="text-xl font-extrabold tracking-tight text-white">{t.chooseCategory}</h1>
                 <p className="text-xs font-semibold text-white/[0.7] tracking-wide mt-0.5">{t.chooseCategorySub}</p>
               </div>
 
@@ -205,6 +207,6 @@ export default function CategorySelector({ selectedCategory, onSelect, onClose }
           )}
         </div>
       </div>
-    </motion.div>
+    </Dialog>
   );
 }

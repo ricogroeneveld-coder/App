@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
+import { Dialog } from '@/components/ui/dialog';
 import PlayerAvatar from './PlayerAvatar';
 import BannerArt from './BannerArt';
 import { cosmeticById, RARITIES, topEquippedRarity } from '@/lib/cosmetics';
@@ -40,13 +41,10 @@ export default function PlayerCardModal({ player, profile, onClose, onKick = und
   ];
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4"
-      onClick={onClose}>
-      <motion.div initial={{ opacity: 0, y: 40, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ type: 'spring', duration: 0.45 }}
-        onClick={e => e.stopPropagation()}
-        className={`relative w-full max-w-sm rounded-[24px] overflow-hidden ring-1 ${rar.ring} ${rar.cardGlow} shadow-[0_24px_48px_-16px_rgba(0,0,0,0.8)]`}
-        style={{ background: CARD_BG, marginBottom: 'max(env(safe-area-inset-bottom), 0rem)' }}>
+    <Dialog onClose={onClose} placement="bottom" titleId="player-card-title"
+      className="bg-black/70"
+      panelClassName={`relative max-w-sm rounded-[24px] overflow-hidden ring-1 ${rar.ring} ${rar.cardGlow} shadow-[0_24px_48px_-16px_rgba(0,0,0,0.8)]`}
+      style={{ background: CARD_BG, marginBottom: 'max(env(safe-area-inset-bottom), 0rem)' }}>
         {/* Live banner scene, melting into the card body */}
         <div className="relative h-24">
           <BannerArt banner={banner} animated className="absolute inset-0" />
@@ -78,7 +76,7 @@ export default function PlayerCardModal({ player, profile, onClose, onKick = und
           <span aria-hidden className="pointer-events-none absolute inset-x-0 top-16 h-40"
             style={{ background: 'radial-gradient(70% 70% at 50% 0%, rgba(157,92,255,0.09), transparent 70%)' }} />
 
-          <p className={`relative text-xl font-extrabold leading-tight truncate ${nameColor?.cls || 'text-white'}`}>
+          <p id="player-card-title" className={`relative text-xl font-extrabold leading-tight truncate ${nameColor?.cls || 'text-white'}`}>
             {player.display_name}
           </p>
           {title && (
@@ -126,7 +124,6 @@ export default function PlayerCardModal({ player, profile, onClose, onKick = und
             </button>
           )}
         </div>
-      </motion.div>
-    </div>
+    </Dialog>
   );
 }
