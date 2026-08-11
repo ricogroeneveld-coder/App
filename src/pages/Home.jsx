@@ -23,7 +23,7 @@ const PLAYER_COLORS = ['#6366f1','#ec4899','#f59e0b','#10b981','#3b82f6','#8b5cf
 export default function Home() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [joinCode, setJoinCode] = useState('');
   const [loading, setLoading] = useState(null);
   const [nameInput, setNameInput] = useState('');
@@ -135,7 +135,11 @@ export default function Home() {
             current_questioner_index: 0,
             round_number: 1,
             max_rounds: 10,
-            is_public: isPublic
+            is_public: isPublic,
+            // The room's language for GENERATED question text, so a mixed
+            // Dutch/English room doesn't fire auto-questions half of it can't
+            // read (migration 0014).
+            language: lang
           });
         } catch (err) {
           if (err?.code !== '23505' || attempt === 2) throw err;

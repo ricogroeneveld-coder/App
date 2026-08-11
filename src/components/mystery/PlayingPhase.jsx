@@ -266,7 +266,10 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
       const asker = freshAskers.find(p => p.user_id === currentId) || questioner;
       if (!asker) return;
       const prevTexts = (freshQs || []).slice(-8).map(q => q.question_text);
-      const autoQ = getRandomQuestion(fr.category, prevTexts, lang) || 'Is it bigger than a cat?';
+      // Room language, not this device's: in a mixed Dutch/English room an
+      // auto-question generated in the asker's language is unreadable to half
+      // the players, and it's stored as plain text so it never re-translates.
+      const autoQ = getRandomQuestion(fr.category, prevTexts, fr.language || lang);
       await MysteryQuestion.create({
         room_code: roomCode,
         round_number: fr.round_number,
@@ -423,7 +426,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
       const prevTexts = questions.slice(-8).map(q => q.question_text);
       // Picked locally from the static question bank — no server round-trip
       // needed. `lang` selects the Dutch bank in NL games (LOC-2).
-      const autoQ = getRandomQuestion(room.category, prevTexts, lang) || 'Is it something you can hold in one hand?';
+      const autoQ = getRandomQuestion(room.category, prevTexts, room.language || lang);
       await submitQuestionText(autoQ, true);
     } finally {
       setAutoAsking(false);

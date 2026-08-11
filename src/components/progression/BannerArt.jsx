@@ -115,6 +115,32 @@ const FX_SPOTS = [
   { x: '82%', delay: '7.4s', scale: 0.9 },
 ];
 
+// Tint used when an emoji effect is converted to particles over painted art —
+// keeps each banner's character without the literal sticker.
+const EMOJI_TINT = {
+  '☁️': 'rgba(255,255,255,0.9)', '🍬': '#f9a8d4', '❄️': '#bae6fd', '⚡': '#ffd36b',
+  '🫧': '#a5f3fc', '🌸': '#fbcfe8', '👻': '#ddd6fe',
+};
+
+// Painted-art banners keep the ambient MOTION but drop the emoji. The artwork
+// already depicts the scene, so a literal ⚡ or ❄️ drifting over it reads as a
+// leftover sticker from before the art existed — the CSS motifs are already
+// suppressed on art banners for exactly this reason, but the FX layer was not.
+// Emoji-less effects (the tinted ✦ particles) are what the art-era banners are
+// designed around, so those pass through untouched.
+function fxForBanner(b) {
+  const fx = BANNER_FX[b.id];
+  if (!fx || !b.art || !fx.e) return fx;
+  return {
+    ...fx,
+    // A pulse without an emoji needs a tintBg to show anything at all, so
+    // convert it to twinkling particles instead of leaving it invisible.
+    kind: fx.kind === 'pulse' && !fx.tintBg ? 'twinkle' : fx.kind,
+    e: undefined,
+    tint: fx.tint || EMOJI_TINT[fx.e] || 'rgba(255,255,255,0.85)',
+  };
+}
+
 function FxLayer({ fx }) {
   if (!fx) return null;
   if (fx.kind === 'aurora') {
@@ -174,7 +200,7 @@ export default function BannerArt({ banner, className = '', style = {}, motifSca
           {m.e}
         </span>
       ))}
-      {animated && <FxLayer fx={BANNER_FX[b.id]} />}
+      {animated && <FxLayer fx={fxForBanner(b)} />}
       <span className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
       <span className="absolute inset-0"
         style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.07) 0%, transparent 30%, rgba(0,0,0,0.28) 100%)' }} />
