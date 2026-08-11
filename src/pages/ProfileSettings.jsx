@@ -4,8 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MysteryPlayer, MysteryRoom } from '@/api/db';
 import { supabase } from '@/lib/supabaseClient';
 import { Button } from '@/components/ui/button';
+import { Dialog } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
-import { ArrowLeft, Trash2, AlertTriangle, Globe, DoorOpen, Volume2, Vibrate, LogOut, LogIn, RotateCcw, Shield, LifeBuoy } from 'lucide-react';
+import { ArrowLeft, Trash2, AlertTriangle, Globe, DoorOpen, Volume2, Vibrate, LogOut, LogIn, RotateCcw, Shield, LifeBuoy, FileText } from 'lucide-react';
 import { getGuestIdentity, clearGuestIdentity } from '@/lib/guestIdentity';
 import { useAuth } from '@/lib/AuthContext';
 import { useLang } from '@/lib/LanguageContext';
@@ -22,10 +23,20 @@ import { isNativeApp } from '@/lib/platform';
 
 // Public site pages (also linked from the App Store listing). Kept in one
 // place so the in-app links can't drift from the deployed files
-// (public/privacy.html and public/support.html).
-const SITE_BASE = 'https://jinnieoclock.com/whatsmypick';
+// (public/privacy.html, public/support.html and public/terms.html).
+//
+// IMPORTANT — the owner MUST set VITE_SITE_BASE at build time to wherever
+// these HTML files actually deploy. privacy.html / support.html / terms.html
+// live in public/, which most static hosts serve at the site ROOT
+// (https://example.com/privacy.html), NOT under a /whatsmypick subpath — so
+// the previous hardcoded base likely 404'd. Set VITE_SITE_BASE to the correct
+// origin (root or subpath) and VERIFY all three links open before submitting
+// to the App Store. Falls back to the previous value so nothing regresses if
+// the env var is unset.
+const SITE_BASE = import.meta.env.VITE_SITE_BASE || 'https://jinnieoclock.com/whatsmypick';
 const PRIVACY_URL = `${SITE_BASE}/privacy.html`;
 const SUPPORT_URL = `${SITE_BASE}/support.html`;
+const TERMS_URL = `${SITE_BASE}/terms.html`;
 
 export default function ProfileSettings() {
   const navigate = useNavigate();
@@ -377,6 +388,12 @@ export default function ProfileSettings() {
             <LifeBuoy className="w-5 h-5 text-violet-400 flex-shrink-0" />
             {t.supportFaq}
           </a>
+          <a href={TERMS_URL} target="_blank" rel="noopener"
+            className="flex items-center gap-3 pt-3 border-t border-white/10 text-sm font-semibold text-slate-300 hover:text-white transition min-h-[44px]">
+            <FileText className="w-5 h-5 text-violet-400 flex-shrink-0" />
+            {/* TODO i18n: add a `termsOfUse` key to en+nl in LanguageContext (out of scope for this change set). */}
+            Terms of Use
+          </a>
         </motion.div>
 
 
@@ -465,55 +482,48 @@ export default function ProfileSettings() {
         </motion.div>
       </div>
 
-      {/* Confirmation modal */}
+      {/* Confirmation modal — reference migration to the accessible <Dialog>
+          primitive. Keeps the exact look, the !deleting backdrop/Escape
+          dismiss guard, and the bottom-sheet placement. */}
       <AnimatePresence>
         {showConfirm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-            onClick={() => !deleting && setShowConfirm(false)}
+          <Dialog
+            onClose={() => !deleting && setShowConfirm(false)}
+            titleId="delete-confirm-title"
+            placement="bottom"
+            panelClassName="glass-card w-full max-w-sm bg-slate-900/95 p-5 space-y-4"
+            style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1.5rem)' }}
           >
-            <motion.div
-              initial={{ opacity: 0, y: 40, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 40, scale: 0.95 }}
-              onClick={(e) => e.stopPropagation()}
-              className="glass-card w-full max-w-sm bg-slate-900/95 p-5 space-y-4"
-              style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1.5rem)' }}
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-xl bg-rose-500/20 flex items-center justify-center flex-shrink-0">
-                  <AlertTriangle className="w-5 h-5 text-rose-400" />
-                </div>
-                <div>
-                  <p className="font-semibold text-white">{t.areYouSure}</p>
-                  <p className="text-slate-400 text-sm">{t.cannotBeUndone}</p>
-                </div>
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-rose-500/20 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="w-5 h-5 text-rose-400" />
               </div>
-              <p className="text-slate-300 text-sm leading-relaxed">
-                {isRegistered ? t.deleteAccountConfirm : t.deleteProfileConfirm}
-              </p>
-              <div className="flex gap-3">
-                <Button
-                  onClick={() => setShowConfirm(false)}
-                  disabled={deleting}
-                  variant="ghost"
-                  className="flex-1 h-11 bg-white/5 hover:bg-white/10 text-white border-white/10 select-none-interactive"
-                >
-                  {t.cancel}
-                </Button>
-                <Button
-                  onClick={handleDelete}
-                  disabled={deleting}
-                  className="flex-1 h-11 bg-rose-500 hover:bg-rose-600 border-0 text-white font-semibold select-none-interactive"
-                >
-                  {deleting ? t.deleting : t.yesDelete}
-                </Button>
+              <div>
+                <p id="delete-confirm-title" className="font-semibold text-white">{t.areYouSure}</p>
+                <p className="text-slate-400 text-sm">{t.cannotBeUndone}</p>
               </div>
-            </motion.div>
-          </motion.div>
+            </div>
+            <p className="text-slate-300 text-sm leading-relaxed">
+              {isRegistered ? t.deleteAccountConfirm : t.deleteProfileConfirm}
+            </p>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => setShowConfirm(false)}
+                disabled={deleting}
+                variant="ghost"
+                className="flex-1 h-11 bg-white/5 hover:bg-white/10 text-white border-white/10 select-none-interactive"
+              >
+                {t.cancel}
+              </Button>
+              <Button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 h-11 bg-rose-500 hover:bg-rose-600 border-0 text-white font-semibold select-none-interactive"
+              >
+                {deleting ? t.deleting : t.yesDelete}
+              </Button>
+            </div>
+          </Dialog>
         )}
       </AnimatePresence>
     </div>

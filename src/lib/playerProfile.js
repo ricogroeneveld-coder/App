@@ -329,6 +329,23 @@ export async function grantMatchRewards({ room, players, guesses, me }) {
   const roundKey = `${room.id}:${guesses[guesses.length - 1]?.id || 'r0'}`;
   if (granted[roundKey] && now - granted[roundKey] < 30 * 60 * 1000) return null;
 
+  // ── ECON-1 anti-farm ──────────────────────────────────────────────────
+  // The economy could be minted with two browser tabs "Play Again"-ing a
+  // 2-player room. Two guards:
+  //  (1) The compounding bonuses — winner, perfect, and the win streak — plus
+  //      the win STAT only pay out in genuinely competitive games (>=3 players).
+  //      A 1v1 still earns completion + per-guess + host rewards and full XP;
+  //      it just can't farm the winner/perfect/streak stack.
+  //  (2) A per-room hourly cap: only so many rounds in the SAME room pay out
+  //      within an hour, so replay-farming one room dries up fast. Legit
+  //      groups rarely exceed this; farmers hit it immediately.
+  const competitive = players.length >= 3;
+  const REPLAY_CAP_PER_HOUR = 10;
+  const hourAgo = now - 60 * 60 * 1000;
+  const roomRoundsThisHour = Object.entries(granted)
+    .filter(([k, ts]) => k.startsWith(`${room.id}:`) && ts > hourAgo).length;
+  if (roomRoundsThisHour >= REPLAY_CAP_PER_HOUR) return null;
+
   const myPlayer = players.find(p => p.user_id === me.id);
   if (!myPlayer) return null;
 
@@ -350,10 +367,13 @@ export async function grantMatchRewards({ room, players, guesses, me }) {
   // Void it instead: no rewards, no stats, no streak change.
   if (topScore === 0) return null;
 
-  const isWinner = (roundScore[me.id] || 0) === topScore && players.length > 1;
+  // A "win" for reward/stat purposes requires a competitive (>=3 player) game
+  // so a 2-tab self-farm can't mint the winner/perfect/streak stack (ECON-1).
+  const isTopScorer = (roundScore[me.id] || 0) === topScore && players.length > 1;
+  const isWinner = isTopScorer && competitive;
   const myCorrect = guesses.filter(g => g.guesser_id === me.id && g.correct).length;
   const isHost = room.host_id === me.id;
-  const perfect = isWinner && myCorrect >= players.length - 1 && players.length > 1;
+  const perfect = isWinner && myCorrect >= players.length - 1;
 
   const breakdown = { rows: [], levelUps: [], unlocks: [], challenges: [], totalPicks: 0, totalXp: 0 };
   const before = levelFromXp(cache.xp);

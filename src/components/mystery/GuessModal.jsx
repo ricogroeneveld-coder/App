@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { MysteryGuess, MysteryPlayer, MysteryRoom } from '@/api/db';
+import { supabase } from '@/lib/supabaseClient';
+import { track } from '@/lib/analytics';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { X, Check, XCircle } from 'lucide-react';
@@ -8,25 +9,17 @@ import { useLang } from '@/lib/LanguageContext';
 import { toDisplayWord } from '@/lib/wordLists';
 import { playCorrect, playWrong } from '@/lib/sounds';
 import { hapticSuccess, hapticError } from '@/lib/haptics';
-
-// Forgiving comparison for typed guesses: case, accents, punctuation, and
-// spacing never decide a round ("Coca Cola" vs "coca-cola", "Pokemon" vs
-// "Pokémon"). Tap-to-pick guesses were always exact; this matters for the
-// free-type path (Custom words).
-const normalizeGuess = (s) => (s || '')
-  .toLowerCase()
-  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-  .replace(/[^a-z0-9]+/g, '');
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import usePeerProfiles from '@/components/progression/usePeerProfiles';
 
-export default function GuessModal({ target, players, guesses, me, myPlayer, roomCode, room, questions, onClose, reload }) {
+export default function GuessModal({ target, players, guesses, me, myPlayer, roomCode, room, onClose, reload }) {
   const { toast } = useToast();
   const { t, lang } = useLang();
   const profiles = usePeerProfiles(players);
   const [selectedTarget, setSelectedTarget] = useState(target);
   const [guessWord, setGuessWord] = useState('');
   const [result, setResult] = useState(null); // 'correct' | 'wrong'
+  const [revealedWord, setRevealedWord] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const guessableOpponents = players.filter(p => {
@@ -40,40 +33,27 @@ export default function GuessModal({ target, players, guesses, me, myPlayer, roo
     if (!selectedTarget || !guessWord.trim()) return;
     setSubmitting(true);
     try {
-      const isCorrect = !!normalizeGuess(guessWord) &&
-        normalizeGuess(guessWord) === normalizeGuess(selectedTarget.secret_word);
-      await MysteryGuess.create({
-        room_code: roomCode,
-        guesser_id: me.id,
-        guesser_name: myPlayer?.display_name,
-        target_player_id: selectedTarget.user_id,
-        target_player_name: selectedTarget.display_name,
-        guessed_word: guessWord.trim(),
-        correct: isCorrect
+      // Correctness, the reveal, the +1 score, and the finish check are all
+      // decided SERVER-SIDE now (migration 0007). The client never sees the
+      // target's word (SEC-1) and can't forge `correct`/`score` (SEC-2);
+      // simultaneous guesses serialize on a row lock so they can't
+      // double-award or miss the end (GAME-6). The RPC returns the real word
+      // only when the guess is right (public by then).
+      const { data, error } = await supabase.rpc('submit_mystery_guess', {
+        p_room: roomCode,
+        p_guesser_id: me.id,
+        p_guesser_name: myPlayer?.display_name,
+        p_target_player_id: selectedTarget.id,
+        p_guessed: guessWord.trim(),
       });
-
-      // Consume the guess chance on submit (regardless of correct/wrong)
-      if (myPlayer) await MysteryPlayer.update(myPlayer.id, { last_guess_at_question_count: questions.length });
-
+      if (error) throw error;
+      const isCorrect = !!data?.correct;
+      track('guess_made', { correct: isCorrect });
       if (isCorrect) {
-        await Promise.all([
-          MysteryPlayer.update(selectedTarget.id, { word_revealed: true }),
-          MysteryPlayer.update(myPlayer.id, { score: (myPlayer.score || 0) + 1 })
-        ]);
+        setRevealedWord(data?.revealed_word || '');
         setResult('correct');
         playCorrect();
         hapticSuccess();
-
-        const updatedPlayers = players.map(p => {
-          if (p.id === selectedTarget.id) return { ...p, word_revealed: true };
-          if (p.id === myPlayer.id) return { ...p, score: (p.score || 0) + 1 };
-          return p;
-        });
-        const stillActive = updatedPlayers.filter(p => !p.is_eliminated && !p.word_revealed);
-        if (stillActive.length <= 1) {
-          const rooms = await MysteryRoom.filter({ room_code: roomCode });
-          if (rooms?.[0]) await MysteryRoom.update(rooms[0].id, { status: 'finished' });
-        }
       } else {
         setResult('wrong');
         playWrong();
@@ -108,7 +88,7 @@ export default function GuessModal({ target, players, guesses, me, myPlayer, roo
             </div>
             <p className="text-xl font-bold text-emerald-400">{t.correct}</p>
             <p className="text-slate-400 mt-1">{t.guessedWord(selectedTarget?.display_name)}</p>
-            <p className="text-2xl font-bold mt-2">{toDisplayWord(selectedTarget?.secret_word, lang)}</p>
+            <p className="text-2xl font-bold mt-2">{toDisplayWord(revealedWord, lang)}</p>
             <p className="text-sm text-amber-400 mt-3">{t.plusOnePoint}</p>
             <Button onClick={onClose} className="mt-5 w-full h-11 rounded-xl bg-gradient-to-b from-emerald-400 to-emerald-700 hover:brightness-110 border-0 font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_6px_-2px_rgba(0,0,0,0.5)] active:scale-[0.98] transition-all">{t.continueBtn}</Button>
           </div>

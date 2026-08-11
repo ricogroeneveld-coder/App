@@ -3,8 +3,9 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import { Button } from '@/components/ui/button';
-import { MysteryPlayer, MysteryQuestion, MysteryGuess, MysteryRoom } from '@/api/db';
+import { MysteryPlayer, MysteryQuestion, MysteryGuess, MysteryRoom, MysterySecret } from '@/api/db';
 import { leaveRoom } from '@/lib/roomLifecycle';
+import { track } from '@/lib/analytics';
 import { Trophy, Home, RotateCcw, Award, Palette, MessageCircle, Share } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { toDisplayWord } from '@/lib/wordLists';
@@ -41,9 +42,10 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
   useEffect(() => {
     let live = true;
     grantMatchRewards({ room, players, guesses, me }).then(b => { if (live && b) setBreakdown(b); });
+    track('game_finished', { players: players.length });
     return () => { live = false; };
     // Grant exactly once per results screen — the store is idempotent per room anyway.
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room?.id]);
   // p.score accumulates across "Play Again" rounds, but each round crowns its
   // OWN winner. playAgain wipes the room's guesses, so this round's points are
@@ -139,16 +141,20 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
         ...qs.map(q => MysteryQuestion.delete(q.id)),
         ...gs.map(g => MysteryGuess.delete(g.id))
       ]);
+      // Clear last round's secrets so no stale word carries into the rematch.
+      await MysterySecret.clearRoom(roomCode).catch(() => {});
       // Reset room to lobby so host can pick category again
       await MysteryRoom.update(room.id, {
         status: 'lobby',
         round_number: 1,
         current_questioner_index: 0,
+        current_questioner_id: null,
         category: '',
         question_deadline: null
       });
+      track('play_again');
     } catch(e) {
-      console.error(e);
+      toast({ title: t.errorTitle, description: e.message, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
