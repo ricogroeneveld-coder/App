@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { Dialog } from '@/components/ui/dialog';
 import { supabase } from '@/lib/supabaseClient';
 import { track } from '@/lib/analytics';
 import { Button } from '@/components/ui/button';
@@ -73,11 +73,10 @@ export default function GuessModal({ target, players, guesses, me, myPlayer, roo
     : [];
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
-      <motion.div initial={{ opacity:0, y:40 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:40 }}
-        className="glass-card w-full max-w-md bg-slate-900/95 p-5">
+    <Dialog onClose={onClose} placement="bottom" titleId="guess-modal-title"
+      panelClassName="glass-card bg-slate-900/95 p-5">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-bold">{t.makeAGuessTitle}</h3>
+          <h3 id="guess-modal-title" className="text-lg font-bold">{t.makeAGuessTitle}</h3>
           <button onClick={onClose} className="p-2.5 -m-1 rounded-xl hover:bg-white/10" aria-label={t.close}><X className="w-5 h-5" /></button>
         </div>
 
@@ -154,8 +153,7 @@ export default function GuessModal({ target, players, guesses, me, myPlayer, roo
             )}
           </>
         )}
-      </motion.div>
-    </div>
+    </Dialog>
   );
 }
 

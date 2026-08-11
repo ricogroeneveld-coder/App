@@ -22,6 +22,11 @@ const counts = new Map();
  */
 export default function useUnreadChat(roomCode, myId, isChatOpen, onEmote) {
   const [unread, setUnread] = useState(() => counts.get(roomCode) || 0);
+  // Bumped on wake/reconnect so the subscription is re-established — mobile
+  // browsers suspend the realtime socket in the background and it can come
+  // back dead, which used to silently stop the unread badge for the rest of
+  // the session (CHAT-2). This mirrors ChatPanel/MysteryGame's wake handling.
+  const [wakeEpoch, setWakeEpoch] = useState(0);
   const isChatOpenRef = useRef(isChatOpen);
   isChatOpenRef.current = isChatOpen;
   const onEmoteRef = useRef(onEmote);
@@ -38,7 +43,30 @@ export default function useUnreadChat(roomCode, myId, isChatOpen, onEmote) {
   }, [isChatOpen, roomCode]);
 
   useEffect(() => {
+    const wake = () => { if (document.visibilityState === 'visible') setWakeEpoch(n => n + 1); };
+    document.addEventListener('visibilitychange', wake);
+    window.addEventListener('pageshow', wake);
+    window.addEventListener('online', wake);
+    return () => {
+      document.removeEventListener('visibilitychange', wake);
+      window.removeEventListener('pageshow', wake);
+      window.removeEventListener('online', wake);
+    };
+  }, []);
+
+  useEffect(() => {
     setUnread(counts.get(roomCode) || 0);
+    let retryTimer = null;
+    let disposed = false;
+    const handleStatus = (status) => {
+      // A dead channel while the tab stays foregrounded won't fire a wake
+      // event — self-heal by bumping the epoch once (never on CLOSED, which
+      // also fires during our own teardown, to avoid a resubscribe loop).
+      if (disposed) return;
+      if ((status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') && !retryTimer) {
+        retryTimer = setTimeout(() => { if (!disposed) setWakeEpoch(n => n + 1); }, 3000);
+      }
+    };
     const unsub = MysteryChat.subscribe((event) => {
       if (event.type !== 'create' || event.data?.room_code !== roomCode) return;
       if (isMuted(event.data.user_id)) return;
@@ -50,10 +78,10 @@ export default function useUnreadChat(roomCode, myId, isChatOpen, onEmote) {
       if (event.data.user_id !== myId && !isChatOpenRef.current) {
         set(roomCode, (counts.get(roomCode) || 0) + 1);
       }
-    }, undefined, `room_code=eq.${roomCode}`);
-    return unsub;
+    }, handleStatus, `room_code=eq.${roomCode}`);
+    return () => { disposed = true; clearTimeout(retryTimer); unsub(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomCode, myId]);
+  }, [roomCode, myId, wakeEpoch]);
 
   return unread;
 }

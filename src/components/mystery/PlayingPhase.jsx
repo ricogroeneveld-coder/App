@@ -4,6 +4,7 @@ import { MysteryQuestion, MysteryRoom, MysteryPlayer } from '@/api/db';
 import { supabase } from '@/lib/supabaseClient';
 import { serverNow } from '@/lib/serverTime';
 import { track } from '@/lib/analytics';
+import { notifyUser } from '@/lib/push';
 import { leaveRoom } from '@/lib/roomLifecycle';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -13,6 +14,7 @@ import ChatPanel from '@/components/mystery/ChatPanel';
 import EmojiRain from '@/components/mystery/EmojiRain';
 import RoomTabBar from '@/components/mystery/RoomTabBar';
 import useUnreadChat from '@/components/mystery/useUnreadChat';
+import { Dialog } from '@/components/ui/dialog';
 import { BookOpen, MessageCircleQuestion, Trophy, Mic, Users, MessageCircle, Zap, Timer, Lightbulb, CheckCircle2, LogOut, Sparkles, X } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { toDisplayWord, shortCategory } from '@/lib/wordLists';
@@ -354,14 +356,18 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
         status: 'answering'
       });
       setQuestionText('');
+      const nextId = nextAskerId(me.id, askingPlayers);
       await MysteryRoom.update(fr.id, {
         round_number: fr.round_number + 1,
         // Advance by identity so eliminations/joins can't skip or repeat a turn.
-        current_questioner_id: nextAskerId(me.id, askingPlayers),
+        current_questioner_id: nextId,
         current_questioner_index: (fr.current_questioner_index + 1) % Math.max(askingPlayers.length, 1),
         // Next asker's shared deadline — see the timer/enforcement effects.
         question_deadline: nextDeadline()
       });
+      // Nudge the next asker back into the app if they've stepped away (no-op
+      // until APNs is configured, and never for ourselves).
+      if (nextId && nextId !== me.id) notifyUser(nextId, 'turn');
       track('question_asked', { auto: !!isAI });
     } catch(e) {
       toast({ title: t.errorTitle, description: e.message, variant: 'destructive' });
@@ -584,18 +590,15 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
       {/* Leave confirmation */}
       <AnimatePresence>
         {showLeaveConfirm && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
-              className="glass-card bg-slate-900/95 p-5 max-w-sm w-full">
-              <p className="font-extrabold text-lg mb-1">{t.leaveQuestion}</p>
-              <p className="text-slate-400 text-sm mb-4">{t.leaveBody}</p>
-              <div className="flex gap-2.5">
-                <Button onClick={() => setShowLeaveConfirm(false)} variant="ghost" className="flex-1 h-11 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10">{t.cancel}</Button>
-                <Button onClick={leaveGame} className="flex-1 h-11 rounded-xl bg-rose-500 hover:bg-rose-600 border-0 font-bold">{t.leave}</Button>
-              </div>
-            </motion.div>
-          </motion.div>
+          <Dialog onClose={() => setShowLeaveConfirm(false)} titleId="playing-leave-title"
+            panelClassName="glass-card bg-slate-900/95 p-5 max-w-sm">
+            <p id="playing-leave-title" className="font-extrabold text-lg mb-1">{t.leaveQuestion}</p>
+            <p className="text-slate-400 text-sm mb-4">{t.leaveBody}</p>
+            <div className="flex gap-2.5">
+              <Button onClick={() => setShowLeaveConfirm(false)} variant="ghost" className="flex-1 h-11 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10">{t.cancel}</Button>
+              <Button onClick={leaveGame} className="flex-1 h-11 rounded-xl bg-rose-500 hover:bg-rose-600 border-0 font-bold">{t.leave}</Button>
+            </div>
+          </Dialog>
         )}
       </AnimatePresence>
 

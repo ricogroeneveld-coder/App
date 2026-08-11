@@ -13,6 +13,8 @@ import { loadProfile, getProfile, subscribeProfile, ensureDailyLogin } from '@/l
 import { ALL_COSMETICS, cosmeticById } from '@/lib/cosmetics';
 import { isNativeApp } from '@/lib/platform';
 import { Keyboard, KeyboardResize } from '@capacitor/keyboard';
+import { track } from '@/lib/analytics';
+import { TERMS_URL, PRIVACY_URL } from '@/lib/links';
 import heroImage from '../../home-hero.webp';
 
 const PLAYER_COLORS = ['#6366f1','#ec4899','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ef4444','#14b8a6','#f97316','#06b6d4','#84cc16','#a855f7'];
@@ -84,6 +86,7 @@ export default function Home() {
     if (!nameInput.trim()) { toast({ title: t.enterYourName, variant: 'destructive' }); return; }
     setGuestName(nameInput.trim());
     setNameSet(true);
+    track('name_set', { via: 'home' });
     // A brand-new player has no reason to know the rules modal exists behind
     // the header icon — show it once, right after they've named themselves,
     // instead of leaving it to be discovered by accident. The day-1 reward
@@ -147,6 +150,7 @@ export default function Home() {
         is_eliminated: false,
         color: PLAYER_COLORS[0]
       });
+      track('lobby_created', { public: isPublic });
       navigate(`/mystery/${code}`);
     } catch (e) {
       toast({ title: t.failedToCreate, description: e.message, variant: 'destructive' });
@@ -184,6 +188,7 @@ export default function Home() {
         is_eliminated: false,
         color: PLAYER_COLORS[players.length % PLAYER_COLORS.length]
       });
+      track('lobby_joined', { via: 'code' });
       navigate(`/mystery/${code}`);
     } catch (e) {
       toast({ title: t.failedToJoin, description: e.message, variant: 'destructive' });
@@ -325,6 +330,13 @@ export default function Home() {
                 {t.letsPlay}
               </span>
             </button>
+            {/* UGC/App Store: surface Terms + Privacy at the entry point (LAUNCH-3). */}
+            <p className="text-center text-[11px] text-slate-500 leading-relaxed px-4">
+              {t.byPlayingAgree}{' '}
+              <a href={TERMS_URL} target="_blank" rel="noopener" className="underline hover:text-slate-300">{t.termsOfUse}</a>
+              {' & '}
+              <a href={PRIVACY_URL} target="_blank" rel="noopener" className="underline hover:text-slate-300">{t.privacyPolicy}</a>.
+            </p>
           </motion.div>
         ) : (
           <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.2 }}>

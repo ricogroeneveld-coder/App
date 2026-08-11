@@ -7,6 +7,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { ChevronLeft, RefreshCw, LogIn, Globe, Loader2 } from 'lucide-react';
 import { getGuestIdentity } from '@/lib/guestIdentity';
 import { categoryMeta, shortCategory } from '@/lib/wordLists';
+import { track } from '@/lib/analytics';
 import { useLang } from '@/lib/LanguageContext';
 import GameBackground from '@/components/GameBackground';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
@@ -122,6 +123,7 @@ export default function BrowseLobbies() {
           color: PLAYER_COLORS[players.length % PLAYER_COLORS.length]
         });
       }
+      track('lobby_joined', { via: 'browse' });
       navigate(`/mystery/${room.room_code}`);
     } catch (e) {
       toast({ title: t.failedToJoin, description: e.message, variant: 'destructive' });

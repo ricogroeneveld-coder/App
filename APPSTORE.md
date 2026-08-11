@@ -160,12 +160,48 @@ Sign In / Providers → "Allow anonymous sign-ins" → ON) together with
 migration 0004 — without those, profile cloud sync pauses (local play
 is unaffected).
 
+## 6c. Push notifications — code done, APNs is a dashboard/env step (LAUNCH-4)
+
+The app registers for push on native (`src/lib/push.js`), stores device
+tokens in `push_tokens` (migration 0009), and sends "it's your turn" via the
+`notify-turn` Edge Function (`supabase/functions/notify-turn`). All of it is
+**inert until APNs is configured** — same "code ships, credentials are a
+dashboard step" pattern as RevenueCat. To turn it on:
+
+1. developer.apple.com → Identifiers → `com.whatsmypick.app` → tick **Push
+   Notifications**. In Xcode, add the **Push Notifications** capability (this
+   adds the `aps-environment` entitlement); the CI signing profile then picks
+   it up. Capacitor already syncs the `@capacitor/push-notifications` plugin
+   into `ios/` on `npm run ios`.
+2. Create an **APNs Auth Key** (Keys → "+" → Apple Push Notifications
+   service) and download the `.p8` (once only). Note the **Key ID** and your
+   **Team ID**.
+3. Deploy the function: `npx supabase functions deploy notify-turn`.
+4. Set its secrets:
+   ```bash
+   npx supabase secrets set \
+     APNS_KEY_ID=XXXXXXXXXX APNS_TEAM_ID=YYYYYYYYYY \
+     APNS_BUNDLE_ID=com.whatsmypick.app \
+     APNS_HOST=api.push.apple.com \
+     APNS_PRIVATE_KEY="$(cat AuthKey_XXXXXXXXXX.p8)"
+   ```
+   Use `api.sandbox.push.apple.com` for TestFlight/dev builds. Until these are
+   set, the function returns `{ ok:true, skipped:'apns_not_configured' }` and
+   the client calls are best-effort no-ops.
+
 ## 7. Before every store build
 
 - `dist/` built from a clean `npm run build`
-- Supabase migrations 0001–0006 applied (0006 adds the atomic answer RPC
-  and the profile delete policy — without it the app falls back to the old
-  racy answer merge, and "Delete my profile" can't remove the remote row)
+- Supabase migrations 0001–0009 applied. Highlights: **0006** atomic answer
+  RPC + profile delete policy; **0007** server-authoritative gameplay (secrets
+  isolated to a non-readable `mystery_secrets` table + `submit_mystery_guess`
+  RPC + `resolve_stalled_question`; `score`/`word_revealed` columns revoked
+  from clients; `current_questioner_id`; `unique(room_code,user_id)`); **0008**
+  analytics events; **0009** push tokens. Without 0007 the app cannot resolve
+  guesses (guessing hard-fails) — it must be applied before shipping.
+- Set `VITE_SITE_BASE` to wherever `public/privacy.html`/`support.html`/
+  `terms.html` actually deploy (root vs subpath) and confirm all three links
+  open from Settings, or the App Store privacy/terms URLs may 404 (LAUNCH-2).
 - Optional: set `VITE_SENTRY_DSN` (GitHub secret, same place as the other
   build secrets) to enable crash reporting — without it no Sentry code
   ships at all
