@@ -14,12 +14,16 @@
 #   VITE_SUPABASE_ANON_KEY — the project's anon/public key (same page)
 #   VITE_REVENUECAT_IOS_KEY — RevenueCat → Project → API Keys → the "Apple App
 #                             Store" public app key (starts with "appl_")
-#   VITE_SITE_BASE         — the ORIGIN where public/privacy.html, support.html
-#                             and terms.html deploy, e.g. https://whatsmypick.com
-#                             (NO trailing path). The in-app legal links AND the
-#                             App Store Connect privacy URL use this; the build
-#                             FAILS below if it's unset so a store build can't
-#                             ship a 404 placeholder (LAUNCH-1).
+#   VITE_SITE_BASE         — the ORIGIN where this app's web build (and with it
+#                             public/privacy.html, support.html, terms.html) is
+#                             deployed — whatever domain that is, with NO
+#                             trailing path. Native needs it spelled out because
+#                             the Capacitor webview's origin isn't a real
+#                             address; the web build resolves these same-origin
+#                             on its own and needs no configuration. The in-app
+#                             legal links AND the App Store Connect privacy URL
+#                             use this, so the build FAILS below if it's unset
+#                             rather than shipping a dead link (LAUNCH-1).
 #
 # Signing is fully MANUAL and explicit: a real Distribution certificate is
 # imported into a CI keychain and a real App Store provisioning profile is
@@ -71,7 +75,7 @@ jobs:
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
         run: |
           if [ -z "$VITE_SITE_BASE" ]; then
-            echo "::error::VITE_SITE_BASE secret is not set. Set it to the origin where public/privacy.html, support.html and terms.html deploy (e.g. https://whatsmypick.com) and verify all three links resolve before submitting — otherwise the in-app legal links and the App Store privacy URL 404 (LAUNCH-1)."
+            echo "::error::VITE_SITE_BASE secret is not set. Set it to the origin where this app's web build is deployed (the domain serving privacy.html / support.html / terms.html, no trailing path) and open all three links to confirm they resolve — otherwise the in-app legal links and the App Store privacy URL 404 (LAUNCH-1)."
             exit 1
           fi
           npm ci
