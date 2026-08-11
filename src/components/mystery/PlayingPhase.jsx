@@ -41,6 +41,10 @@ const MAX_HINT_LENGTH = 120;
 // How long a question may wait on answers before any client force-completes it
 // so an absent (backgrounded / dropped) answerer can't freeze the room (STUCK-1).
 const ANSWER_TIMER_MS = 45000;
+// How long the hint round waits before an awake client fills in placeholder
+// hints for absent players, so one backgrounded player can't freeze the whole
+// game during a hint break (GAME-N1) — the hint-phase analogue of ANSWER_TIMER_MS.
+const HINT_TIMER_MS = 60000;
 
 const nextDeadline = () => new Date(serverNow() + QUESTION_TIMER_SECONDS * 1000).toISOString();
 
@@ -301,6 +305,79 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
     return () => clearInterval(iv);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room.status, inHintBreak, questions, activePlayers, currentQuestionPending, me?.id]);
+
+  // Hint-freeze breaker (GAME-N1): the hint round blocks all play until every
+  // active player submits a hint, and — unlike every other phase — had no
+  // timeout. One backgrounded player there froze the whole room until the 2h
+  // cron. Once the break has been open past HINT_TIMER_MS (+ staggered grace so
+  // one client usually fires), an awake client fills placeholder hints for the
+  // players who haven't submitted; the break then clears and asking resumes.
+  const hintEnforcedRef = useRef('');
+  useEffect(() => {
+    if (room.status !== 'playing' || !inHintBreak || !me?.id) return;
+    const breakStart = lastNormalQ?.updated_date ? new Date(lastNormalQ.updated_date).getTime()
+      : lastNormalQ?.created_date ? new Date(lastNormalQ.created_date).getTime() : serverNow();
+    const iv = setInterval(() => {
+      const rank = activePlayers2.findIndex(p => p.user_id === me.id);
+      const myRank = rank < 0 ? activePlayers2.length : rank;
+      const fireAt = breakStart + HINT_TIMER_MS + ENFORCE_GRACE_MS + myRank * ENFORCE_STAGGER_MS;
+      if (serverNow() < fireAt) return;
+      const key = String(hintPhaseNumber);
+      if (hintEnforcedRef.current === key) return;
+      hintEnforcedRef.current = key;
+      enforceStalledHints(key);
+    }, 1000);
+    return () => clearInterval(iv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [room.status, inHintBreak, hintPhaseNumber, lastNormalQ, activePlayers2, me?.id]);
+
+  const enforceStalledHints = async (key) => {
+    let done = false;
+    try {
+      const [freshQs, freshPlayers] = await Promise.all([
+        MysteryQuestion.filter({ room_code: roomCode }),
+        MysteryPlayer.filter({ room_code: roomCode }),
+      ]);
+      const active = (freshPlayers || []).filter(p => !p.is_eliminated && !p.word_revealed);
+      const missing = active.filter(p => !(freshQs || []).some(q =>
+        q.question_text?.startsWith('[HINT]') && q.asker_id === p.user_id && Number(q.round_number) === hintPhaseNumber));
+      if (!missing.length) { done = true; return; }
+      await Promise.all(missing.map(p => MysteryQuestion.create({
+        room_code: roomCode,
+        round_number: hintPhaseNumber,
+        question_text: '[HINT] —',
+        asker_id: p.user_id,
+        asker_name: p.display_name,
+        is_ai: true,
+        answers: {},
+        status: 'complete',
+      })));
+      // Asking resumes now — give the next asker a fresh turn deadline.
+      await MysteryRoom.update(room.id, { question_deadline: nextDeadline() }).catch(() => {});
+      done = true;
+    } catch { /* release the latch so a later tick can retry (GAME-5 pattern) */ }
+    finally {
+      if (!done && hintEnforcedRef.current === key) hintEnforcedRef.current = '';
+    }
+  };
+
+  // Turn-holder left mid-turn (GAME-N3): current_questioner_id points at a player
+  // who is no longer in the asking roster, so the positional fallback shows
+  // *some* present player "your turn" — but submitQuestionText's fresh check
+  // compares against the stale stored id and silently drops their question. The
+  // derived fallback claims the turn for real by writing current_questioner_id,
+  // so their Ask works instead of vanishing into a ~30–70s void.
+  useEffect(() => {
+    if (room.status !== 'playing' || inHintBreak) return;
+    if (!room.current_questioner_id || !me?.id) return;
+    if (askingPlayers.some(p => p.user_id === room.current_questioner_id)) return;
+    if (!questioner || questioner.user_id !== me.id) return;
+    MysteryRoom.update(room.id, {
+      current_questioner_id: questioner.user_id,
+      question_deadline: nextDeadline(),
+    }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [room.status, room.current_questioner_id, inHintBreak, askingPlayers, me?.id]);
 
   const handleAutoQuestion = async (isTimeout = false) => {
     if (autoAsking) return;
