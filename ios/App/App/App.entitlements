@@ -20,7 +20,10 @@
 	          it without push.)
 	       3. base64 the .mobileprovision and put it in the
 	          IOS_PROVISIONING_PROFILE GitHub secret.
-	       4. Uncomment the two lines below.
+	       4. Uncomment the two lines below, AND set VITE_PUSH_ENABLED=1 in the
+	          build env (the CI step's env block). The app deliberately skips
+	          the notification-permission prompt while that flag is unset, so
+	          it never asks for a permission it cannot honor — see src/lib/push.js.
 	     CI checks these two stay consistent: if this key is present, the
 	     profile MUST carry it; if absent, the build warns that push is off.
 
