@@ -1,7 +1,9 @@
-// Local-only pack ownership tracking. There is no real payment backend yet —
-// "purchasing" a pack here just unlocks it in this browser. Swap this out
-// for real IAP/Stripe once monetization is wired up; the Category Selector
-// only depends on isPackUnlocked/unlockPack, so that's the one file to change.
+// Local cache of unlocked packs. Real purchases go through Apple IAP via
+// RevenueCat (src/lib/payments.js); this localStorage cache is just the fast,
+// synchronous gate the Category Selector reads. On native it is RECONCILED to
+// RevenueCat's entitlements at startup (reconcilePacks below), so it is a
+// mirror of the authoritative server state, not a trust boundary — a
+// hand-edited unlock is wiped on the next launch (SEC-4).
 const UNLOCKED_KEY = 'mystery_unlocked_packs';
 
 export function getUnlockedPacks() {
@@ -22,4 +24,13 @@ export function unlockPack(packId) {
   if (!current.includes(packId)) {
     localStorage.setItem(UNLOCKED_KEY, JSON.stringify([...current, packId]));
   }
+}
+
+// Set the local cache to EXACTLY the authoritative set (RevenueCat entitlements
+// on native). Unlike unlockPack this also REMOVES packs that aren't entitled,
+// so a hand-edited localStorage unlock can't grant paid content for free (SEC-4).
+export function reconcilePacks(entitledPackIds) {
+  try {
+    localStorage.setItem(UNLOCKED_KEY, JSON.stringify([...new Set(entitledPackIds || [])]));
+  } catch { /* ignore */ }
 }

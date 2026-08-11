@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { serverNow } from '@/lib/serverTime';
 import { track } from '@/lib/analytics';
 import { notifyUser } from '@/lib/push';
+import { breakStreakOnLeave } from '@/lib/playerProfile';
 import { leaveRoom } from '@/lib/roomLifecycle';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -461,6 +462,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
   };
 
   const leaveGame = async () => {
+    breakStreakOnLeave(); // ECON-9: forfeit the win streak on a live-match rage quit
     try {
       if (myPlayer) {
         const remaining = players.filter(p => p.id !== myPlayer.id && !p.is_eliminated);

@@ -13,6 +13,29 @@ import { supabase } from '@/lib/supabaseClient';
 // themselves, and the game only works if every player in a room can freely
 // read and write the shared room/players/questions/guesses/chat state. Don't
 // put anything sensitive in these tables.
+
+// NET-6: a Supabase one-shot request (a dead socket, a stalled fetch, a proxy
+// black hole) can hang forever with no error, leaving the caller spinning on
+// an await that never settles. Race every one-shot query against a timeout
+// that REJECTS, so the caller's existing try/catch surfaces an error instead
+// of the UI hanging. The realtime `.subscribe` path is deliberately NOT
+// wrapped — it's a long-lived channel, not a request that should time out.
+const REQUEST_TIMEOUT_MS = 10000;
+
+function withTimeout(thenable, table) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error(`Supabase ${table} request timed out`)),
+      REQUEST_TIMEOUT_MS
+    );
+  });
+  // Promise.race accepts the PostgREST builder (a thenable); awaiting it kicks
+  // off the request exactly once. clearTimeout stops the pending rejection from
+  // firing (and leaking the timer) once the real call wins the race.
+  return Promise.race([Promise.resolve(thenable), timeout]).finally(() => clearTimeout(timer));
+}
+
 function createEntity(table) {
   return {
     /**
@@ -30,25 +53,28 @@ function createEntity(table) {
       const descending = sortSpec.startsWith('-');
       q = q.order(descending ? sortSpec.slice(1) : sortSpec, { ascending: !descending });
       if (limit) q = q.limit(limit);
-      const { data, error } = await q;
+      const { data, error } = await withTimeout(q, table); // NET-6
       if (error) throw error;
       return data;
     },
 
     async create(fields) {
-      const { data, error } = await supabase.from(table).insert(fields).select().single();
+      const { data, error } = await withTimeout(
+        supabase.from(table).insert(fields).select().single(), table); // NET-6
       if (error) throw error;
       return data;
     },
 
     async update(id, patch) {
-      const { data, error } = await supabase.from(table).update(patch).eq('id', id).select().single();
+      const { data, error } = await withTimeout(
+        supabase.from(table).update(patch).eq('id', id).select().single(), table); // NET-6
       if (error) throw error;
       return data;
     },
 
     async delete(id) {
-      const { error } = await supabase.from(table).delete().eq('id', id);
+      const { error } = await withTimeout(
+        supabase.from(table).delete().eq('id', id), table); // NET-6
       if (error) throw error;
       return true;
     },

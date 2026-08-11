@@ -4,6 +4,7 @@
 // the table isn't migrated yet, so the app never breaks.
 import { supabase } from './supabaseClient';
 import { getGuestIdentity } from './guestIdentity';
+import { serverNow } from './serverTime';
 import {
   ECONOMY, levelFromXp, dailyChallenges, WEEKLY, SEASON, SEASON_ID,
   todayKey, weekKey, loginReward,
@@ -12,6 +13,9 @@ import { STARTER_OWNED, DEFAULT_EQUIPPED, cosmeticById, levelUnlocks, ALL_COSMET
 
 const LS_KEY = 'wmp_profile_v1';
 let cache = null;
+// In-flight guard for match-reward granting (ECON-7): blocks a double-invoke
+// (StrictMode / remount) from paying the same round twice before save() lands.
+const grantingRounds = new Set();
 let remoteOk = true; // flips false once the table proves missing
 let remoteState = 'unknown'; // 'unknown' | 'ok' | 'missing'
 const listeners = new Set();
@@ -261,10 +265,14 @@ export function grantBetaCosmetics() {
 
 export async function ensureDailyLogin() {
   await loadProfile();
-  const today = todayKey();
+  // Use SERVER time, not the device clock (ECON-5): winding the phone clock
+  // forward a day used to re-trigger the login reward and bump the streak.
+  // serverNow() is re-synced at startup, so an online player can't fast-forward
+  // the daily reset. (Offline falls back to the local clock — same as before.)
+  const today = todayKey(new Date(serverNow()));
   const d = cache.daily || {};
   if (d.last === today) return null;
-  const yesterday = todayKey(new Date(Date.now() - 86400000));
+  const yesterday = todayKey(new Date(serverNow() - 86400000));
   const streak = d.last === yesterday ? (d.streak || 0) + 1 : 1;
   const picks = loginReward(streak);
   cache.daily = { ...d, last: today, streak };
@@ -323,10 +331,22 @@ export function challengeState() {
 
 export async function grantMatchRewards({ room, players, guesses, me }) {
   if (!room || !me?.id) return null;
+  const roundKey = `${room.id}:${guesses[guesses.length - 1]?.id || 'r0'}`;
+  // ECON-7: serialize concurrent calls for the same round so a double-invoke
+  // can't both pass the persisted idempotency check and double-pay.
+  if (grantingRounds.has(roundKey)) return null;
+  grantingRounds.add(roundKey);
+  try {
+    return await grantMatchRewardsInner({ room, players, guesses, me, roundKey });
+  } finally {
+    grantingRounds.delete(roundKey);
+  }
+}
+
+async function grantMatchRewardsInner({ room, players, guesses, me, roundKey }) {
   await loadProfile();
   const now = Date.now();
   const granted = cache.granted || (cache.granted = {});
-  const roundKey = `${room.id}:${guesses[guesses.length - 1]?.id || 'r0'}`;
   if (granted[roundKey] && now - granted[roundKey] < 30 * 60 * 1000) return null;
 
   // ── ECON-1 anti-farm ──────────────────────────────────────────────────
@@ -433,6 +453,14 @@ export async function grantMatchRewards({ room, players, guesses, me }) {
 // ── Cosmetics ──────────────────────────────────────────────────────────────
 
 export function ownsCosmetic(id) { return getProfile().owned.includes(id); }
+
+// Bailing on a live match forfeits the win streak (ECON-9) — otherwise a
+// player could keep a streak alive by rage-quitting any match they're losing
+// before it reaches the results screen (where the streak would normally reset).
+export function breakStreakOnLeave() {
+  getProfile();
+  if (cache.win_streak) { cache.win_streak = 0; save(); }
+}
 
 export function purchaseCosmetic(id) {
   getProfile();

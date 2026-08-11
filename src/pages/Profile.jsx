@@ -16,6 +16,7 @@ import { ALL_COSMETICS, cosmeticById, RARITIES, TYPE_LABELS, topEquippedRarity, 
 import { shortCategory } from '@/lib/wordLists';
 import { setGuestName, normalizeName, MAX_NAME_LENGTH } from '@/lib/guestIdentity';
 import { SEASON_NAME, todayKey, msUntilNextDay, levelFromXp } from '@/lib/progression';
+import { serverNow } from '@/lib/serverTime';
 import { isDevToolsEnabled } from '@/lib/platform';
 
 const TYPE_ORDER = ['emblem', 'banner', 'border', 'title', 'nameColor'];
@@ -360,11 +361,11 @@ export default function Profile() {
 
   // "New stock in 5h 12m" — a rotation without a visible clock reads as
   // static inventory. Ticks each minute; only rendered on the shop tab.
-  const [rotateLeft, setRotateLeft] = useState(msUntilNextDay());
+  const [rotateLeft, setRotateLeft] = useState(msUntilNextDay(new Date(serverNow())));
   useEffect(() => {
     if (tab !== 'shop') return;
-    setRotateLeft(msUntilNextDay());
-    const iv = setInterval(() => setRotateLeft(msUntilNextDay()), 60000);
+    setRotateLeft(msUntilNextDay(new Date(serverNow())));
+    const iv = setInterval(() => setRotateLeft(msUntilNextDay(new Date(serverNow()))), 60000);
     return () => clearInterval(iv);
   }, [tab]);
   const rotateCountdown = (() => {
@@ -448,9 +449,11 @@ export default function Profile() {
   const shopItems = ALL_COSMETICS.filter(c => c.source.type === 'shop' && !isHiddenCosmetic(c.id));
   // The whole shop rotates every 24h: a deterministic date-seeded shuffle
   // picks one row (3 items) per section, so every visit after midnight shows
-  // a fresh stock. Anything not in today's stock stays buyable from the
-  // Collection tab.
-  const seed = Number(todayKey().replaceAll('-', ''));
+  // fresh stock. This daily rotation is intentional (the "come back tomorrow
+  // for the item you want" hook) — an item that isn't in stock today comes
+  // back around on a later day. Collection-set items are also buyable anytime
+  // from their album; other items wait for their rotation slot.
+  const seed = Number(todayKey(new Date(serverNow())).replaceAll('-', ''));
   const seededPick = (arr, n, s) => {
     const a = [...arr];
     let x = s || 1;
@@ -554,9 +557,10 @@ export default function Profile() {
               <span className="text-[11px] font-extrabold text-violet-300 shrink-0">Lv {lvl.level}</span>
               <div className="flex-1 h-2 rounded-full bg-black/40 ring-1 ring-white/10 overflow-hidden">
                 <div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 shadow-[0_0_8px_rgba(157,92,255,0.5)]"
-                  style={{ width: `${(lvl.into / lvl.need) * 100}%` }} />
+                  style={{ width: `${Math.min((lvl.into / lvl.need) * 100, 100)}%` }} />
               </div>
-              <span className="text-[10px] font-bold text-slate-400 shrink-0 tabular-nums">{lvl.into}/{lvl.need} XP</span>
+              {/* ECON-8: at the cap show MAX instead of an overflowing ratio. */}
+              <span className="text-[10px] font-bold text-slate-400 shrink-0 tabular-nums">{lvl.maxed ? 'MAX' : `${lvl.into}/${lvl.need} XP`}</span>
             </div>
             {/* Stats */}
             <div className="relative grid grid-cols-4 gap-1.5 mt-3">

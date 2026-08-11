@@ -20,7 +20,7 @@
 // ProfileSettings exposes it.
 
 import { Purchases } from '@revenuecat/purchases-capacitor';
-import { unlockPack, isPackUnlocked } from './premiumPacks';
+import { unlockPack, isPackUnlocked, reconcilePacks } from './premiumPacks';
 import { isNativeApp, isDevToolsEnabled } from './platform';
 
 export const PRODUCTS = {
@@ -64,12 +64,11 @@ export async function configurePurchases() {
   // (Settings → Restore Purchases stays as the manual, Apple-required path).
   try {
     const { customerInfo } = await Purchases.getCustomerInfo();
-    for (const packId of Object.keys(PRODUCTS)) {
-      if (customerInfo.entitlements.active[packId] && !isPackUnlocked(packId)) {
-        unlockPack(packId);
-      }
-    }
-  } catch { /* offline — the manual restore button still exists */ }
+    // RevenueCat is the source of truth (SEC-4): mirror its active entitlements
+    // exactly, which unlocks a reinstalling buyer's packs AND strips any
+    // hand-edited localStorage unlock that isn't actually owned.
+    reconcilePacks(Object.keys(PRODUCTS).filter(packId => customerInfo.entitlements.active[packId]));
+  } catch { /* offline — RevenueCat's cache/Restore Purchases still covers it */ }
 }
 
 // Localized store prices, e.g. { pop_culture: "€2,99" }. Fetched once from

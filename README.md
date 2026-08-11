@@ -154,8 +154,11 @@ game.
 This was originally built on base44; this version is fully independent of
 it. A few things were intentionally simplified along the way:
 
-- **No payments.** The original had a Stripe-based paywall for some word
-  packs. Everything is unlocked here — there's no billing integration.
+- **Payments are Apple IAP, not Stripe.** The original had a Stripe-based
+  web paywall for some word packs. This version sells the premium category
+  packs through Apple In-App Purchase via RevenueCat instead
+  (`src/lib/payments.js`; see `APPSTORE.md §2`). The in-game "Picks" currency
+  and all cosmetics are earned by playing only — never sold.
 - **No Tic-Tac-Toe.** There was an unused, unreachable Tic-Tac-Toe mini-game
   left over in the original codebase (nothing in the UI ever created a
   match). It wasn't ported.
