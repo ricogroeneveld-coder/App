@@ -325,7 +325,7 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
             const pProfile = profiles[p.user_id];
             return (
               <div key={p.id} className="flex flex-col items-center gap-0.5 w-12">
-                <span className="relative">
+                <span className="relative flex">
                   <PlayerAvatar profile={pProfile} name={p.display_name} color={p.color} size={28} />
                   <span className={`absolute -bottom-0.5 -right-1 w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-[#0d0716] ${p.word_submitted ? 'bg-emerald-500' : 'bg-slate-600'}`}>
                     {p.word_submitted

@@ -49,7 +49,7 @@ function Artwork({ c, profile }) {
         <BannerArt banner={c} animated className="absolute inset-0" />
         <span className="absolute left-3 bottom-2 flex items-center gap-2">
           {profile && (
-            <span style={{ filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.55))' }}>
+            <span className="flex" style={{ filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.55))' }}>
               <PlayerAvatar profile={profile} size={34} />
             </span>
           )}

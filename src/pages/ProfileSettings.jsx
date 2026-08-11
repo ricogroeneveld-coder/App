@@ -230,7 +230,7 @@ export default function ProfileSettings() {
           <BannerArt banner={cosmeticById(cosmeticProfile.equipped?.banner)} animated className="absolute inset-0" motifScale={0.7} />
           <span aria-hidden className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/35 to-black/50" />
           <div className="relative p-4 flex items-center gap-3.5">
-            <span style={{ filter: 'drop-shadow(0 6px 10px rgba(0,0,0,0.55))' }}>
+            <span className="flex" style={{ filter: 'drop-shadow(0 6px 10px rgba(0,0,0,0.55))' }}>
               <PlayerAvatar profile={cosmeticProfile} name={displayName} size={52} />
             </span>
             <div className="min-w-0">
