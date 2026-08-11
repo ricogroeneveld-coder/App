@@ -355,6 +355,49 @@ const translations = {
     done: 'Done',
     askedBy: 'Asked by',
     youShort: 'You',
+    // auth
+    authWelcomeBack: 'Welcome back',
+    authLogInToAccount: 'Log in to your account',
+    authNoAccount: "Don't have an account?",
+    authCreateOne: 'Create one',
+    authContinueApple: 'Continue with Apple',
+    authContinueGoogle: 'Continue with Google',
+    authOr: 'or',
+    authEmail: 'Email',
+    authPassword: 'Password',
+    authForgotPassword: 'Forgot password?',
+    authLogIn: 'Log in',
+    authLoggingIn: 'Logging in...',
+    authCreateAccountTitle: 'Create your account',
+    authSignUpToStart: 'Sign up to get started',
+    authHaveAccount: 'Already have an account?',
+    authVerifyEmail: 'Verify your email',
+    authSentCodeTo: (email) => `We sent a code to ${email}`,
+    authVerify: 'Verify',
+    authVerifying: 'Verifying...',
+    authDidntReceive: "Didn't receive the code?",
+    authResend: 'Resend',
+    authCodeSent: 'Code sent',
+    authCodeSentDesc: 'Check your email for the new code.',
+    authConfirmPassword: 'Confirm Password',
+    authCreateAccount: 'Create account',
+    authCreatingAccount: 'Creating account...',
+    authPasswordsNoMatch: 'Passwords do not match',
+    authResetPassword: 'Reset password',
+    authResetSubtitle: "We'll send you a link to reset it",
+    authBackToLogIn: 'Back to log in',
+    authResetSentBody: "If an account exists with that email, you'll receive a password reset link shortly.",
+    authEmailAddress: 'Email address',
+    authSendResetLink: 'Send reset link',
+    authSending: 'Sending...',
+    authInvalidLinkTitle: 'Invalid reset link',
+    authInvalidLinkSubtitle: 'This password reset link is missing, invalid, or expired',
+    authRequestNewLink: 'Request a new link',
+    authInvalidLinkBody: 'The link you used appears to be incomplete or expired. Please request a new password reset email.',
+    authNewPasswordTitle: 'New password',
+    authNewPasswordSubtitle: 'Enter your new password below',
+    authNewPassword: 'New Password',
+    authResettingPassword: 'Resetting...',
   },
   nl: {
     // Home
@@ -718,18 +761,74 @@ const translations = {
     done: 'Klaar',
     askedBy: 'Gevraagd door',
     youShort: 'Jij',
+    // auth
+    authWelcomeBack: 'Welkom terug',
+    authLogInToAccount: 'Log in op je account',
+    authNoAccount: 'Nog geen account?',
+    authCreateOne: 'Maak er een aan',
+    authContinueApple: 'Doorgaan met Apple',
+    authContinueGoogle: 'Doorgaan met Google',
+    authOr: 'of',
+    authEmail: 'E-mail',
+    authPassword: 'Wachtwoord',
+    authForgotPassword: 'Wachtwoord vergeten?',
+    authLogIn: 'Inloggen',
+    authLoggingIn: 'Inloggen...',
+    authCreateAccountTitle: 'Maak je account aan',
+    authSignUpToStart: 'Meld je aan om te beginnen',
+    authHaveAccount: 'Heb je al een account?',
+    authVerifyEmail: 'Verifieer je e-mail',
+    authSentCodeTo: (email) => `We hebben een code gestuurd naar ${email}`,
+    authVerify: 'Verifiëren',
+    authVerifying: 'Verifiëren...',
+    authDidntReceive: 'Geen code ontvangen?',
+    authResend: 'Opnieuw versturen',
+    authCodeSent: 'Code verstuurd',
+    authCodeSentDesc: 'Check je e-mail voor de nieuwe code.',
+    authConfirmPassword: 'Bevestig wachtwoord',
+    authCreateAccount: 'Account aanmaken',
+    authCreatingAccount: 'Account aanmaken...',
+    authPasswordsNoMatch: 'Wachtwoorden komen niet overeen',
+    authResetPassword: 'Wachtwoord herstellen',
+    authResetSubtitle: 'We sturen je een link om het te herstellen',
+    authBackToLogIn: 'Terug naar inloggen',
+    authResetSentBody: 'Als er een account bestaat met dat e-mailadres, ontvang je binnenkort een link om je wachtwoord te herstellen.',
+    authEmailAddress: 'E-mailadres',
+    authSendResetLink: 'Herstellink versturen',
+    authSending: 'Versturen...',
+    authInvalidLinkTitle: 'Ongeldige herstellink',
+    authInvalidLinkSubtitle: 'Deze wachtwoord-herstellink ontbreekt, is ongeldig of verlopen',
+    authRequestNewLink: 'Vraag een nieuwe link aan',
+    authInvalidLinkBody: 'De link die je gebruikte lijkt onvolledig of verlopen. Vraag een nieuwe wachtwoord-herstelmail aan.',
+    authNewPasswordTitle: 'Nieuw wachtwoord',
+    authNewPasswordSubtitle: 'Voer hieronder je nieuwe wachtwoord in',
+    authNewPassword: 'Nieuw wachtwoord',
+    authResettingPassword: 'Herstellen...',
   }
 };
 
 const LanguageContext = createContext(null);
 
+function detectInitialLang() {
+  const saved = localStorage.getItem(LS_KEY);
+  if (saved) return saved;
+  // No saved preference — follow the device language (Dutch users land in NL).
+  const nav = (typeof navigator !== 'undefined' && navigator.language) || '';
+  return nav.toLowerCase().startsWith('nl') ? 'nl' : 'en';
+}
+
 export function LanguageProvider({ children }) {
-  const [lang, setLang] = useState(() => localStorage.getItem(LS_KEY) || 'en');
+  const [lang, setLang] = useState(detectInitialLang);
 
   const switchLang = (l) => {
     setLang(l);
     localStorage.setItem(LS_KEY, l);
   };
+
+  // Keep <html lang> in sync so the document advertises the active language.
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
 
   const t = translations[lang] || translations.en;
 

@@ -243,7 +243,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
       const asker = freshAskers.find(p => p.user_id === currentId) || questioner;
       if (!asker) return;
       const prevTexts = (freshQs || []).slice(-8).map(q => q.question_text);
-      const autoQ = getRandomQuestion(fr.category, prevTexts) || 'Is it bigger than a cat?';
+      const autoQ = getRandomQuestion(fr.category, prevTexts, lang) || 'Is it bigger than a cat?';
       await MysteryQuestion.create({
         room_code: roomCode,
         round_number: fr.round_number,
@@ -320,8 +320,9 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
     }
     try {
       const prevTexts = questions.slice(-8).map(q => q.question_text);
-      // Picked locally from the static question bank — no server round-trip needed.
-      const autoQ = getRandomQuestion(room.category, prevTexts) || 'Is it something you can hold in one hand?';
+      // Picked locally from the static question bank — no server round-trip
+      // needed. `lang` selects the Dutch bank in NL games (LOC-2).
+      const autoQ = getRandomQuestion(room.category, prevTexts, lang) || 'Is it something you can hold in one hand?';
       await submitQuestionText(autoQ, true);
     } finally {
       setAutoAsking(false);

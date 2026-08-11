@@ -550,17 +550,410 @@ export const FUNNY_QUESTIONS = [
   'Could it survive a TikTok trend?', 'Would you trust it with your WiFi password?'
 ];
 
+// ── Dutch (nl) question bank ──────────────────────────────────────────────
+// Keyed by the SAME (English) category ids used everywhere else (room.category
+// stays English), so a Dutch game gets Dutch questions for the same category.
+// Categories without a Dutch set fall back to UNIVERSAL_QUESTIONS_NL.
+export const QUESTION_BANK_BY_CATEGORY_NL = {
+  // ── Dieren ──────────────────────────────────────────────────────────────
+  Pets: [
+    'Is het een zoogdier?', 'Is het een hond?', 'Is het een kat?', 'Is het klein?', 'Is het zwaarder dan 10 kg?',
+    'Heeft het vacht?', 'Heeft het veren?', 'Heeft het schubben?', 'Kan het vliegen?', 'Kan het zwemmen?',
+    'Kun je het africhten?', 'Blaft het?', 'Miauwt het?', 'Spint het?', 'Tjilpt het?',
+    'Piept het?', 'Is het luidruchtig?', 'Is het stil?', 'Is het exotisch?', 'Is het een reptiel?',
+    'Is het een knaagdier?', 'Is het een vogel?', 'Is het een vis?', 'Is het een konijn?', 'Is het een cavia?',
+    'Is het een hamster?', 'Is het een hagedis?', 'Is het een slang?', 'Is het een schildpad?', 'Is het een papegaai?',
+    'Leeft het in een kooi?', 'Leeft het in een aquarium?', 'Leeft het buiten?', 'Verhaart het?', 'Eet het vlees?',
+    'Eet het zaden?', 'Eet het hooi?', 'Kun je het aan de riem doen?', 'Is het nachtdier?', 'Houdt het een winterslaap?',
+    'Is het duur om te houden?', 'Wordt het ouder dan 10 jaar?', 'Is het goed met kinderen?', 'Is het territoriaal?', 'Heeft het een lange staart?',
+    'Heeft het snorharen?', 'Heeft het klauwen?', 'Is het een populair huisdier?', 'Kan het kunstjes leren?', 'Is het aaibaar?',
+  ],
+  'Wild Animals': [
+    'Is het een zoogdier?', 'Is het een carnivoor?', 'Is het een herbivoor?', 'Is het een alleseter?', 'Leeft het in Afrika?',
+    'Leeft het in Azië?', 'Leeft het in Europa?', 'Leeft het in Amerika?', 'Leeft het in Australië?', 'Leeft het in de jungle?',
+    'Leeft het op de savanne?', 'Leeft het in de woestijn?', 'Leeft het in de bergen?', 'Leeft het in het bos?', 'Is het bedreigd?',
+    'Is het groter dan een mens?', 'Is het groter dan een auto?', 'Is het kleiner dan een kat?', 'Heeft het vacht?', 'Heeft het strepen?',
+    'Heeft het vlekken?', 'Heeft het manen?', 'Heeft het een lange nek?', 'Heeft het een slurf?', 'Heeft het hoorns?',
+    'Heeft het een gewei?', 'Heeft het een staart?', 'Kan het in bomen klimmen?', 'Kan het zwemmen?', 'Kan het vliegen?',
+    'Is het een nachtdier?', 'Jaagt het \'s nachts?', 'Leeft het in groepen?', 'Leeft het alleen?', 'Is het snel?',
+    'Is het traag?', 'Is het een roofdier?', 'Is het een grote katachtige?', 'Is het een primaat?', 'Is het een buideldier?',
+    'Eet het vis?', 'Houdt het een winterslaap?', 'Heeft het scherpe tanden?', 'Is het giftig?', 'Is het een roedeldier?',
+    'Heeft het een sterke beet?', 'Kan het ver springen?', 'Maakt het een luid geluid?', 'Is het gecamoufleerd?', 'Is het beroemd?',
+  ],
+  'Farm Animals': [
+    'Is het een zoogdier?', 'Geeft het melk?', 'Legt het eieren?', 'Geeft het wol?', 'Wordt het voor vlees gehouden?',
+    'Is het groter dan een hond?', 'Is het groter dan een mens?', 'Is het klein?', 'Heeft het hoeven?', 'Heeft het veren?',
+    'Heeft het vacht?', 'Heeft het hoorns?', 'Heeft het een snavel?', 'Heeft het manen?', 'Heeft het een lange staart?',
+    'Leeft het in een schuur?', 'Leeft het in een wei?', 'Graast het op gras?', 'Eet het graan?', 'Eet het hooi?',
+    'Kun je erop rijden?', 'Kan het een kar trekken?', 'Is het een veelvoorkomend boerderijdier?', 'Is het luidruchtig?', 'Kakelt het?',
+    'Loeit het?', 'Knort het?', 'Blaat het?', 'Hinnikt het?', 'Wordt het in een hok gehouden?',
+    'Legt het meer dan één ei per dag?', 'Is het wit?', 'Is het bruin?', 'Is het zwart-wit?', 'Heeft het een kam?',
+    'Kraait het bij zonsopgang?', 'Is het een vogel?', 'Is het een herkauwer?', 'Levert het iets dat mensen gebruiken?', 'Heeft het veel ruimte nodig?',
+    'Is het vriendelijk naar mensen?', 'Is het een groot dier?', 'Wordt het op bijna elke boerderij gehouden?', 'Leeft het in een kudde?', 'Is het jong lief?',
+  ],
+  'Sea Animals': [
+    'Is het een zoogdier?', 'Is het een vis?', 'Is het een schaaldier?', 'Is het een weekdier?', 'Is het een roofdier?',
+    'Is het groter dan een mens?', 'Is het groter dan een auto?', 'Is het heel klein?', 'Heeft het vinnen?', 'Heeft het tentakels?',
+    'Heeft het een schelp?', 'Heeft het schubben?', 'Heeft het kieuwen?', 'Heeft het een spuitgat?', 'Heeft het een staart?',
+    'Heeft het tanden?', 'Heeft het scherpe tanden?', 'Heeft het een lang lichaam?', 'Is het gevaarlijk voor mensen?', 'Is het giftig?',
+    'Leeft het in de diepzee?', 'Leeft het vlak onder het oppervlak?', 'Leeft het op de zeebodem?', 'Leeft het in een rif?', 'Leeft het in koud water?',
+    'Leeft het in warm water?', 'Is het felgekleurd?', 'Is het gecamoufleerd?', 'Is het bedreigd?', 'Zwemt het in scholen?',
+    'Zwemt het alleen?', 'Is het snel?', 'Is het traag?', 'Kan het van kleur veranderen?', 'Geeft het licht?',
+    'Heeft het een angel?', 'Heeft het acht armen?', 'Spuit het inkt?', 'Heeft het een harde schaal?', 'Is het een haai?',
+    'Is het een walvis of dolfijn?', 'Is het een populaire aquariumvis?', 'Eet het plankton?', 'Is het een bodemeter?', 'Is het beroemd?',
+  ],
+  Birds: [
+    'Kan het vliegen?', 'Is het klein?', 'Is het groot?', 'Is het kleurrijk?', 'Is het een roofvogel?',
+    'Is het een nachtdier?', 'Heeft het felle veren?', 'Heeft het een lange snavel?', 'Heeft het zwemvliezen?', 'Heeft het een kuif?',
+    'Leeft het bij water?', 'Leeft het in het bos?', 'Leeft het in steden?', 'Trekt het naar het zuiden?', 'Zingt het?',
+    'Tjilpt het?', 'Krast het?', 'Oehoet het?', 'Bootst het geluiden na?', 'Is het een roofdier?',
+    'Is het een huisdier?', 'Zie je het vaak in tuinen?', 'Is het zeldzaam?', 'Is het bedreigd?', 'Eet het zaden?',
+    'Eet het vis?', 'Eet het insecten?', 'Eet het fruit?', 'Bouwt het een nest?', 'Legt het eieren?',
+    'Is het zwart?', 'Is het wit?', 'Is het geel?', 'Is het blauw?', 'Is het rood?',
+    'Is het een papegaai?', 'Is het een valk?', 'Is het een watervogel?', 'Is het een zangvogel?', 'Komt het uit Europa?',
+    'Komt het uit de tropen?', 'Is het groter dan een duif?', 'Heeft het een lange nek?', 'Kan het zwemmen?', 'Is het een snelle vlieger?',
+  ],
+  Insects: [
+    'Kan het vliegen?', 'Is het heel klein?', 'Heeft het vleugels?', 'Heeft het zes poten?', 'Heeft het acht poten?',
+    'Heeft het voelsprieten?', 'Heeft het een angel?', 'Bijt het?', 'Is het gevaarlijk?', 'Is het giftig?',
+    'Is het kleurrijk?', 'Is het zwart?', 'Is het geel?', 'Is het bruin?', 'Is het groen?',
+    'Leeft het in kolonies?', 'Leeft het alleen?', 'Maakt het honing?', 'Spint het een web?', 'Bouwt het een nest?',
+    'Is het een nachtdier?', 'Is het overdag actief?', 'Kruipt het?', 'Springt het?', 'Heeft het een hard pantser?',
+    'Heeft het strepen?', 'Heeft het stippen?', 'Eet het planten?', 'Eet het andere insecten?', 'Wordt het als plaag gezien?',
+    'Is het nuttig voor mensen?', 'Is het een bestuiver?', 'Leeft het onder de grond?', 'Leeft het in bomen?', 'Leeft het in water?',
+    'Maakt het veel lawaai?', 'Zoemt het?', 'Is het een kever?', 'Is het een bij of wesp?', 'Is het een vlinder of mot?',
+    'Is het een vlieg?', 'Is het een mier?', 'Geeft het licht?', 'Wordt het door licht aangetrokken?', 'Is het een mug?',
+  ],
+  Dinosaurs: [
+    'Is het een carnivoor?', 'Is het een herbivoor?', 'Is het groter dan een bus?', 'Is het hoger dan een huis?', 'Is het kleiner dan een mens?',
+    'Kon het vliegen?', 'Kon het zwemmen?', 'Liep het op twee poten?', 'Liep het op vier poten?', 'Had het hoorns?',
+    'Had het stekels?', 'Had het platen op zijn rug?', 'Had het een lange nek?', 'Had het een lange staart?', 'Had het scherpe tanden?',
+    'Had het een kam?', 'Had het een snavel?', 'Had het veren?', 'Had het schubben?', 'Had het klauwen?',
+    'Leefde het in het Jura?', 'Leefde het in het Krijt?', 'Is het bekend bij kinderen?', 'Komt het voor in Jurassic Park?', 'Is het een familielid van de T. rex?',
+    'Is het een sauropode?', 'Is het een roofdier?', 'Was het traag?', 'Was het snel?', 'Is het een van de grootste dinosaurussen?',
+    'Leefde het in kuddes?', 'Verdedigde het zich met zijn staart?', 'Had het een knotsstaart?', 'Is zijn naam moeilijk uit te spreken?', 'Begint zijn naam met een T?',
+    'Is het een planteneter?', 'Is het een vleeseter?', 'Is het een beroemde filmdinosaurus?', 'Is het een raptor?', 'Had het een klein brein?',
+  ],
+
+  // ── Mensen ──────────────────────────────────────────────────────────────
+  Actors: [
+    'Is de acteur een man?', 'Is de acteur een vrouw?', 'Is de acteur Amerikaans?', 'Is de acteur Brits?', 'Leeft de acteur nog?',
+    'Is de acteur ouder dan 50?', 'Is de acteur jonger dan 40?', 'Heeft de acteur een Oscar gewonnen?', 'Heeft de acteur meerdere Oscars gewonnen?', 'Is de acteur bekend van actiefilms?',
+    'Is de acteur bekend van komedies?', 'Is de acteur bekend van drama\'s?', 'Is de acteur bekend van horror?', 'Is de acteur bekend van sciencefiction?', 'Is de acteur ook regisseur?',
+    'Is de acteur ook producer?', 'Is de acteur ook muzikant?', 'Is de acteur lang?', 'Heeft de acteur in de MCU gespeeld?', 'Heeft de acteur in Star Wars gespeeld?',
+    'Heeft de acteur Batman gespeeld?', 'Heeft de acteur James Bond gespeeld?', 'Is de acteur Europees?', 'Is de acteur Australisch?', 'Is de acteur blond?',
+    'Is de acteur donkerharig?', 'Heeft de acteur vaak een baard?', 'Was de acteur al beroemd vóór 2000?', 'Is de acteur vandaag nog actief?', 'Is de acteur wereldwijd beroemd?',
+    'Heeft de acteur een echt persoon gespeeld?', 'Heeft de acteur een schurk gespeeld?', 'Heeft de acteur een superheld gespeeld?', 'Is de acteur ook op het toneel bekend?', 'Zit de acteur in een grote filmreeks?',
+    'Is de acteur bekend van één iconische rol?', 'Heeft de acteur met Spielberg gewerkt?', 'Heeft de acteur met Tarantino gewerkt?', 'Is de acteur Canadees?', 'Is de acteur vooral een filmster?',
+  ],
+  Celebrities: [
+    'Is het een man?', 'Is het een vrouw?', 'Is de beroemdheid Amerikaans?', 'Is de beroemdheid Brits?', 'Leeft de beroemdheid nog?',
+    'Is de beroemdheid ouder dan 40?', 'Is de beroemdheid jonger dan 30?', 'Is de beroemdheid bekend van muziek?', 'Is de beroemdheid bekend van acteren?', 'Is de beroemdheid bekend van realitytv?',
+    'Is de beroemdheid bekend van sport?', 'Is de beroemdheid bekend om rijkdom?', 'Is de beroemdheid bekend van social media?', 'Is de beroemdheid een zanger(es)?', 'Is de beroemdheid een komiek?',
+    'Heeft de beroemdheid kinderen?', 'Heeft de beroemdheid beroemde broers of zussen?', 'Is de beroemdheid in een schandaal geweest?', 'Is de beroemdheid blond?', 'Is de beroemdheid donkerharig?',
+    'Heeft de beroemdheid een Grammy gewonnen?', 'Heeft de beroemdheid een Oscar gewonnen?', 'Is de beroemdheid wereldwijd beroemd?', 'Is de beroemdheid actief op Instagram?', 'Is de beroemdheid bekend van modellenwerk?',
+    'Komt de beroemdheid uit Europa?', 'Is de beroemdheid heel rijk?', 'Is de beroemdheid controversieel?', 'Was de beroemdheid al beroemd als kind?', 'Is de beroemdheid een rapper?',
+    'Is de beroemdheid een topsporter?', 'Is de beroemdheid een voetballer?', 'Zit de beroemdheid in een beroemd koppel?', 'Staat de beroemdheid vaak in het nieuws?', 'Is de beroemdheid ouder dan 50?',
+    'Heeft de beroemdheid in films gespeeld?', 'Is de beroemdheid een popster?', 'Is de beroemdheid een influencer?', 'Heeft de beroemdheid een eigen merk?', 'Is de beroemdheid een YouTuber?',
+  ],
+  'Football Players': [
+    'Is de speler nog actief?', 'Is de speler een aanvaller?', 'Is de speler een middenvelder?', 'Is de speler een verdediger?', 'Is de speler een keeper?',
+    'Is de speler Braziliaans?', 'Is de speler Portugees?', 'Is de speler Argentijns?', 'Is de speler Frans?', 'Is de speler Engels?',
+    'Is de speler Spaans?', 'Is de speler Nederlands?', 'Is de speler Belgisch?', 'Is de speler Duits?', 'Heeft de speler het WK gewonnen?',
+    'Heeft de speler de Ballon d\'Or gewonnen?', 'Heeft de speler meerdere Ballons d\'Or gewonnen?', 'Speelt de speler bij een Spaanse club?', 'Speelt de speler bij een Engelse club?', 'Speelt de speler bij een Italiaanse club?',
+    'Heeft de speler bij Real Madrid gespeeld?', 'Heeft de speler bij Barcelona gespeeld?', 'Heeft de speler bij Manchester United gespeeld?', 'Heeft de speler bij Liverpool gespeeld?', 'Heeft de speler bij PSG gespeeld?',
+    'Is de speler jonger dan 25?', 'Is de speler ouder dan 30?', 'Is de speler ouder dan 35?', 'Is de speler een aanvoerder?', 'Draagt de speler rugnummer 10?',
+    'Draagt de speler rugnummer 7?', 'Staat de speler bekend om dribbelen?', 'Staat de speler bekend om scoren?', 'Staat de speler bekend om vrije trappen?', 'Staat de speler bekend om kopballen?',
+    'Is de speler linksbenig?', 'Is de speler rechtsbenig?', 'Is de speler heel snel?', 'Komt de speler uit Zuid-Amerika?', 'Wordt de speler tot de allerbesten gerekend?',
+    'Is de speler Afrikaans?', 'Is de speler voor een recordbedrag verkocht?', 'Heeft de speler een opvallend kapsel?', 'Speelt de speler in de Eredivisie?', 'Heeft de speler ooit in Nederland gespeeld?',
+  ],
+  'Music Artists': [
+    'Is de artiest solo?', 'Is de artiest een man?', 'Is de artiest een vrouw?', 'Is de artiest Amerikaans?', 'Is de artiest Brits?',
+    'Is de artiest een popartiest?', 'Is de artiest een rockartiest?', 'Is de artiest een rapper?', 'Is de artiest een R&B-artiest?', 'Is de artiest een dj?',
+    'Is de artiest een K-popartiest?', 'Zit de artiest in een band?', 'Speelt de artiest gitaar?', 'Speelt de artiest piano?', 'Is de artiest nog actief?',
+    'Is de artiest jonger dan 30?', 'Is de artiest ouder dan 40?', 'Is de artiest ouder dan 60?', 'Heeft de artiest een Grammy gewonnen?', 'Heeft de artiest meerdere Grammy\'s gewonnen?',
+    'Is de artiest wereldwijd beroemd?', 'Was de artiest beroemd in de jaren 2000?', 'Was de artiest beroemd in de jaren 90?', 'Was de artiest al beroemd vóór 1990?', 'Heeft de artiest op de Super Bowl opgetreden?',
+    'Komt de artiest uit Canada?', 'Is de artiest Europees?', 'Is de artiest een singer-songwriter?', 'Schrijft de artiest zijn eigen nummers?', 'Heeft de artiest in een boyband gezeten?',
+    'Heeft de artiest een nummer 1-hit gehad?', 'Staat de artiest bekend om dansen?', 'Is de artiest controversieel?', 'Is de artiest ook producer?', 'Is de artiest een rocklegende?',
+    'Is de artiest blond?', 'Heeft de artiest een herkenbare stem?', 'Heeft de artiest een album uitgebracht in de jaren 2020?', 'Is de artiest een Latin-artiest?', 'Is de artiest Nederlandstalig?',
+  ],
+  YouTubers: [
+    'Maakt de YouTuber gamingcontent?', 'Maakt de YouTuber vlogs?', 'Maakt de YouTuber comedysketches?', 'Maakt de YouTuber challenges?', 'Maakt de YouTuber educatieve content?',
+    'Is de YouTuber Amerikaans?', 'Is de YouTuber Brits?', 'Komt de YouTuber uit een ander land?', 'Is de YouTuber een man?', 'Is de YouTuber een vrouw?',
+    'Heeft de YouTuber meer dan 100 miljoen abonnees?', 'Heeft de YouTuber meer dan 50 miljoen abonnees?', 'Heeft de YouTuber meer dan 10 miljoen abonnees?', 'Spreekt de YouTuber vooral Engels?', 'Maakt de YouTuber ook muziek?',
+    'Streamt de YouTuber ook op Twitch?', 'Maakt de YouTuber reactievideo\'s?', 'Maakt de YouTuber pranks?', 'Zit de YouTuber in een creatorgroep?', 'Is de YouTuber controversieel?',
+    'Heeft de YouTuber in een boksgevecht gestaan?', 'Is de YouTuber jonger dan 30?', 'Is de YouTuber ouder dan 40?', 'Heeft de YouTuber een podcast?', 'Focust de YouTuber op Minecraft?',
+    'Focust de YouTuber op Fortnite?', 'Heeft de YouTuber een eigen merk?', 'Verkoopt de YouTuber merchandise?', 'Is de YouTuber familievriendelijk?', 'Is de YouTuber bekend van eten?',
+    'Is de YouTuber bekend van reizen?', 'Is de YouTuber bekend van fitness?', 'Werkt de YouTuber samen met MrBeast?', 'Zit de YouTuber ook op TikTok?', 'Verdient de YouTuber aan sponsoring?',
+    'Is de YouTuber wereldwijd beroemd?', 'Laat de YouTuber zijn gezicht zien?', 'Is de YouTuber Nederlands?', 'Is de YouTuber bekend van giveaways?', 'Is de YouTuber een stel-kanaal?',
+  ],
+
+  // ── Personages ──────────────────────────────────────────────────────────
+  'Movie Characters': [
+    'Is het personage een man?', 'Is het personage een vrouw?', 'Is het personage een mens?', 'Is het personage een dier?', 'Is het personage geanimeerd?',
+    'Is het personage een schurk?', 'Is het personage een held?', 'Is het personage een superheld?', 'Is het personage van Disney?', 'Is het personage van Pixar?',
+    'Is het personage uit de MCU?', 'Is het personage van DC?', 'Is het personage uit Star Wars?', 'Is het personage uit Harry Potter?', 'Is het personage uit een horrorfilm?',
+    'Is het personage uit een komedie?', 'Is het personage uit een actiefilm?', 'Is het personage uit een kinderfilm?', 'Is het personage uit een recente film?', 'Is het personage blond?',
+    'Is het personage donkerharig?', 'Is het personage kaal?', 'Draagt het personage een hoed?', 'Draagt het personage een masker?', 'Draagt het personage een bril?',
+    'Gebruikt het personage magie?', 'Gebruikt het personage een wapen?', 'Heeft het personage superkrachten?', 'Kan het personage vliegen?', 'Heeft het personage een sidekick?',
+    'Is het personage van koninklijke afkomst?', 'Is het personage de hoofdrol?', 'Gaat het personage dood in de film?', 'Is het personage gebaseerd op een boek?', 'Zit het personage in een filmreeks?',
+    'Heeft het personage een iconische uitspraak?', 'Draagt het personage een kostuum?', 'Is het personage grappig?', 'Is het personage Brits?', 'Is het personage van vóór 2000?',
+  ],
+  'Disney Characters': [
+    'Is het personage een prinses?', 'Is het personage een man?', 'Is het personage een vrouw?', 'Is het personage een mens?', 'Is het personage een dier?',
+    'Is het personage een schurk?', 'Is het personage een sidekick?', 'Is het personage uit een klassieke film?', 'Is het personage uit een moderne film?', 'Is het personage uit een Pixar-film?',
+    'Is het personage van koninklijke afkomst?', 'Is het personage een koningin?', 'Is het personage een koning?', 'Is het personage een heks?', 'Zingt het personage?',
+    'Heeft het personage een sidekick?', 'Heeft het personage een beroemd lied?', 'Is het personage blond?', 'Is het personage donkerharig?', 'Is het personage een vis?',
+    'Is het personage een leeuw?', 'Is het personage uit Frozen?', 'Is het personage uit De Kleine Zeemeermin?', 'Is het personage uit Belle en het Beest?', 'Is het personage uit Aladdin?',
+    'Is het personage uit Moana?', 'Is het personage uit Mulan?', 'Is het personage uit Sneeuwwitje?', 'Is het personage uit Assepoester?', 'Is het personage uit Toy Story?',
+    'Is het personage uit The Lion King?', 'Is het personage magisch?', 'Heeft het personage een dierlijke metgezel?', 'Is het personage een Disney-prinses?', 'Is het personage grappig?',
+    'Heeft het personage bovennatuurlijke krachten?', 'Is het personage een vriend van Mickey?', 'Is het personage uit Winnie de Poeh?', 'Is het personage geliefd bij kinderen?', 'Is het personage wereldwijd bekend?',
+  ],
+
+  // ── Media ───────────────────────────────────────────────────────────────
+  Movies: [
+    'Is de film geanimeerd?', 'Is het een Pixar-film?', 'Is de film van Disney?', 'Is de film een Marvel-film?', 'Is de film een DC-film?',
+    'Is de film live-action?', 'Is de film een vervolg?', 'Is de film een remake?', 'Is de film een komedie?', 'Is de film een drama?',
+    'Is de film een actiefilm?', 'Is de film een horrorfilm?', 'Is de film een sciencefictionfilm?', 'Is de film een romantische film?', 'Is de film een thriller?',
+    'Is de film een fantasyfilm?', 'Is de film een musical?', 'Is de film familievriendelijk?', 'Is de film uitgebracht vóór 2000?', 'Is de film uitgebracht in de jaren 2000?',
+    'Is de film uitgebracht in de jaren 2010?', 'Is de film uitgebracht in de jaren 2020?', 'Heeft de film een Oscar gewonnen?', 'Heeft de film een beroemde regisseur?', 'Is de film van Christopher Nolan?',
+    'Is de film van Spielberg?', 'Is de film van Tarantino?', 'Is de film langer dan 2,5 uur?', 'Speelt Leonardo DiCaprio in de film?', 'Speelt Tom Hanks in de film?',
+    'Is de film gebaseerd op een boek?', 'Is de film gebaseerd op echte gebeurtenissen?', 'Is de film een superheldenfilm?', 'Heeft de film een beroemde soundtrack?', 'Zit de film in de MCU?',
+    'Speelt de film zich af in de ruimte?', 'Is de film grappig?', 'Is de film een wereldwijde kaskraker?', 'Is de film bekend bij kinderen?', 'Is de film een Disney-klassieker?',
+  ],
+  'TV Shows': [
+    'Is de serie geanimeerd?', 'Is de serie Amerikaans?', 'Is de serie Brits?', 'Is de serie een sitcom?', 'Is de serie een drama?',
+    'Is de serie een misdaadserie?', 'Is de serie sciencefiction?', 'Is de serie fantasy?', 'Is de serie een realityshow?', 'Is de serie een documentaireserie?',
+    'Staat de serie op Netflix?', 'Staat de serie op Disney+?', 'Staat de serie op HBO?', 'Loopt de serie nog?', 'Is de serie afgelopen?',
+    'Is de serie uit de jaren 90?', 'Is de serie uit de jaren 2000?', 'Is de serie van na 2010?', 'Is de serie een Netflix Original?', 'Heeft de serie meer dan 5 seizoenen?',
+    'Heeft de serie meer dan 10 seizoenen?', 'Is de serie een langlopende tekenfilm?', 'Is de serie een animatiesitcom?', 'Is de serie bekend om zijn tune?', 'Heeft de serie een beroemde cast?',
+    'Heeft de serie Emmy\'s gewonnen?', 'Is de serie erg populair?', 'Is de serie familievriendelijk?', 'Is de serie alleen voor volwassenen?', 'Is de serie een superheldenserie?',
+    'Is de serie een tienerserie?', 'Is de serie een ziekenhuisdrama?', 'Is de serie gebaseerd op een boek?', 'Is de serie een kookprogramma?', 'Gaat de serie over families?',
+    'Is de serie een spin-off?', 'Is de serie een talkshow?', 'Is de serie een spelshow?', 'Is de serie satirisch?', 'Is de serie wereldwijd bekend?',
+  ],
+  'Video Games': [
+    'Is de game een first-person shooter?', 'Is de game een RPG?', 'Is de game een strategiespel?', 'Is de game een sportspel?', 'Is de game een racespel?',
+    'Is de game een platformspel?', 'Is de game een sandbox-spel?', 'Is de game een vechtspel?', 'Is de game een battle royale?', 'Is de game een MMO?',
+    'Is de game van Nintendo?', 'Komt de game van een beroemde Japanse studio?', 'Komt de game van Rockstar?', 'Is de game uitgegeven door EA?', 'Is de game uitgebracht vóór 2000?',
+    'Is de game uit de jaren 2000?', 'Is de game uit de jaren 2010?', 'Is de game uit de jaren 2020?', 'Heeft de game een beroemde mascotte?', 'Heeft de game een vervolg?',
+    'Maakt de game deel uit van een lange reeks?', 'Is de game multiplayer?', 'Is de game vooral singleplayer?', 'Is de game op consoles?', 'Is de game op de pc?',
+    'Is de game op mobiel?', 'Is de game Minecraft?', 'Is de game een Zelda-spel?', 'Is de game een Mario-spel?', 'Is de game een Pokémon-spel?',
+    'Is de game GTA?', 'Is de game een simulatie?', 'Is de game gewelddadig?', 'Is de game een horrorgame?', 'Staat de game bekend om zijn verhaal?',
+    'Is de game enorm populair?', 'Is de game controversieel?', 'Is de game makkelijk te leren?', 'Is de game gratis te spelen?', 'Is de game een indie-game?',
+  ],
+  Pokémon: [
+    'Is de Pokémon van het type vuur?', 'Is de Pokémon van het type water?', 'Is de Pokémon van het type gras?', 'Is de Pokémon van het type elektrisch?', 'Is de Pokémon van het type psychisch?',
+    'Is de Pokémon van het type vliegend?', 'Is de Pokémon van het type gesteente?', 'Is de Pokémon van het type grond?', 'Is de Pokémon van het type ijs?', 'Is de Pokémon van het type gif?',
+    'Is de Pokémon van het type spook?', 'Is de Pokémon van het type draak?', 'Is de Pokémon van het type duister?', 'Is de Pokémon van het type fee?', 'Is de Pokémon van het type kever?',
+    'Is de Pokémon van het type staal?', 'Is de Pokémon van het type vechten?', 'Is de Pokémon van het type normaal?', 'Is de Pokémon legendarisch?', 'Is de Pokémon mythisch?',
+    'Komt de Pokémon uit generatie 1?', 'Komt de Pokémon uit generatie 2?', 'Komt de Pokémon uit generatie 3?', 'Komt de Pokémon uit een latere generatie?', 'Is de Pokémon een starter?',
+    'Is de Pokémon klein?', 'Is de Pokémon groot?', 'Kan de Pokémon vliegen?', 'Kan de Pokémon zwemmen?', 'Evolueert de Pokémon?',
+    'Heeft de Pokémon een mega-evolutie?', 'Is de Pokémon heel beroemd?', 'Is de Pokémon schattig?', 'Is de Pokémon een favoriet van fans?', 'Lijkt de Pokémon op Pikachu?',
+    'Is de Pokémon blauw?', 'Is de Pokémon geel?', 'Is de Pokémon rood?', 'Is de Pokémon groen?', 'Heeft de Pokémon een staart?',
+  ],
+
+  // ── Plaatsen ────────────────────────────────────────────────────────────
+  'European Countries': [
+    'Ligt het land in de EU?', 'Gebruikt het land de euro?', 'Ligt het land in West-Europa?', 'Ligt het land in Oost-Europa?', 'Ligt het land in Noord-Europa?',
+    'Ligt het land in Zuid-Europa?', 'Ligt het land op de Balkan?', 'Ligt het land in Scandinavië?', 'Is het land ingesloten door land?', 'Grenst het land aan de Atlantische Oceaan?',
+    'Grenst het land aan de Middellandse Zee?', 'Grenst het land aan Duitsland?', 'Grenst het land aan Frankrijk?', 'Is het land een eiland?', 'Is het land een monarchie?',
+    'Is het land een republiek?', 'Is het land groot?', 'Is het land klein?', 'Heeft het land minder dan 10 miljoen inwoners?', 'Heeft het land meer dan 30 miljoen inwoners?',
+    'Heeft het land bergen?', 'Heeft het land beroemde stranden?', 'Staat het land bekend om wijn?', 'Staat het land bekend om bier?', 'Staat het land bekend om kaas?',
+    'Is het land beroemd om voetbal?', 'Heeft het land het WK gewonnen?', 'Was het land een voormalige Sovjetstaat?', 'Heeft het land een koninklijke familie?', 'Staat het land bekend om koude winters?',
+    'Staat het land bekend om warm weer?', 'Ligt het land in Centraal-Europa?', 'Heeft het land een beroemde hoofdstad?', 'Staat het land bekend om chocolade?', 'Spreekt men er een Slavische taal?',
+    'Spreekt men er een Germaanse taal?', 'Spreekt men er een Romaanse taal?', 'Ligt het land in het Schengengebied?', 'Is het land neutraal?', 'Staat het land bekend om tulpen?',
+  ],
+  Countries: [
+    'Ligt het land in Europa?', 'Ligt het land in Azië?', 'Ligt het land in Afrika?', 'Ligt het land in Noord-Amerika?', 'Ligt het land in Zuid-Amerika?',
+    'Ligt het land in Oceanië?', 'Is het een groot land?', 'Is het land klein?', 'Bestaat het land uit eilanden?', 'Is het land ingesloten door land?',
+    'Ligt het land op het noordelijk halfrond?', 'Ligt het land op het zuidelijk halfrond?', 'Is het land een populaire toeristenbestemming?', 'Is het land erg warm?', 'Is het land erg koud?',
+    'Is het land een monarchie?', 'Is het land een republiek?', 'Gebruikt het land de euro?', 'Maakt het land deel uit van de EU?', 'Heeft het land een beroemde hoofdstad?',
+    'Heeft het land beroemde stranden?', 'Heeft het land bergen?', 'Heeft het land woestijnen?', 'Heeft het land een enorme bevolking?', 'Staat het land bekend om voetbal?',
+    'Heeft het land het WK gewonnen?', 'Staat het land bekend om eten?', 'Is het land beroemd om zijn geschiedenis?', 'Is het land een eilandnatie?', 'Heeft het land beroemde bezienswaardigheden?',
+    'Staat het land bekend om auto\'s?', 'Staat het land bekend om technologie?', 'Is het land Engelstalig?', 'Is het land Spaanstalig?', 'Grenst het land aan de Atlantische Oceaan?',
+    'Grenst het land aan de Grote Oceaan?', 'Heeft het land een beroemde koninklijke familie?', 'Is het land dichtbevolkt?', 'Staat het land bekend om een beroemde keuken?', 'Heeft het land jungles?',
+  ],
+  'European Cities': [
+    'Is het een hoofdstad?', 'Ligt de stad in West-Europa?', 'Ligt de stad in Oost-Europa?', 'Ligt de stad in Noord-Europa?', 'Ligt de stad in Zuid-Europa?',
+    'Ligt de stad in Duitsland?', 'Ligt de stad in Frankrijk?', 'Ligt de stad in Italië?', 'Ligt de stad in Spanje?', 'Ligt de stad in het Verenigd Koninkrijk?',
+    'Ligt de stad in Nederland?', 'Is de stad groot?', 'Is de stad klein?', 'Ligt de stad aan de kust?', 'Is de stad beroemd om zijn grachten?',
+    'Is de stad beroemd om zijn musea?', 'Heeft de stad een beroemde voetbalclub?', 'Is de stad een populaire toeristenbestemming?', 'Staat de stad bekend om mode?', 'Staat de stad bekend om eten?',
+    'Staat de stad bekend om kunst?', 'Staat de stad bekend om muziek?', 'Staat de stad bekend om bier?', 'Heeft de stad een beroemde kathedraal?', 'Heeft de stad een beroemde brug?',
+    'Heeft de stad een beroemd paleis?', 'Heeft de stad een beroemde toren?', 'Ligt de stad in de EU?', 'Ligt de stad in Scandinavië?', 'Is de stad beroemd om een rivier?',
+    'Is de stad beroemd om een kasteel?', 'Is de stad beroemd om een universiteit?', 'Heeft de stad een metro?', 'Staat de stad bekend als duur?', 'Is de stad beroemd om een festival?',
+    'Is de stad een havenstad?', 'Ligt de stad in Oostenrijk of Zwitserland?', 'Sneeuwt het er in de winter?', 'Is de stad de grootste van haar land?', 'Is de stad heel oud?',
+  ],
+  'World Capitals': [
+    'Ligt de hoofdstad in Europa?', 'Ligt de hoofdstad in Azië?', 'Ligt de hoofdstad in Afrika?', 'Ligt de hoofdstad in Amerika?', 'Ligt de hoofdstad in Oceanië?',
+    'Is de hoofdstad een grote stad?', 'Is de hoofdstad klein?', 'Ligt de hoofdstad aan de kust?', 'Ligt de hoofdstad in het binnenland?', 'Ligt de hoofdstad op het noordelijk halfrond?',
+    'Ligt de hoofdstad op het zuidelijk halfrond?', 'Is de hoofdstad heet in de zomer?', 'Is de hoofdstad koud in de winter?', 'Is de hoofdstad beroemd om zijn bezienswaardigheden?', 'Heeft de hoofdstad een beroemd monument?',
+    'Is de hoofdstad beroemd om zijn musea?', 'Staat de hoofdstad bekend om zijn eten?', 'Is de hoofdstad een toeristenbestemming?', 'Ligt de hoofdstad in de EU?', 'Ligt de hoofdstad in een Spaanstalig land?',
+    'Gebruikt het land van de hoofdstad de euro?', 'Ligt de hoofdstad in een monarchie?', 'Ligt de hoofdstad in Noord-Amerika?', 'Ligt de hoofdstad in Zuid-Amerika?', 'Heeft de hoofdstad ooit de Olympische Spelen gehouden?',
+    'Heeft de hoofdstad een beroemd plein?', 'Heeft de hoofdstad een beroemde toren?', 'Heeft de hoofdstad een beroemde kathedraal?', 'Is de hoofdstad bekend om een paleis?', 'Ligt de hoofdstad in een tropisch land?',
+    'Is de hoofdstad dichtbevolkt?', 'Is de hoofdstad bekend om zijn nachtleven?', 'Ligt de hoofdstad aan een rivier?', 'Is de hoofdstad beroemd om een brug?', 'Ligt de hoofdstad in een eilandland?',
+    'Heeft de hoofdstad een metro?', 'Is de hoofdstad oud?', 'Ligt de hoofdstad hoog in de bergen?', 'Is de hoofdstad de grootste stad van het land?', 'Is de hoofdstad wereldwijd bekend?',
+  ],
+
+  // ── Merken ──────────────────────────────────────────────────────────────
+  'Tech Brands': [
+    'Is het merk een hardwarebedrijf?', 'Is het merk een softwarebedrijf?', 'Is het merk een socialmediabedrijf?', 'Is het merk een streamingdienst?', 'Is het merk een telefoonfabrikant?',
+    'Is het merk Amerikaans?', 'Is het merk Aziatisch?', 'Is het merk Europees?', 'Is het merk heel beroemd?', 'Maakt het merk smartphones?',
+    'Maakt het merk laptops?', 'Maakt het merk spelconsoles?', 'Maakt het merk auto\'s?', 'Is het merk vooral onlinediensten?', 'Is het merk bekend om een zoekmachine?',
+    'Is het merk bekend om een sociaal netwerk?', 'Is het merk bekend om een besturingssysteem?', 'Is het merk bekend om clouddiensten?', 'Is het merk bekend om AI?', 'Is het merk bekend om chips?',
+    'Heeft het merk een beroemde oprichter?', 'Is het merk ouder dan 30 jaar?', 'Is het merk jonger dan 20 jaar?', 'Maakt het merk tv\'s?', 'Heeft het merk een eigen appwinkel?',
+    'Wordt het merk geassocieerd met elektrische auto\'s?', 'Maakt het merk wearables?', 'Is het merk een Chinees bedrijf?', 'Is het merk een Japans bedrijf?', 'Is het merk een Koreaans bedrijf?',
+    'Is het merk bekend om winkelen?', 'Is het merk bekend om films streamen?', 'Staat het merk op de beurs?', 'Heeft het merk zijn hoofdkantoor in Californië?', 'Heeft het merk een beroemd logo?',
+    'Is het merk controversieel?', 'Is het merk bekend om videogames?', 'Verkoopt het merk AI-assistenten?', 'Is het een van de biljoenbedrijven?', 'Maakt het merk grafische kaarten?',
+  ],
+  'Fast Food Chains': [
+    'Is de keten Amerikaans?', 'Staat de keten bekend om hamburgers?', 'Staat de keten bekend om kip?', 'Staat de keten bekend om pizza?', 'Staat de keten bekend om friet?',
+    'Staat de keten bekend om ontbijt?', 'Staat de keten bekend om koffie?', 'Staat de keten bekend om ijs?', 'Staat de keten bekend om taco\'s?', 'Staat de keten bekend om broodjes?',
+    'Is de keten wereldwijd?', 'Is de keten vooral afhaal?', 'Heeft de keten een clown als mascotte?', 'Heeft de keten een koning als mascotte?', 'Heeft de keten een kolonel?',
+    'Is de keten bekend om bezorging?', 'Is de keten bekend om een voordeelmenu?', 'Is de keten goedkoop?', 'Is de keten bekend om kindermenu\'s?', 'Is de keten bekend om een Happy Meal?',
+    'Is de keten bekend om nuggets?', 'Is de keten bekend om een Big Mac?', 'Heeft de keten een beroemd boogjeslogo?', 'Is de keten bekend om een vierkante burger?', 'Is de keten bekend om een drive-thru?',
+    'Is de keten bekend om milkshakes?', 'Heeft de keten in films gezeten?', 'Verkoopt de keten hotdogs?', 'Is de keten bekend om een gevlamde burger?', 'Is de keten eigendom van een groter bedrijf?',
+    'Is de keten bekend om donuts?', 'Is de keten bekend om een geheime menukaart?', 'Is de keten controversieel?', 'Heeft de keten een bekende kleur in het logo?', 'Is de keten bekend om krulfriet?',
+    'Is de keten bekend om laat open zijn?', 'Is de keten ook in Nederland te vinden?', 'Is de keten bekend om kip in een emmer?', 'Verkoopt de keten frisdrank van een bekend merk?', 'Is de keten bekend om een mascotte voor kinderen?',
+  ],
+  'Car Brands': [
+    'Is het merk Duits?', 'Is het merk Amerikaans?', 'Is het merk Japans?', 'Is het merk Italiaans?', 'Is het merk Brits?',
+    'Is het merk Koreaans?', 'Is het merk Frans?', 'Is het merk Zweeds?', 'Is het een luxemerk?', 'Is het een massamerk?',
+    'Maakt het merk elektrische auto\'s?', 'Maakt het merk sportauto\'s?', 'Maakt het merk SUV\'s?', 'Maakt het merk trucks?', 'Maakt het merk supercars?',
+    'Staat het merk bekend om betrouwbaarheid?', 'Staat het merk bekend om snelle auto\'s?', 'Staat het merk bekend om terreinwagens?', 'Staat het merk bekend om betaalbare auto\'s?', 'Heeft het merk een beroemd logo?',
+    'Wordt het merk geassocieerd met racen?', 'Wordt het merk geassocieerd met Formule 1?', 'Is het een gezinsautomerk?', 'Is het merk duur?', 'Maakt het merk een beroemde sportauto?',
+    'Is het merk bekend om een kleine stadsauto?', 'Is het merk eigendom van een grotere groep?', 'Is het een Chinees merk?', 'Maakt het merk hybrides?', 'Is het merk ouder dan 100 jaar?',
+    'Is het merk jonger dan 20 jaar?', 'Heeft het merk een beroemde modellijn?', 'Is het merk bekend om luxe sedans?', 'Is het merk bekend om zuinigheid?', 'Is het merk bekend om een iconisch ontwerp?',
+    'Is het merk bekend om hypercars?', 'Hoort het merk bij een beroemde groep?', 'Wordt het merk geassocieerd met een raceteam?', 'Is het merk populair in Nederland?', 'Heeft het merk een beroemde oprichter?',
+  ],
+
+  // ── Eten & Drinken ──────────────────────────────────────────────────────
+  Fruits: [
+    'Groeit het aan een boom?', 'Groeit het aan een struik?', 'Groeit het aan een rank?', 'Is het tropisch?', 'Is het een citrusvrucht?',
+    'Is het een bes?', 'Heeft het een schil die je eraf haalt?', 'Heeft het eetbare schil?', 'Heeft het zaden of pitten?', 'Heeft het één grote pit?',
+    'Is het meestal geel?', 'Is het meestal rood?', 'Is het meestal groen?', 'Is het meestal oranje?', 'Is het meestal paars?',
+    'Is het sappig?', 'Is het zuur?', 'Is het zoet?', 'Is het knapperig?', 'Is het zacht?',
+    'Kun je het in één hap eten?', 'Moet je het snijden?', 'Is het groter dan een vuist?', 'Is het kleiner dan een golfbal?', 'Groeit het in een tros?',
+    'Wordt het vaak in smoothies gebruikt?', 'Wordt het vaak in desserts gebruikt?', 'Wordt het vaak gedroogd?', 'Wordt het vaak geperst?', 'Is het een populair lunchboxfruit?',
+    'Heeft het een harige schil?', 'Bestaat het vooral uit water?', 'Zit er veel vitamine C in?', 'Komt het uit warme streken?', 'Heeft het een sterke geur?',
+    'Wordt het gebruikt om jam te maken?', 'Is het een zomervrucht?', 'Is het een steenvrucht?', 'Zitten er partjes in?', 'Wordt het vaak als tussendoortje gegeten?',
+    'Groeit het in trossen?', 'Wordt het in fruitsalade gebruikt?', 'Is het populair bij kinderen?', 'Rijpt het na het plukken?', 'Wordt het over cornflakes gesneden?',
+  ],
+  Vegetables: [
+    'Groeit het onder de grond?', 'Groeit het boven de grond?', 'Is het een wortelgroente?', 'Is het een bladgroente?', 'Groeit het aan een rank?',
+    'Is het meestal groen?', 'Is het meestal oranje?', 'Is het meestal wit?', 'Is het meestal rood?', 'Is het meestal paars?',
+    'Kun je het rauw eten?', 'Wordt het meestal gekookt gegeten?', 'Is het knapperig?', 'Is het zacht als het gekookt is?', 'Heeft het een sterke geur?',
+    'Heeft het lagen?', 'Heeft het een dikke schil?', 'Is het bitter?', 'Is het zetmeelrijk?', 'Wordt het vaak in salades gebruikt?',
+    'Wordt het vaak in soep gebruikt?', 'Wordt het vaak geroosterd?', 'Wordt het vaak gekookt?', 'Wordt het vaak gebakken?', 'Zitten er zaden in?',
+    'Groeit het in een peul?', 'Is het een soort pompoen?', 'Hoort het bij de uienfamilie?', 'Hoort het bij de koolfamilie?', 'Is het een veelvoorkomend pizzabeleg?',
+    'Vinden kinderen het meestal niet lekker?', 'Zit er veel vezel in?', 'Is het caloriearm?', 'Moet het geschild worden?', 'Is het groter dan een vuist?',
+    'Wordt het vaak met een dipsaus gegeten?', 'Wordt het gebruikt om friet of chips te maken?', 'Is het een veelvoorkomend bijgerecht?', 'Groeit het in een moestuin?', 'Wordt het vaak geroerbakt?',
+    'Is het een wintergroente?', 'Is het een zomergroente?', 'Wordt het vaak geraspt?', 'Heeft het een stronk?', 'Bestaat het vooral uit water?',
+  ],
+  'Snacks & Candy': [
+    'Is het zoet?', 'Is het zout?', 'Is het zuur?', 'Is het pittig?', 'Is het op basis van chocolade?',
+    'Is het taai?', 'Is het knapperig?', 'Is het kleverig?', 'Smelt het in je mond?', 'Zit het in een wikkel?',
+    'Zit het in een zak?', 'Zit het in een doosje?', 'Is het bruisend of prikkelend?', 'Is het een gummisnoepje?', 'Zit het aan een stokje?',
+    'Is het kleurrijk?', 'Komt het in meerdere smaken?', 'Is het een chip?', 'Is het een soort snoep?', 'Is het een chocoladereep?',
+    'Wordt het vaak in de bioscoop gegeten?', 'Wordt het vaak met Halloween uitgedeeld?', 'Is het een jeugdfavoriet?', 'Ligt het bij de kassa?', 'Zitten er noten in?',
+    'Zit er karamel in?', 'Is het hard snoep?', 'Zit het op een lolliestokje?', 'Is het hapklaar?', 'Deel je het of eet je het alleen?',
+    'Is het gebakken?', 'Is het een merksnack?', 'Heeft het een knapperig laagje?', 'Is het knoeierig om te eten?', 'Kleurt het je vingers?',
+    'Is het een populaire feestsnack?', 'Wordt het vaak met een drankje gegeten?', 'Heeft het een mascotte?', 'Is het rond?', 'Heeft het een vulling?',
+    'Is het een seizoenstraktatie?', 'Vind je het in een snoepautomaat?', 'Is het populair bij kinderen?', 'Heeft het geen bereiding nodig?', 'Zit het in een multipack?',
+  ],
+  Desserts: [
+    'Is het gebakken?', 'Is het bevroren?', 'Wordt het warm geserveerd?', 'Wordt het koud geserveerd?', 'Zit er chocolade in?',
+    'Zit er fruit in?', 'Heeft het een bodem?', 'Heeft het lagen?', 'Heeft het glazuur of frosting?', 'Is het een soort taart?',
+    'Is het een soort ijs?', 'Is het een soort koekje?', 'Is het een soort gebak?', 'Is het romig?', 'Is het knapperig?',
+    'Eet je het met een lepel?', 'Eet je het met je handen?', 'Wordt het in een kommetje geserveerd?', 'Wordt het op een bord geserveerd?', 'Is het een Frans dessert?',
+    'Is het een Italiaans dessert?', 'Wordt het vaak als ontbijt gegeten?', 'Is het een verjaardagstraktatie?', 'Moet het gekoeld worden?', 'Zit er karamel in?',
+    'Zitten er noten in?', 'Zit er kaneel in?', 'Wordt het met siroop of saus overgoten?', 'Zit er slagroom op?', 'Is het een portie voor één persoon?',
+    'Is het een warm troostgerecht?', 'Is het gemaakt met eieren?', 'Is het gemaakt met melk of room?', 'Heeft het een knapperige topping?', 'Is het meestal rond?',
+    'Is het vaker zelfgemaakt dan gekocht?', 'Is het rijk en zwaar?', 'Is het licht en luchtig?', 'Zou het smelten als je het laat staan?', 'Past het goed bij koffie?',
+  ],
+  Drinks: [
+    'Wordt het warm geserveerd?', 'Wordt het koud geserveerd?', 'Wordt het met ijs geserveerd?', 'Is het bruisend?', 'Is het alcoholisch?',
+    'Bevat het cafeïne?', 'Bevat het zuivel?', 'Bevat het fruit?', 'Bevat het suiker?', 'Is het een frisdrank?',
+    'Is het een soort thee?', 'Is het een soort koffie?', 'Is het een soort sap?', 'Is het een smoothie?', 'Wordt het meestal in een mok geserveerd?',
+    'Wordt het meestal in een glas geserveerd?', 'Wordt het in een blikje of fles geserveerd?', 'Zit er een rietje bij?', 'Heeft het schuim erop?', 'Is het zoet?',
+    'Is het bitter?', 'Is het zuur?', 'Is het romig?', 'Is het helder of doorzichtig?', 'Is het bruin of donker van kleur?',
+    'Heeft het een felle kleur?', 'Wordt het vaak bij het ontbijt gedronken?', 'Wordt het vaak op feestjes gedronken?', 'Helpt het je wakker worden?', 'Helpt het je ontspannen?',
+    'Is het een kinderdrankje?', 'Is het een zomerdrankje?', 'Is het een winterdrankje?', 'Is het van een plant gemaakt?', 'Heeft het een beroemd merk?',
+    'Zou je het in een café drinken?', 'Zou je het in een bar drinken?', 'Is het een drankje op melkbasis?', 'Is het koolzuurhoudend?', 'Moet het geschud of gemixt worden?',
+    'Heeft het een sterke geur?', 'Is het een gezondheidsdrankje?', 'Is het een traktatie, geen dagelijks drankje?', 'Wordt het vaak gedeeld, zoals een kan?', 'Is het een drankje voor één persoon?',
+  ],
+  'World Dishes': [
+    'Is het pittig?', 'Is het hartig?', 'Wordt het warm geserveerd?', 'Wordt het koud geserveerd?', 'Zit er vlees in?',
+    'Zit er vis of zeevruchten in?', 'Is het vegetarisch?', 'Zit er rijst in?', 'Zitten er pasta of noedels in?', 'Zit er brood in?',
+    'Zit er kaas in?', 'Eet je het met je handen?', 'Eet je het met stokjes?', 'Eet je het met mes en vork?', 'Is het gewikkeld of gerold?',
+    'Is het een soep of heeft het bouillon?', 'Is het gefrituurd?', 'Is het gegrild?', 'Is het gebakken?', 'Is het rauw?',
+    'Komt het uit Azië?', 'Komt het uit Europa?', 'Komt het uit Latijns-Amerika?', 'Komt het uit het Midden-Oosten?', 'Komt het uit Afrika?',
+    'Is het een ontbijtgerecht?', 'Is het streetfood?', 'Is het een fastfoodgerecht?', 'Is het comfortfood?', 'Wordt het meestal aan tafel gedeeld?',
+    'Is het een gerecht voor één persoon?', 'Heeft het een saus of dip?', 'Is het knapperig?', 'Is het kleurrijk?', 'Is het een veelvoorkomende afhaalbestelling?',
+    'Is het een wereldwijd bekend gerecht?', 'Zou je het als lunch eten?', 'Zou je het als avondeten eten?', 'Is het een feestgerecht?', 'Is het gevuld met iets?',
+    'Wordt het in een kom geserveerd?', 'Is het een populair restaurantgerecht?', 'Wordt het meestal zelf gemaakt?', 'Zit er veel kruiden in?', 'Is het naar een plaats vernoemd?',
+  ],
+
+  // ── Voorwerpen ──────────────────────────────────────────────────────────
+  'Household Objects': [
+    'Vind je het in de keuken?', 'Vind je het in de badkamer?', 'Vind je het in de woonkamer?', 'Vind je het in de slaapkamer?', 'Vind je het in de garage?',
+    'Wordt het elke dag gebruikt?', 'Is het elektronisch?', 'Gebruikt het elektriciteit?', 'Gebruikt het batterijen?', 'Is het klein?',
+    'Is het groot?', 'Kun je het met één hand vasthouden?', 'Is het van metaal?', 'Is het van plastic?', 'Is het van glas?',
+    'Is het van hout?', 'Is het van stof?', 'Is het scherp?', 'Is het hol?', 'Kun je ermee koken?',
+    'Kun je ermee schoonmaken?', 'Kun je erop zitten?', 'Kun je er spullen in bewaren?', 'Eet je ermee?', 'Heeft het een scherm?',
+    'Maakt het geluid?', 'Heeft het een snoer?', 'Is het zwaar?', 'Is het licht?', 'Is het breekbaar?',
+    'Is het waterdicht?', 'Heeft het knoppen?', 'Heeft het een handvat?', 'Heeft het een deksel?', 'Heeft het een schakelaar?',
+    'Is het onderdeel van een set?', 'Steek je het in een stopcontact?', 'Gebruikt het water?', 'Is het een meubelstuk?', 'Is het decoratief?',
+    'Is het gereedschap?', 'Zou je het inpakken bij een verhuizing?', 'Is het gevaarlijk voor kinderen?', 'Is het van keramiek?', 'Gebruik je het dagelijks?',
+  ],
+};
+
+// Fallback for Dutch games in categories without a specific bank.
+export const UNIVERSAL_QUESTIONS_NL = [
+  'Is het klein?', 'Is het groot?', 'Is het zwaar?', 'Is het beroemd?', 'Is het kleurrijk?',
+  'Is het door mensen gemaakt?', 'Is het natuurlijk?', 'Is het gewoon?', 'Is het zeldzaam?', 'Is het duur?',
+  'Is het goedkoop?', 'Is het oud?', 'Is het modern?', 'Is het nog populair?', 'Heeft het een naam?',
+  'Heeft het een logo?', 'Kom je het in het dagelijks leven tegen?', 'Kennen kinderen het?', 'Is het luid?', 'Is het stil?',
+  'Wordt het door veel mensen gebruikt?', 'Is het een merk?', 'Is het een persoon?', 'Is het een plaats?', 'Is het een ding?',
+];
+
+// Dutch counterpart to FUNNY_QUESTIONS — weird/funny wildcards for any category.
+export const FUNNY_QUESTIONS_NL = [
+  'Zou het een zombie-apocalyps overleven?', 'Kan een peuter het redelijkerwijs verslaan?', 'Is het bang in het donker?',
+  'Verdient het een knuffel?', 'Heeft het ooit op tv gestaan?', 'Zou je oma het gebruiken?',
+  'Is het dramatischer dan je ex?', 'Roddelt het?', 'Zou het je kunnen bespioneren?',
+  'Zou je ermee trouwen?', 'Zou het je baan kunnen inpikken?', 'Is het nu iets aan het beramen?',
+  'Heeft het vertrouwensproblemen?', 'Zou het 5 seconden met een peuter overleven?', 'Zou het een hamster in een gevecht verslaan?',
+  'Is het een introvert?', 'Heeft het een therapeut nodig?', 'Zou het een rapbattle winnen?',
+  'Zou het naast je in de auto zitten?', 'Ruikt het raar?', 'Schaamt het zich?',
+  'Heeft het ooit tegen je gelogen?', 'Zou je het aan je schoonfamilie geven?', 'Heeft het onverwerkt trauma?',
+  'Zou het je ghosten na één date?', 'Is het stiekem iconisch?', 'Heeft het een geheime identiteit?',
+  'Zou het een magnetron overleven?', 'Zou het een rechtszaak van je winnen?', 'Beoordeelt het je kledingkeuzes?',
+  'Zou je het in een gestolen rugzak passen?', 'Is het spookachtig?', 'Zou een peuter huilen als hij het zag?',
+  'Heeft het hoofdpersoon-energie?', 'Zou het groepschat-drama overleven?', 'Is het bang voor katten?',
+  'Zou het een week met je familie overleven?', 'Is het stiekem verdacht?', 'Denkt het dat het beter is dan jij?',
+  'Zou een wasbeer het kunnen stelen?', 'Is het emotioneel beschikbaar?', 'Zou het een vibe-check doorstaan?',
+  'Verbergt het geheimen?', 'Zou het een vlucht zonder beenruimte overleven?', 'Is het de schurk in zijn eigen verhaal?',
+  'Zou een gans er agressief naar toeteren?', 'Is het cooler dan jij?', 'Houdt het je \'s nachts wakker?',
+  'Zou het een TikTok-trend overleven?', 'Zou je het je wifi-wachtwoord toevertrouwen?',
+];
+
 // Returns a random question for the given category that isn't recently asked.
-// ~10% of the time it pulls from FUNNY_QUESTIONS instead for surprise/wildcard variety.
-export function getRandomQuestion(category, previousQuestions = []) {
+// ~10% of the time it pulls from the funny wildcard bank for surprise/variety.
+// `lang` selects the language bank ('nl' → Dutch); defaults to English so
+// existing callers that pass no lang keep getting English questions.
+export function getRandomQuestion(category, previousQuestions = [], lang = 'en') {
+  const isNl = lang === 'nl';
+  const bank = isNl ? QUESTION_BANK_BY_CATEGORY_NL : QUESTION_BANK_BY_CATEGORY;
+  const universal = isNl ? UNIVERSAL_QUESTIONS_NL : UNIVERSAL_QUESTIONS;
+  const funny = isNl ? FUNNY_QUESTIONS_NL : FUNNY_QUESTIONS;
   const used = new Set(previousQuestions.map(q => q.toLowerCase().trim()));
   // 10% chance → weird/funny wildcard bank (works for any category)
   if (Math.random() < 0.1) {
-    const available = FUNNY_QUESTIONS.filter(q => !used.has(q.toLowerCase().trim()));
-    const source = available.length > 0 ? available : FUNNY_QUESTIONS;
+    const available = funny.filter(q => !used.has(q.toLowerCase().trim()));
+    const source = available.length > 0 ? available : funny;
     return source[Math.floor(Math.random() * source.length)];
   }
-  const pool = QUESTION_BANK_BY_CATEGORY[category] || UNIVERSAL_QUESTIONS;
+  const pool = bank[category] || universal;
   const available = pool.filter(q => !used.has(q.toLowerCase().trim()));
   const source = available.length > 0 ? available : pool;
   return source[Math.floor(Math.random() * source.length)];
