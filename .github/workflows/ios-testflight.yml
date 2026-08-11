@@ -120,6 +120,17 @@ jobs:
             echo "::error::Provisioning profile '$PROFILE_NAME' lacks the iCloud key-value entitlement. Tick iCloud on the App ID (developer.apple.com), regenerate + re-download the App Store profile, and update the IOS_PROVISIONING_PROFILE secret with its base64."
             exit 1
           fi
+          # Same check for push. A profile snapshots its entitlements when it is
+          # ISSUED, so enabling Push on the App ID does not update a profile that
+          # already exists — it must be regenerated and the secret replaced.
+          # Checking here (rather than only after the archive) turns a confusing
+          # 90-second Xcode signing failure into an instant, specific message.
+          if ! echo "$PROFILE_PLIST" | plutil -extract 'Entitlements.aps-environment' raw - >/dev/null 2>&1; then
+            echo "Entitlement keys actually present in '$PROFILE_NAME':"
+            echo "$PROFILE_PLIST" | plutil -extract Entitlements xml1 -o - - | grep -o '<key>[^<]*</key>' | sed 's/<\/*key>//g' | sed 's/^/  - /' || true
+            echo "::error::Provisioning profile '$PROFILE_NAME' lacks the aps-environment entitlement. Push IS enabled on the App ID (or this would also report a missing capability), but THIS profile predates that change. Go to developer.apple.com -> Profiles, REGENERATE the App Store profile for com.whatsmypick.app (edit + save is not always enough — delete and recreate if aps-environment still doesn't appear), download it, then update the IOS_PROVISIONING_PROFILE secret with 'base64 -i <file>'."
+            exit 1
+          fi
 
       # SIGNED archive — this is load-bearing for entitlements. An unsigned
       # archive gets its entitlements reconstructed from the provisioning
