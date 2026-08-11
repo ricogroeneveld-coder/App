@@ -655,11 +655,10 @@ export default function Profile() {
                 <div className="grid grid-cols-2 gap-2">
                   {COLLECTIONS.filter(col =>
                     // Hidden collections (Royal, Founder) are stashed for a
-                    // later release; the beta album only exists for players
-                    // who hold a piece of it.
-                    !col.hidden &&
-                    (col.id !== 'col_beta' ||
-                    collectionItems(col.id).some(i => profile.owned.includes(i.id)))
+                    // later release; the beta set is a gift, not a shop
+                    // item — its album never shows here (owners keep the
+                    // pieces in their Collection locker).
+                    !col.hidden && col.id !== 'col_beta'
                   ).map(col => (
                     <CollectionCover key={col.id} col={col} owned={profile.owned}
                       onOpen={() => setOpenCollection(col.id)} />
