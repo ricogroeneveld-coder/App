@@ -25,14 +25,17 @@ begin
   new.message := left(coalesce(new.message, ''), 300);
   new.display_name := left(coalesce(new.display_name, ''), 40);
 
-  -- Per-user, per-room flood limit (CHAT-4). The client already throttles to
-  -- ~1 send / 600ms, so this only bites crafted/abusive clients.
+  -- Per-user, per-room flood limit (CHAT-4). Deliberately set ABOVE what the
+  -- app itself can produce: the client throttles to one send per 600ms (~16
+  -- per 10s at the absolute maximum), so 20 leaves headroom for the fastest
+  -- legitimate user while still stopping a crafted client from flooding a room
+  -- (and from driving continuous full-screen emote rain for everyone).
   select count(*) into recent
   from public.mystery_chats
   where room_code = new.room_code
     and user_id = new.user_id
     and created_date > now() - interval '10 seconds';
-  if recent >= 8 then
+  if recent >= 20 then
     raise exception 'chat_rate_limited' using errcode = 'P0001';
   end if;
 

@@ -251,6 +251,12 @@ grant execute on function public.submit_mystery_guess(text, text, text, uuid, te
 -- ─────────────────────────────────────────────────────────────────────────
 -- submit_mystery_word — word_entry only, no empty/unguessable words.
 -- ─────────────────────────────────────────────────────────────────────────
+-- Return type changes void -> jsonb (it now reports why a lock-in was
+-- refused). CREATE OR REPLACE cannot change a function's return type
+-- ("cannot change return type of existing function"), so the old signature
+-- must be dropped first. Dropping also drops its grants — re-granted below.
+drop function if exists public.submit_mystery_word(text, text, text);
+
 create or replace function public.submit_mystery_word(
   p_room text,
   p_user text,
@@ -288,6 +294,9 @@ grant execute on function public.submit_mystery_word(text, text, text) to anon, 
 -- ─────────────────────────────────────────────────────────────────────────
 -- play_again_mystery — only from a finished room (no mid-game reset grief).
 -- ─────────────────────────────────────────────────────────────────────────
+-- Same as above: void -> jsonb, so the old signature must be dropped first.
+drop function if exists public.play_again_mystery(text);
+
 create or replace function public.play_again_mystery(p_room text)
 returns jsonb
 language plpgsql
