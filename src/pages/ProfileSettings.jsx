@@ -21,22 +21,10 @@ import { getProfile, loadProfile, deleteProfileData } from '@/lib/playerProfile'
 import { restorePurchases } from '@/lib/payments';
 import { isNativeApp } from '@/lib/platform';
 
-// Public site pages (also linked from the App Store listing). Kept in one
-// place so the in-app links can't drift from the deployed files
-// (public/privacy.html, public/support.html and public/terms.html).
-//
-// IMPORTANT — the owner MUST set VITE_SITE_BASE at build time to wherever
-// these HTML files actually deploy. privacy.html / support.html / terms.html
-// live in public/, which most static hosts serve at the site ROOT
-// (https://example.com/privacy.html), NOT under a /whatsmypick subpath — so
-// the previous hardcoded base likely 404'd. Set VITE_SITE_BASE to the correct
-// origin (root or subpath) and VERIFY all three links open before submitting
-// to the App Store. Falls back to the previous value so nothing regresses if
-// the env var is unset.
-const SITE_BASE = import.meta.env.VITE_SITE_BASE || 'https://jinnieoclock.com/whatsmypick';
-const PRIVACY_URL = `${SITE_BASE}/privacy.html`;
-const SUPPORT_URL = `${SITE_BASE}/support.html`;
-const TERMS_URL = `${SITE_BASE}/terms.html`;
+// Public site pages (privacy / support / terms) — single source of truth in
+// src/lib/links.js so the in-app links and the App Store metadata URL can't
+// drift (LAUNCH-1).
+import { PRIVACY_URL, SUPPORT_URL, TERMS_URL } from '@/lib/links';
 
 export default function ProfileSettings() {
   const navigate = useNavigate();

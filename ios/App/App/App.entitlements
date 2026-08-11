@@ -4,5 +4,13 @@
 <dict>
 	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
 	<string>$(TeamIdentifierPrefix)$(CFBundleIdentifier)</string>
+	<!-- Push notifications (LAUNCH-2). Without this the turn/re-engagement
+	     push feature registers but never receives a token, so notify-turn
+	     silently sends nothing. The value is overridden to "production" at
+	     export for App Store/TestFlight builds; "development" covers dev
+	     devices. Requires the Push Notifications capability on the App ID and
+	     a regenerated provisioning profile (see the CI guard). -->
+	<key>aps-environment</key>
+	<string>development</string>
 </dict>
 </plist>

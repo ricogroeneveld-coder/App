@@ -4,6 +4,7 @@ import { ArrowLeft, Check, ChevronRight, Lock, Sparkles } from 'lucide-react';
 import { CATEGORIES, CATEGORY_EMOJIS, PACKS, shortCategory } from '@/lib/wordLists';
 import { isPackUnlocked } from '@/lib/premiumPacks';
 import { purchasePack, purchasesAvailable, getPackPrices } from '@/lib/payments';
+import { track } from '@/lib/analytics';
 import { useToast } from '@/components/ui/use-toast';
 import { useLang } from '@/lib/LanguageContext';
 import { Dialog } from '@/components/ui/dialog';
@@ -51,7 +52,10 @@ export default function CategorySelector({ selectedCategory, onSelect, onClose }
 
   const openPack = (pack) => {
     setActivePack(pack);
-    setView(isPackUnlocked(pack.id) ? 'packCategories' : 'packPreview');
+    const locked = !isPackUnlocked(pack.id);
+    // ANA-2: paywall impression — the top of the conversion funnel.
+    if (locked) track('pack_viewed', { pack: pack.id });
+    setView(locked ? 'packPreview' : 'packCategories');
   };
 
   const handleBack = () => {

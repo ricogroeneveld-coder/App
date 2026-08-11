@@ -22,6 +22,7 @@
 import { Purchases } from '@revenuecat/purchases-capacitor';
 import { unlockPack, isPackUnlocked, reconcilePacks } from './premiumPacks';
 import { isNativeApp, isDevToolsEnabled } from './platform';
+import { track } from './analytics';
 
 export const PRODUCTS = {
   // Apple permanently blocks reuse of a deleted product ID, even after it
@@ -99,19 +100,25 @@ export async function getPackPrices() {
 export async function purchasePack(packId) {
   if (isPackUnlocked(packId)) return { ok: true };
   if (isNative()) {
+    // ANA-2: the purchase funnel — impression→start→outcome — is what a
+    // soft-launch measures conversion with.
+    track('purchase_started', { pack: packId });
     try {
       const productId = PRODUCTS[packId].productId;
       const { products } = await Purchases.getProducts({ productIdentifiers: [productId] });
       const product = products?.[0];
-      if (!product) return { ok: false, reason: 'error' };
+      if (!product) { track('purchase_failed', { pack: packId }); return { ok: false, reason: 'error' }; }
       const { customerInfo } = await Purchases.purchaseStoreProduct({ product });
       if (customerInfo.entitlements.active[packId]) {
         unlockPack(packId);
+        track('purchase_completed', { pack: packId });
         return { ok: true };
       }
+      track('purchase_failed', { pack: packId });
       return { ok: false, reason: 'error' };
     } catch (e) {
-      if (e?.userCancelled) return { ok: false, reason: 'cancelled' };
+      if (e?.userCancelled) { track('purchase_cancelled', { pack: packId }); return { ok: false, reason: 'cancelled' }; }
+      track('purchase_failed', { pack: packId });
       return { ok: false, reason: 'error' };
     }
   }
@@ -138,6 +145,7 @@ export async function restorePurchases() {
           restored++;
         }
       }
+      track('restore_purchases', { restored });
       return { ok: true, restored };
     } catch {
       return { ok: false, reason: 'error' };

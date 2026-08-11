@@ -14,6 +14,12 @@
 #   VITE_SUPABASE_ANON_KEY — the project's anon/public key (same page)
 #   VITE_REVENUECAT_IOS_KEY — RevenueCat → Project → API Keys → the "Apple App
 #                             Store" public app key (starts with "appl_")
+#   VITE_SITE_BASE         — the ORIGIN where public/privacy.html, support.html
+#                             and terms.html deploy, e.g. https://whatsmypick.com
+#                             (NO trailing path). The in-app legal links AND the
+#                             App Store Connect privacy URL use this; the build
+#                             FAILS below if it's unset so a store build can't
+#                             ship a 404 placeholder (LAUNCH-1).
 #
 # Signing is fully MANUAL and explicit: a real Distribution certificate is
 # imported into a CI keychain and a real App Store provisioning profile is
@@ -56,10 +62,18 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_REVENUECAT_IOS_KEY: ${{ secrets.VITE_REVENUECAT_IOS_KEY }}
+          # The origin the privacy/support/terms pages deploy at. Load-bearing:
+          # the in-app legal links and the App Store privacy URL both use it, and
+          # a wrong/empty value is an App Review rejection (LAUNCH-1).
+          VITE_SITE_BASE: ${{ secrets.VITE_SITE_BASE }}
           # Optional — crash reporting. Leave the secret unset and the build
           # ships zero Sentry code (see src/main.jsx).
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
         run: |
+          if [ -z "$VITE_SITE_BASE" ]; then
+            echo "::error::VITE_SITE_BASE secret is not set. Set it to the origin where public/privacy.html, support.html and terms.html deploy (e.g. https://whatsmypick.com) and verify all three links resolve before submitting — otherwise the in-app legal links and the App Store privacy URL 404 (LAUNCH-1)."
+            exit 1
+          fi
           npm ci
           npm run ios
 
@@ -136,7 +150,15 @@ jobs:
             echo "::error::Archived app is missing the iCloud kv-store entitlement — check App.entitlements and the profile."
             exit 1
           fi
-          codesign -d --entitlements - "$APP_PATH" 2>/dev/null | grep -A1 "ubiquity" || true
+          # Push notifications (LAUNCH-2): without aps-environment the app never
+          # gets an APNs token and notify-turn silently sends nothing. Fail loudly
+          # if the capability didn't make it into the signed app — tick Push
+          # Notifications on the App ID and regenerate the provisioning profile.
+          if ! codesign -d --entitlements - "$APP_PATH" 2>/dev/null | grep -q "aps-environment"; then
+            echo "::error::Archived app is missing the aps-environment (push) entitlement. Enable Push Notifications on the App ID (developer.apple.com), regenerate + re-download the App Store profile, and update the IOS_PROVISIONING_PROFILE secret."
+            exit 1
+          fi
+          codesign -d --entitlements - "$APP_PATH" 2>/dev/null | grep -A1 "ubiquity\|aps-environment" || true
 
       - name: Export and upload to TestFlight
         env:
