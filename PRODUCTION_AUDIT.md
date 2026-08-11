@@ -43,6 +43,28 @@ Method: full source read of every gameplay, data, migration, economy, cosmetic, 
 
 ---
 
+## 1a. Implementation Status (fixes applied after the audit)
+
+The audit above was the diagnosis. Following approval to "fix everything needed for a launch without flaws," the P0/P1 set and most P2s were implemented in six committed batches. Two new migrations were added: **`0012_authorize_gameplay.sql`** (authorization/integrity) and **`0013_chat_rate_limit.sql`** (chat guardrails). `npm run lint`, `npm run typecheck`, and `npm run build` all pass.
+
+**Resolved**
+
+- **Security/integrity (0012).** `mystery_rooms.status` is revoked from clients; every transition goes through a validated `mystery_set_status` RPC that finishes a room only when the finish condition is truly met — so **force-finish (and the secret leak via the reveal trigger) is impossible** (SEC-2a). `submit_mystery_guess` now rejects a non-member/eliminated guesser, a room not in play, a **self-target**, an already-revealed target, and enforces the **guess cooldown server-side** (SEC-N1) — self-guess and dictionary brute-force are no longer deterministic wins. `submit_mystery_word` is word_entry-only and rejects empty/unguessable words (SEC-N3/STUCK-3). `play_again_mystery` is finished-only (SEC-N2). `mystery_guesses` UPDATE/DELETE revoked (SEC-2b); `mystery_secrets` is RPC-only (SEC-N3); `push_tokens` DELETE locked (SEC-N6). The guess RPC also records the target's `user_id`, fixing the **GAME-N5** regression (correct-guess alert + Notebook attribution + re-guess filtering work again).
+- **Reliability.** Hint round now has a **timeout** with placeholder auto-fill (GAME-N1); the turn deadline is **refreshed server-side when a question completes**, killing the post-answer-timeout enforcement stampede/turn-hijack (GAME-N4); phase deadlines are minted server-side (clock-skew proof, GAME-N6); the Notebook clamps its page index (GAME-N2); an eliminated turn-holder's turn is claimed by the present fallback instead of vanishing (GAME-N3); host is reclaimed on the results screen if the host's app died (STUCK-4); word-entry host handoff is crash-safe (GAME-N7).
+- **Chat.** Own message reconciles from the insert's returned row (CHAT-1); unread badge reconciles missed messages on wake (CHAT-2); history snapshot merges instead of full-replace (CHAT-3); display-side length cap (CHAT-5); server-side per-user flood limit + length truncation (CHAT-4, migration 0013).
+- **UX/a11y.** Both How-to-Play modals use the accessible Dialog (UX-1/A11Y-1); BrowseLobbies distinguishes offline from empty with a retry (UX-3) and no longer flashes the list to a spinner on background refetch (UX-5); failed kick surfaces a toast (UX-4); 44px hit targets on chat emotes/send, Playing leave, Home Join (UX-2); localized emote/send aria-labels + refresh label + CategorySelector dialog name (A11Y-3/4/5).
+- **Launch.** Privacy/terms/support URLs fixed (subpath dropped, single source, `VITE_SITE_BASE` injected in CI with a build-failing guard — LAUNCH-1); `aps-environment` push entitlement added with a CI archive check (LAUNCH-2); `armv7`→`arm64` (LAUNCH-3); purchase + share funnels instrumented (ANA-2).
+- **Economy.** Global cross-room hourly reward cap on top of the per-room cap (ECON-1); tab-close mid-match forfeits the win streak (ECON-2).
+
+**Deliberately deferred (documented, not launch-blocking)**
+
+- **SEC-3** (client-authoritative economy) and **SEC-5/SEC-6** (spoofable reports, evadable mute) are **inherent to the login-less guest model** — closing them needs real per-user auth binding, out of scope for a login-less party game; they are contained to cosmetics/vanity. **Host seizure / `is_public` flip** remain possible for a room you've joined (low-severity grief, same root cause). **SEC-N5** (analytics events unthrottled) and web-only **SEC-4** are P3 residuals.
+- **ECON-3** (buy any non-rotated item on demand) is a shop-UI design change, left for a product decision. **PERF-1** (bundle split), **NET-1/2/3** (peer-profile channel sharing), remaining **UX/A11Y P3 polish** (switch-row hit area, word-grid density, emoji-only semantics, contrast), and the **product gaps** (solo/bot practice, friends/rematch loop) are post-launch items in the roadmap below.
+
+The section-by-section findings below are retained as the original diagnosis; the ID references above map directly onto them.
+
+---
+
 ## 2. Game Overview (verified against implementation)
 
 **What's My Pick?** is a real-time multiplayer party game in the 20-questions family. Every feature below was traced to working code.
