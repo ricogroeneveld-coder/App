@@ -53,7 +53,7 @@ The audit above was the diagnosis. Following approval to "fix everything needed 
 - **Reliability.** Hint round now has a **timeout** with placeholder auto-fill (GAME-N1); the turn deadline is **refreshed server-side when a question completes**, killing the post-answer-timeout enforcement stampede/turn-hijack (GAME-N4); phase deadlines are minted server-side (clock-skew proof, GAME-N6); the Notebook clamps its page index (GAME-N2); an eliminated turn-holder's turn is claimed by the present fallback instead of vanishing (GAME-N3); host is reclaimed on the results screen if the host's app died (STUCK-4); word-entry host handoff is crash-safe (GAME-N7).
 - **Chat.** Own message reconciles from the insert's returned row (CHAT-1); unread badge reconciles missed messages on wake (CHAT-2); history snapshot merges instead of full-replace (CHAT-3); display-side length cap (CHAT-5); server-side per-user flood limit + length truncation (CHAT-4, migration 0013).
 - **UX/a11y.** Both How-to-Play modals use the accessible Dialog (UX-1/A11Y-1); BrowseLobbies distinguishes offline from empty with a retry (UX-3) and no longer flashes the list to a spinner on background refetch (UX-5); failed kick surfaces a toast (UX-4); 44px hit targets on chat emotes/send, Playing leave, Home Join (UX-2); localized emote/send aria-labels + refresh label + CategorySelector dialog name (A11Y-3/4/5).
-- **Launch.** `aps-environment` push entitlement added with a CI archive check (LAUNCH-2); `armv7`→`arm64` (LAUNCH-3); purchase + share funnels instrumented (ANA-2). Legal-page links were consolidated onto a single `links.js` (ProfileSettings no longer keeps its own copy) — but note **LAUNCH-1 itself was withdrawn as a false positive**; the URLs were already correct, and the changes made against that false premise were reverted (§15).
+- **Launch.** `aps-environment` push entitlement added with a CI archive check (LAUNCH-2); `armv7`→`arm64` (LAUNCH-3); age rating settled at **12+** with `privacy.html`'s Children section rewritten to match and the decision recorded in `APPSTORE.md §3a` (LAUNCH-4); purchase + share funnels instrumented (ANA-2). Legal-page links were consolidated onto a single `links.js` (ProfileSettings no longer keeps its own copy) — but note **LAUNCH-1 itself was withdrawn as a false positive**; the URLs were already correct, and the changes made against that false premise were reverted (§15).
 - **Economy.** Global cross-room hourly reward cap on top of the per-room cap (ECON-1); tab-close mid-match forfeits the win streak (ECON-2).
 
 **Deliberately deferred (documented, not launch-blocking)**
@@ -323,7 +323,7 @@ The paywall could convert at 0% and the data would look identical. *Fix:* add `t
 
 **Also:**
 - **LAUNCH-3 [P2] `armv7` in `UIRequiredDeviceCapabilities`** — 32-bit; the App Store is arm64-only. Stale Capacitor default. *Fix:* `arm64`.
-- **LAUNCH-4 [P2] Age rating vs "general audiences."** `privacy.html` says "general audiences," but public lobbies + open stranger chat typically push the rating to 12+. UGC controls (filter/report/mute/block/host-remove/EULA) are present and satisfy Guideline 1.2; the *rating* and wording need to match reality.
+- **LAUNCH-4 [P2] Age rating vs "general audiences." — RESOLVED.** `privacy.html` claimed "suitable for general audiences" while the app has public lobbies with live stranger chat. The owner is rating the app **12+**; the privacy page's Children section now states that explicitly (12+, not directed to under-13s, no knowing collection from under-13s, with a deletion contact), and `APPSTORE.md §3a` records the rating decision so a later submission can't silently drift back to 4+. UGC controls (filter/report/mute/block/host-remove/EULA) were already present and satisfy Guideline 1.2. *Remaining owner action: set 12+ in the App Store Connect questionnaire.*
 - **LAUNCH-5 [P3] `privacy.html` over-describes native sign-in** that the native build hides; minor wording cleanup.
 
 ---
@@ -354,7 +354,7 @@ The paywall could convert at 0% and the data would look identical. *Fix:* add `t
 - **UX-4** Silent kick/rejoin/clipboard failures. **UX-5 / PERF-2** BrowseLobbies blanks to spinner on every background refetch.
 - **CHAT-2** Unread badge misses background messages. **CHAT-3** Snapshot full-replace clobbers live/optimistic messages. **CHAT-4** Rate limiting client-side only. **CHAT-5** Unbounded message length on display.
 - **A11Y-3** English aria-labels in Dutch. **A11Y-4** Refresh mislabeled "Loading". **A11Y-5** CategorySelector unnamed in 2/3 views.
-- **PERF-1** 459 kB main chunk. **LAUNCH-3** `armv7`. **LAUNCH-4** Age rating vs wording.
+- **PERF-1** 459 kB main chunk. **LAUNCH-3** `armv7`. ~~**LAUNCH-4** Age rating vs wording~~ — resolved (12+; wording reconciled).
 
 **P3 — Polish**
 - **GAME-N6** Next asker's timer eaten by answering time; word-entry deadline uses `Date.now()`; server-time never re-synced. **GAME-N7** Word-entry host handoff not crash-safe. **GAME play-again fallback** hits revoked column under partial migration.
@@ -436,7 +436,7 @@ The paywall could convert at 0% and the data would look identical. *Fix:* add `t
 13. UX-4 surface kick/rejoin/clipboard errors; UX-5/PERF-2 silent background refetch.
 14. CHAT-2 count-on-wake; CHAT-3 merge snapshot; CHAT-4 server rate-limit; CHAT-5 display cap.
 15. A11Y-3/4/5 localize aria-labels, fix refresh label, name all CategorySelector views.
-16. PERF-1 lazy-load data modules + fix `cloudBackup` double-import; LAUNCH-3 `arm64`; LAUNCH-4 age rating.
+16. PERF-1 lazy-load data modules + fix `cloudBackup` double-import; LAUNCH-3 `arm64` ✅; LAUNCH-4 age rating ✅ (12+ set at submission).
 
 **Phase 3 — Polish (P3) & Future (P4)**
 17. GAME-N4/N5, SEC-N4/N5/N6, NET-1/2/3, CHAT-6/7, UX-6..10, A11Y-6/7, ECON-4/5, COL-1/2, LAUNCH-5; then the product gaps in §21 (friends/rematch, solo/bot, reactions, scarcity).
