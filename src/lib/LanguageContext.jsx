@@ -142,6 +142,7 @@ const translations = {
     inviteHint: 'Tap to copy the room code and share it with your friends',
     enterWordFirst: 'Enter your word first',
     pickWordFirst: 'Pick a word first',
+    lockInOrRemoved: "Lock in a word soon or you'll be removed from the game",
     noStatsYet: 'No profile stats yet.',
     statLevel: 'Level',
     challengeNames: {},
@@ -537,6 +538,7 @@ const translations = {
     inviteHint: 'Tik om de roomcode te kopiëren en deel hem met je vrienden',
     enterWordFirst: 'Vul eerst je woord in',
     pickWordFirst: 'Kies eerst een woord',
+    lockInOrRemoved: 'Kies snel een woord of je wordt uit het spel verwijderd',
     noStatsYet: 'Nog geen profielstatistieken.',
     statLevel: 'Level',
     challengeNames: {

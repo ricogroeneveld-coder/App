@@ -437,6 +437,17 @@
     outline-offset: 2px;
   }
 
+  /* A11Y-5: fallback keyboard-focus ring for the many inline-styled buttons,
+     links and role=button elements that don't define their own — so keyboard
+     and switch-control users can always see where focus is. Mouse/touch users
+     never see it (:focus-visible only). */
+  button:focus-visible, a:focus-visible, [role="button"]:focus-visible,
+  [role="tab"]:focus-visible, input:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid rgba(167, 139, 250, 0.9);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
   /* Select-none for interactive UI — text in message/chat areas keeps selection */
   button, [role="button"], [role="tab"], nav, .select-none-interactive {
     -webkit-user-select: none;

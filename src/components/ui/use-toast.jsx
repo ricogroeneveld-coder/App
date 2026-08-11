@@ -1,7 +1,10 @@
 // Inspired by react-hot-toast library
 import { useState, useEffect } from "react";
 
-const TOAST_LIMIT = 20;
+// UX-3: cap stacked toasts so a filling lobby (a burst of "X joined" toasts)
+// can't blanket the screen / cover the Start button. Newest ones win; older
+// ones drop off the top.
+const TOAST_LIMIT = 3;
 // How long a toast stays on screen before it dismisses itself.
 const TOAST_AUTO_DISMISS = 3500;
 // Error/destructive toasts stay longer so the message is readable (and has

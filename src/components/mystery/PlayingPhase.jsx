@@ -571,9 +571,9 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
         </div>
 
         <button
-          onClick={() => navigator.clipboard?.writeText(roomCode)}
+          onClick={() => { navigator.clipboard?.writeText(roomCode).then(() => toast({ title: t.linkCopied })).catch(() => {}); }}
           className="shrink-0 self-stretch flex flex-col items-center justify-center px-2 rounded-xl bg-violet-500/10 ring-1 ring-violet-400/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-violet-500/20 transition active:scale-[0.98]"
-          title={t.room}
+          title={t.room} aria-label={t.room}
         >
           <p className="text-[10px] uppercase tracking-wide text-violet-400/70 leading-none">{t.room}</p>
           <p className="font-bold font-mono tracking-[0.12em] text-violet-200 text-xs leading-tight mt-0.5">{roomCode}</p>
@@ -582,7 +582,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
         <button
           onClick={() => setShowMyWord(v => !v)}
           className={`${wordFlex} self-stretch flex flex-col items-end justify-center px-2.5 py-1 rounded-xl bg-gradient-to-b from-white/[0.06] to-black/[0.12] ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-white/10 transition active:scale-[0.98]`}
-          title={t.myWord}
+          title={t.myWord} aria-label={t.myWord}
         >
           <p className="text-[10px] uppercase tracking-wide text-slate-400 leading-none">{t.myWord}</p>
           <p className={`font-bold text-violet-300 ${myWordSize} leading-[1.15] mt-0.5 text-right w-full`}
@@ -915,7 +915,7 @@ function QuestionCard({ question, players, me }) {
               <div key={p.user_id} className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-white/5 text-[11px]">
                 <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
                 <span className={isMe ? 'text-violet-300 font-medium' : 'text-slate-300'}>{isMe ? t.youShort : p.display_name}</span>
-                <span>{ans === true ? '✅' : ans === false ? '❌' : '—'}</span>
+                <span aria-label={ans === true ? t.answerYes : ans === false ? t.answerNo : undefined}>{ans === true ? '✅' : ans === false ? '❌' : '—'}</span>
               </div>
             );
           })}

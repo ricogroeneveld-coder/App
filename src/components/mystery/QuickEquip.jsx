@@ -26,6 +26,16 @@ export default function QuickEquip() {
   }, []);
 
   const owned = ALL_COSMETICS.filter(c => profile.owned?.includes(c.id));
+  // UX-11: never render a blank panel — if there's nothing equippable in any
+  // bucket, show a message instead of an empty container.
+  const hasAny = TYPE_ORDER.some(type => owned.some(c => c.type === type));
+  if (!hasAny) {
+    return (
+      <div className="w-full max-w-lg mx-auto text-center text-slate-400 text-sm py-10">
+        {t.collectionEmpty}
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-lg mx-auto space-y-3">

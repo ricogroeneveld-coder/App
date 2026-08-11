@@ -84,9 +84,15 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
   };
 
   const copyCode = () => {
-    navigator.clipboard.writeText(roomCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    // UX-10: only flash the "copied" confirmation once the write actually
+    // succeeds (and swallow the rejection so it isn't an unhandled promise),
+    // instead of showing a checkmark even when the clipboard write failed.
+    Promise.resolve(navigator.clipboard?.writeText(roomCode))
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      })
+      .catch(() => {});
   };
 
   const shareInvite = async () => {
