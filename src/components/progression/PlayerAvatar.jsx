@@ -47,6 +47,7 @@ const RIM = {
   epic:      'conic-gradient(from 220deg, #f3e8ff, #a855f7 22%, #e9d5ff 45%, #6d28d9 70%, #c084fc 88%, #f3e8ff)',
   legendary: 'conic-gradient(from 220deg, #fff7d6, #ffcb45 20%, #b06104 42%, #ffe9a8 58%, #e08e05 78%, #fff7d6)',
   mythic:    'conic-gradient(from 220deg, #ff8bd8, #ffd36b 20%, #7dffa8 40%, #7db9ff 60%, #c98bff 80%, #ff8bd8)',
+  special:   'conic-gradient(from 220deg, #ffe1e1, #f87171 20%, #7f1d1d 42%, #ffb4b4 58%, #dc2626 78%, #ffe1e1)',
 };
 
 /**

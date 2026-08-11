@@ -28,6 +28,11 @@ export const RARITIES = {
   mythic:    { label: 'Mythic',    ring: 'ring-fuchsia-400/70', text: 'text-fuchsia-300',
                chip: 'bg-gradient-to-b from-fuchsia-400 to-purple-700 text-white',
                cardGlow: 'shadow-[0_0_22px_-9px_rgba(232,121,249,0.7)]' },
+  // Special — the ruby-red tier for one-time exclusives (Founder, Beta
+  // Tester). Sits above Mythic; never appears on purchasable items.
+  special:   { label: 'Special',   ring: 'ring-red-400/70',     text: 'text-red-300',
+               chip: 'bg-gradient-to-b from-red-400 to-rose-700 text-white',
+               cardGlow: 'shadow-[0_0_22px_-9px_rgba(248,113,113,0.7)]' },
 };
 
 // Glossy character tiles — light hits top-left, deep color at the base.
@@ -69,12 +74,12 @@ export const EMBLEMS = [
   { id: 'em_oni',       type: 'emblem', name: 'Oni Mask',    emoji: '👺', rarity: 'legendary', source: { type: 'shop', price: 2000 },  tile: tile('#ff9d76', '#d92c1c', '#4d0703') },
   { id: 'em_crown', collection: 'col_royal',     type: 'emblem', name: 'Royalty',     emoji: '👑', rarity: 'legendary', source: { type: 'shop', price: 2000 },  tile: tile('#ffdf75', '#cd8306', '#4b2a00') },
   { id: 'em_trophy',    type: 'emblem', name: 'Champion',    emoji: '🏆', rarity: 'legendary', source: { type: 'level', level: 20 },   tile: tile('#ffd75e', '#c47b08', '#402400') },
-  { id: 'em_wrench', collection: 'col_beta',     type: 'emblem', name: 'The Fixer',   emoji: '🔧', rarity: 'legendary', source: { type: 'beta' },               tile: tile('#b6f7c1', '#159a4a', '#053118') },
+  { id: 'em_wrench', collection: 'col_beta',     type: 'emblem', name: 'The Fixer',   emoji: '🔧', rarity: 'special', source: { type: 'beta' },               tile: tile('#b6f7c1', '#159a4a', '#053118') },
   { id: 'em_star',      type: 'emblem', name: 'Superstar',   emoji: '🌟', rarity: 'legendary', source: { type: 'level', level: 25 },   tile: starTile('#fff0a8', '#e3a008', '#4d3000') },
   // Mythics — the chase
   { id: 'em_phoenix', collection: 'col_inferno',   type: 'emblem', name: 'Phoenix',     emoji: '🔥', rarity: 'mythic',    source: { type: 'shop', price: 5000 },  tile: tile('#ffc46b', '#f04c13', '#560b06') },
   { id: 'em_planet', collection: 'col_galaxy',    type: 'emblem', name: 'Ringworld',   emoji: '🪐', rarity: 'mythic',    source: { type: 'shop', price: 5000 },  tile: starTile('#c4b5fd', '#5b21b6', '#11043a') },
-  { id: 'em_galaxy', collection: 'col_founder',    type: 'emblem', name: 'Cosmic Mind', emoji: '🌌', rarity: 'mythic',    source: { type: 'challenge' },          tile: starTile('#8b7cff', '#3b1a8f', '#0a0620') },
+  { id: 'em_galaxy', collection: 'col_founder',    type: 'emblem', name: 'Cosmic Mind', emoji: '🌌', rarity: 'special',    source: { type: 'challenge' },          tile: starTile('#8b7cff', '#3b1a8f', '#0a0620') },
 ];
 
 // Banner scenes — layered backgrounds (patterns + gradients baked into one
@@ -145,7 +150,7 @@ export const BANNERS = [
   { id: 'bn_winter', collection: 'col_winter',   type: 'banner', name: 'Winter Wonder',  rarity: 'legendary', source: { type: 'shop', price: 2000 }, shine: true,
     css: `${dots([[16, 20, 1.5, 0.9], [40, 44, 1, 0.7], [66, 22, 1.5, 0.8], [86, 52, 1, 0.7]])}, linear-gradient(170deg, #164e63 0%, #0c2f42 55%, #041521 100%)`,
     motifs: [{ e: '🎄', x: '74%', y: '30%', s: 22, o: 0.95 }, { e: '⛄', x: '12%', y: '44%', s: 16, o: 0.85 }, { e: '❄️', x: '46%', y: '16%', s: 11, o: 0.7, r: 18 }] },
-  { id: 'bn_beta', collection: 'col_beta',   type: 'banner', name: 'The Workshop',   rarity: 'legendary', source: { type: 'beta' }, shine: true,
+  { id: 'bn_beta', collection: 'col_beta',   type: 'banner', name: 'The Workshop',   rarity: 'special', source: { type: 'beta' }, shine: true,
     css: `${dots([[20, 26, 1.5, 0.6], [72, 58, 1, 0.5], [46, 40, 1, 0.45]])}, radial-gradient(90% 110% at 75% 100%, rgba(74,222,128,0.4), transparent 60%), radial-gradient(70% 90% at 20% 0%, rgba(255,203,69,0.18), transparent 55%), linear-gradient(150deg, #14532d 0%, #052e16 55%, #01130a 100%)`,
     motifs: [{ e: '🔧', x: '74%', y: '22%', s: 22, o: 0.95, r: -12 }, { e: '⚙️', x: '14%', y: '46%', s: 16, o: 0.85, r: 20 }, { e: '🛠️', x: '48%', y: '64%', s: 13, o: 0.7, r: -8 }] },
   { id: 'bn_dragon', collection: 'col_dragon',   type: 'banner', name: 'Dragon Realm',   rarity: 'mythic', source: { type: 'shop', price: 5000 }, shine: true,
@@ -190,11 +195,11 @@ export const BORDERS = [
     frame: { ring: 'conic-gradient(#fff3c4, #ffcb45, #a85800, #ffcb45, #fff3c4, #e08e05, #fff3c4)', glow: '0 0 15px 0 rgba(255,180,60,0.75)', spin: true, sparkle: true } },
   { id: 'bd_diamond',  type: 'border', name: 'Diamond',       rarity: 'legendary', source: { type: 'level', level: 35 },
     frame: { ring: 'conic-gradient(#ffffff, #bae6fd, #7dd3fc, #ffffff, #e0f2fe, #ffffff)', glow: '0 0 15px 0 rgba(186,230,253,0.8)', spin: true, sparkle: true } },
-  { id: 'bd_champion', collection: 'col_founder', type: 'border', name: 'Champion',      rarity: 'legendary', source: { type: 'challenge' },
+  { id: 'bd_champion', collection: 'col_founder', type: 'border', name: 'Champion',      rarity: 'special', source: { type: 'challenge' },
     frame: { ring: 'conic-gradient(#ffcb45, #9d5cff, #ffcb45, #9d5cff, #ffcb45)', glow: '0 0 15px 0 rgba(255,203,69,0.7)', spin: true, sparkle: true } },
   { id: 'bd_royal', collection: 'col_royal',    type: 'border', name: 'Regalia',       rarity: 'legendary', source: { type: 'shop', price: 2000 },
     frame: { ring: 'conic-gradient(#ffcb45, #6d28d9 25%, #ffe9a8 50%, #4c1d95 75%, #ffcb45)', glow: '0 0 15px 0 rgba(157,92,255,0.7)', spin: true, sparkle: true } },
-  { id: 'bd_beta', collection: 'col_beta', type: 'border', name: 'Gilded Emerald', rarity: 'legendary', source: { type: 'beta' },
+  { id: 'bd_beta', collection: 'col_beta', type: 'border', name: 'Gilded Emerald', rarity: 'special', source: { type: 'beta' },
     frame: { ring: 'conic-gradient(#a7f3d0, #10b981 20%, #ffd36b 40%, #047857 60%, #ffcb45 80%, #a7f3d0)', glow: '0 0 15px 0 rgba(52,211,153,0.75)', spin: true, sparkle: true } },
   { id: 'bd_dragonscale', collection: 'col_dragon', type: 'border', name: 'Dragonscale', rarity: 'mythic',   source: { type: 'shop', price: 5000 },
     frame: { ring: 'conic-gradient(#6ee7b7, #065f46 20%, #a7f3d0 40%, #047857 60%, #ffd36b 80%, #6ee7b7)', glow: '0 0 16px 1px rgba(52,211,153,0.75)', spin: true, pulse: true, sparkle: true } },
@@ -216,7 +221,7 @@ export const TITLES = [
   { id: 't_legend',    type: 'title', name: 'Living Legend',    rarity: 'legendary', source: { type: 'shop', price: 2000 } },
   { id: 't_guessmstr', type: 'title', name: 'Guess Master',     rarity: 'legendary', source: { type: 'level', level: 28 } },
   { id: 't_myth',      type: 'title', name: 'Myth Hunter',      rarity: 'mythic',    source: { type: 'shop', price: 5000 } },
-  { id: 't_founder', collection: 'col_founder',   type: 'title', name: 'Founder',          rarity: 'mythic',    source: { type: 'challenge' } },
+  { id: 't_founder', collection: 'col_founder',   type: 'title', name: 'Founder',          rarity: 'special',    source: { type: 'challenge' } },
 ];
 
 // Name styles — rendering classes live in index.css (.name-*).
@@ -232,9 +237,9 @@ export const NAME_COLORS = [
   { id: 'nc_mythic',   type: 'nameColor', name: 'Rainbow',       rarity: 'mythic',    source: { type: 'shop', price: 5000 }, cls: 'name-rainbow' },
   { id: 'nc_sakura',   type: 'nameColor', name: 'Rose Gold',     rarity: 'epic',      source: { type: 'shop', price: 800 },  cls: 'name-rosegold', collection: 'col_sakura' },
   { id: 'nc_celestial',type: 'nameColor', name: 'Celestial',     rarity: 'epic',      source: { type: 'shop', price: 800 },  cls: 'name-celestial', collection: 'col_galaxy' },
-  { id: 'nc_beta', collection: 'col_beta', type: 'nameColor', name: 'Beta Glow', rarity: 'legendary', source: { type: 'beta' }, cls: 'name-beta' },
+  { id: 'nc_beta', collection: 'col_beta', type: 'nameColor', name: 'Beta Glow', rarity: 'special', source: { type: 'beta' }, cls: 'name-beta' },
   // Collection completion rewards — never sold, only earned.
-  { id: 'nc_founder',  type: 'nameColor', name: 'Founder Glow',  rarity: 'mythic',    source: { type: 'reward' }, cls: 'name-founder' },
+  { id: 'nc_founder',  type: 'nameColor', name: 'Founder Glow',  rarity: 'special',    source: { type: 'reward' }, cls: 'name-founder' },
 ];
 
 // Completion-reward titles (source 'reward' — granted when a collection is
@@ -247,7 +252,7 @@ export const REWARD_TITLES = [
   { id: 't_frostwalker',type: 'title', name: 'Frost Walker',  rarity: 'epic',      source: { type: 'reward' } },
   { id: 't_neonrunner', type: 'title', name: 'Neon Runner',   rarity: 'epic',      source: { type: 'reward' } },
   { id: 't_reborn',     type: 'title', name: 'Reborn',        rarity: 'legendary', source: { type: 'reward' } },
-  { id: 't_beta',       type: 'title', name: 'BETA TESTER',   rarity: 'legendary', source: { type: 'reward' } },
+  { id: 't_beta',       type: 'title', name: 'BETA TESTER',   rarity: 'special', source: { type: 'reward' } },
 ];
 
 // Collectible collections — matching sets across cosmetic types. Completing
@@ -305,7 +310,7 @@ export function cosmeticById(id) { return byId[id] || null; }
 // Highest rarity among a player's equipped cosmetics — drives the overall
 // presentation of their profile card (ring, glow), so a Legendary loadout
 // reads as Legendary before you read a single word.
-const RARITY_ORDER = ['common', 'rare', 'epic', 'legendary', 'mythic'];
+const RARITY_ORDER = ['common', 'rare', 'epic', 'legendary', 'mythic', 'special'];
 export function topEquippedRarity(equipped) {
   let best = 'common';
   for (const id of Object.values(equipped || {})) {

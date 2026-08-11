@@ -20,6 +20,7 @@ const RARITY_COLOR = {
   epic:      { main: '#c4a1ff', glow: 'rgba(157,92,255,0.45)' },
   legendary: { main: '#ffcb45', glow: 'rgba(255,180,60,0.45)' },
   mythic:    { main: '#e879f9', glow: 'rgba(232,121,249,0.45)' },
+  special:   { main: '#f87171', glow: 'rgba(248,113,113,0.45)' },
 };
 
 // EmblemTile's metal rim, translated to canvas stops (conic where
@@ -30,6 +31,7 @@ const RIM_STOPS = {
   epic:      ['#f3e8ff', '#a855f7', '#e9d5ff', '#6d28d9', '#c084fc', '#f3e8ff'],
   legendary: ['#fff7d6', '#ffcb45', '#b06104', '#ffe9a8', '#e08e05', '#fff7d6'],
   mythic:    ['#ff8bd8', '#ffd36b', '#7dffa8', '#7db9ff', '#c98bff', '#ff8bd8'],
+  special:   ['#ffe1e1', '#f87171', '#7f1d1d', '#ffb4b4', '#dc2626', '#ffe1e1'],
 };
 
 const FONT = (weight, px) =>
@@ -262,8 +264,8 @@ function drawMedallion(ctx, cx, cy, radius, emblem, artImg) {
   ctx.arc(cx, cy, radius - 1, Math.PI * 1.1, Math.PI * 1.9);
   ctx.stroke();
 
-  // Sparkles on legendary/mythic — same ✦ the UI uses
-  if (rarity === 'legendary' || rarity === 'mythic') {
+  // Sparkles on legendary/mythic/special — same ✦ the UI uses
+  if (rarity === 'legendary' || rarity === 'mythic' || rarity === 'special') {
     ctx.fillStyle = RARITY_COLOR[rarity].main;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';

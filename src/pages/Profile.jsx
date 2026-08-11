@@ -78,7 +78,7 @@ const ART_GLOW = {
  */
 function CosmeticCard({ c, owned, equipped, onTap, justUnlocked, sourceText = undefined, price = undefined, affordable = false, playerName }) {
   const rar = RARITIES[c.rarity];
-  const fancy = c.rarity === 'legendary' || c.rarity === 'mythic';
+  const fancy = c.rarity === 'legendary' || c.rarity === 'mythic' || c.rarity === 'special';
   return (
     <motion.button onClick={() => onTap(c)}
       animate={justUnlocked ? { scale: [0.7, 1.12, 1] } : {}}
