@@ -20,7 +20,7 @@ Method: full source read of every gameplay, data, migration, economy, cosmetic, 
 
 **And one new reliability soft-lock replaced the old ones.** Every 5 question-cycles the game enters a mandatory **hint round** that blocks all play until every active player submits a hint — and unlike every other phase, it has **no timeout, no auto-fill, and no enforcement**. One player backgrounding their phone during a hint break freezes the whole room until the 2-hour cron. It is the same class of bug STUCK-1 fixed everywhere *except* here.
 
-**Two config gaps will block or hollow the launch itself.** The committed CI ships the **placeholder privacy/terms domain** (`jinnieoclock.com/whatsmypick` → 404), which is a concrete App Review rejection; and **push has no `aps-environment` entitlement in the repo**, so the fully-wired turn-notification feature silently sends nothing — a dead re-engagement channel that *looks* implemented.
+**One config gap hollows the launch itself:** **push has no `aps-environment` entitlement in the repo**, so the fully-wired turn-notification feature silently sends nothing — a dead re-engagement channel that *looks* implemented. *(A second claimed gap — a 404'ing privacy/terms domain — was **withdrawn as a false positive** after the owner confirmed the pages really are hosted at that subpath. See §15.)*
 
 **None of this reads as "cheap."** The UI is a genuine, coherent design system; the engine is robust and thoughtfully commented; the meta is deep. What remains is a sharply-defined, mostly-small set of fixes — authorization on the RPCs, one more soft-lock, two CI/entitlement config lines, and a short list of correctness/polish residue.
 
@@ -53,7 +53,7 @@ The audit above was the diagnosis. Following approval to "fix everything needed 
 - **Reliability.** Hint round now has a **timeout** with placeholder auto-fill (GAME-N1); the turn deadline is **refreshed server-side when a question completes**, killing the post-answer-timeout enforcement stampede/turn-hijack (GAME-N4); phase deadlines are minted server-side (clock-skew proof, GAME-N6); the Notebook clamps its page index (GAME-N2); an eliminated turn-holder's turn is claimed by the present fallback instead of vanishing (GAME-N3); host is reclaimed on the results screen if the host's app died (STUCK-4); word-entry host handoff is crash-safe (GAME-N7).
 - **Chat.** Own message reconciles from the insert's returned row (CHAT-1); unread badge reconciles missed messages on wake (CHAT-2); history snapshot merges instead of full-replace (CHAT-3); display-side length cap (CHAT-5); server-side per-user flood limit + length truncation (CHAT-4, migration 0013).
 - **UX/a11y.** Both How-to-Play modals use the accessible Dialog (UX-1/A11Y-1); BrowseLobbies distinguishes offline from empty with a retry (UX-3) and no longer flashes the list to a spinner on background refetch (UX-5); failed kick surfaces a toast (UX-4); 44px hit targets on chat emotes/send, Playing leave, Home Join (UX-2); localized emote/send aria-labels + refresh label + CategorySelector dialog name (A11Y-3/4/5).
-- **Launch.** Privacy/terms/support URLs fixed (subpath dropped, single source, `VITE_SITE_BASE` injected in CI with a build-failing guard — LAUNCH-1); `aps-environment` push entitlement added with a CI archive check (LAUNCH-2); `armv7`→`arm64` (LAUNCH-3); purchase + share funnels instrumented (ANA-2).
+- **Launch.** `aps-environment` push entitlement added with a CI archive check (LAUNCH-2); `armv7`→`arm64` (LAUNCH-3); purchase + share funnels instrumented (ANA-2). Legal-page links were consolidated onto a single `links.js` (ProfileSettings no longer keeps its own copy) — but note **LAUNCH-1 itself was withdrawn as a false positive**; the URLs were already correct, and the changes made against that false premise were reverted (§15).
 - **Economy.** Global cross-room hourly reward cap on top of the per-room cap (ECON-1); tab-close mid-match forfeits the win streak (ECON-2).
 
 **Deliberately deferred (documented, not launch-blocking)**
@@ -318,7 +318,7 @@ The paywall could convert at 0% and the data would look identical. *Fix:* add `t
 **Verified GOOD / FIXED:** real Terms/EULA with a zero-tolerance UGC clause (`public/terms.html`), surfaced at the name gate and Settings via centralized `links.js`; analytics live; IAP a full RevenueCat/StoreKit integration (docs reconciled — the "no payment backend" contradiction is gone); iCloud KV backup mitigates the anon-identity SPOF; console noise down to 2 legitimate `console.error`s; dev-tools inert in store builds; Sentry opt-in with `sendDefaultPii:false`; valid icon/launch storyboard; complete account/data deletion.
 
 **STILL PRESENT / NEW — the two that bite at submission:**
-- **LAUNCH-1 [P1] Privacy/Terms/Support URLs 404 in shipped builds.** `links.js:5` and `ProfileSettings.jsx:36` default `SITE_BASE` to `https://jinnieoclock.com/whatsmypick`, but the files deploy at domain **root** (`public/*.html`, `_redirects`, `vercel.json`), so the correct URL is `<domain>/privacy.html`. **CI never injects the override** — `ios-testflight.yml` passes no `VITE_SITE_BASE`, so every TestFlight/App Store build ships the placeholder. In-app legal links *and* the App Store Connect privacy URL 404 → Guideline 5.1.1 rejection. *Fix:* inject `VITE_SITE_BASE` (real root domain, no subpath) in CI and verify all three URLs resolve.
+- **~~LAUNCH-1 [P1] Privacy/Terms/Support URLs 404 in shipped builds.~~ — WITHDRAWN: FALSE POSITIVE.** The audit claimed `SITE_BASE = https://jinnieoclock.com/whatsmypick` was wrong because "`public/*.html` deploy at domain root." **That was an assumption about the hosting, never verified** — and it was incorrect. The owner publishes the pages at exactly that subpath (`https://www.jinnieoclock.com/whatsmypick/privacy.html`), so the original default was right all along and nothing 404'd. Two "fixes" derived from this false premise were reverted: substituting a guessed domain, and deriving the base from `window.location.origin` (an Origin excludes the path, so that genuinely *would* have broken the subpath). `links.js` now carries the correct base with an optional `VITE_SITE_BASE` override, and the CI hard-fail added for this has been removed. **Lesson recorded:** this was the one finding in the report asserted from inference rather than evidence, and it was the one that was wrong — external hosting can't be verified from the repo and must be confirmed with the owner before being rated a launch blocker.
 - **LAUNCH-2 [P1] Push has no `aps-environment` entitlement → the feature silently does nothing.** The plugin is installed, `registerPush()` is called, `notifyUser(...,'turn')` fires every turn, and the `push_tokens` table + `notify-turn` function exist — but `App.entitlements` has only the iCloud key (no `aps-environment`, no `remote-notification` background mode), so `register()` fails → no token is ever stored → `notify-turn` always sends 0. CI verifies the iCloud entitlement but not this one, so a signed build ships push-dead. *Fix:* add `aps-environment` + Push capability on the App ID / regenerated profile, set the `APNS_*` Supabase secrets, and add an `aps-environment` check to the CI entitlement guard.
 
 **Also:**
@@ -331,7 +331,7 @@ The paywall could convert at 0% and the data would look identical. *Fix:* add `t
 ## 16. Complete Issue List
 
 **P0 — Blocker**
-- *(None strictly blocking a build/upload — but LAUNCH-1 and LAUNCH-2 will fail submission or ship a dead core feature, and SEC-2a/SEC-N1/SEC-N2 + GAME-N1 are launch-blocking in effect. Treated as P1 below.)*
+- *(None strictly blocking a build/upload — but LAUNCH-2 ships a dead core feature, and SEC-2a/SEC-N1/SEC-N2 + GAME-N1 are launch-blocking in effect. Treated as P1 below. LAUNCH-1 was withdrawn as a false positive — see §15.)*
 
 **P1 — Critical (fix before soft-launch)**
 - **GAME-N1** Hint round has no timeout → one absent player freezes the room.
@@ -343,7 +343,7 @@ The paywall could convert at 0% and the data would look identical. *Fix:* add `t
 - **UX-1 / A11Y-1** Two How-to-Play modals bypass the accessible Dialog (first modal a new player sees).
 - **UX-2 / A11Y-2** Sub-44px touch targets on high-frequency in-game controls.
 - **UX-3** BrowseLobbies offline == "No lobbies" dead-end (no retry).
-- **LAUNCH-1** Privacy/Terms/Support URLs 404 in shipped builds (CI ships placeholder domain).
+- ~~**LAUNCH-1** Privacy/Terms/Support URLs 404 in shipped builds.~~ **Withdrawn — false positive** (the pages really are hosted at that subpath; see §15).
 - **LAUNCH-2** Push has no `aps-environment` entitlement → notifications silently never send.
 - **ANA-2** Purchase + share funnels un-instrumented → blind to conversion & virality.
 
@@ -408,7 +408,7 @@ The paywall could convert at 0% and the data would look identical. *Fix:* add `t
 | A11y | VoiceOver a join error | Announced | ✅ aria-live toasts | — |
 | A11y | Enlarge system text | UI scales | ✅ Dynamic Type enabled | — |
 | A11y | Open How-to-Play, keyboard | Focus trapped, Escape closes | ❌ Hand-rolled overlay (UX-1) | P1 |
-| Launch | Tap Privacy in shipped build | Policy loads | ❌ 404 placeholder domain (LAUNCH-1) | P1 |
+| Launch | Tap Privacy in shipped build | Policy loads | ✅ Hosted at the configured subpath (LAUNCH-1 withdrawn) | — |
 | Launch | Your turn while backgrounded | Push arrives | ❌ No `aps-environment` → silent (LAUNCH-2) | P1 |
 | Deletion | Delete profile/account | All data removed | ✅ Complete | — |
 
@@ -422,7 +422,7 @@ The paywall could convert at 0% and the data would look identical. *Fix:* add `t
 **Phase 1 — Launch blockers (P1)**
 2. **Close the two remaining turn-freeze/hijack paths.** (a) Hint-round timeout (GAME-N1) — a hint deadline + enforcement mirroring `resolve_stalled_question`. (b) Refresh `question_deadline = now()+30s` server-side wherever a question completes (GAME-N4) — one ~10-line SQL change that also fixes GAME-N6 and the post-hint race. (Highest reliability priority.)
 3. **Authorize the RPCs & lock `mystery_rooms`** (Phase-0 decision): server-side guess cooldown + membership + reject self-target; host/status guards on `play_again_mystery` and `submit_mystery_word`; revoke client UPDATE on `mystery_rooms` (route finish/host/visibility through checked RPCs); revoke UPDATE/DELETE on `mystery_guesses`.
-4. **LAUNCH-1** Inject `VITE_SITE_BASE` in CI (real root domain); verify all three legal URLs resolve.
+4. ~~**LAUNCH-1** Inject `VITE_SITE_BASE` in CI.~~ Withdrawn — false positive; the baked-in base is correct (§15).
 5. **LAUNCH-2** Add `aps-environment` entitlement + Push capability + `APNS_*` secrets; add a CI check.
 6. **CHAT-1** Reconcile own message from the returned row, not the echo.
 7. **UX-1/A11Y-1** Move both How-to-Play modals to the accessible Dialog.
@@ -455,7 +455,7 @@ The paywall could convert at 0% and the data would look identical. *Fix:* add `t
 | Security | **4/10** | Computation hardened, authorization wide open: force-finish leaks secrets, self-guess/brute-force win, grief any room. |
 | Retention | **5.5/10** | Deep cosmetics + live analytics + season content fixed; no working push, no rematch/friends, cold-start gap. |
 | Social | **6/10** | Chat much improved; own-message loss, unread-on-wake gap, no durable block. |
-| Production readiness | **6/10** | Terms/IAP/analytics done; privacy-URL 404 and push-entitlement gap block a clean submission. |
+| Production readiness | **6/10** | Terms/IAP/analytics done; the push-entitlement gap blocks a clean submission (the privacy-URL finding was withdrawn — §15). |
 | **Overall** | **6/10** | A well-built game a **short, sharply-defined** hardening pass from soft-launch quality. |
 
 ### SHIP NOW: **NO**
@@ -463,7 +463,7 @@ The paywall could convert at 0% and the data would look identical. *Fix:* add `t
 **These are the exact issues preventing shipping:**
 1. **GAME-N1 + GAME-N4 (P1)** — the hint round (every 5 cycles) has no timeout, so one backgrounded player freezes the room; and because the turn deadline isn't refreshed when a question completes, the answer-timeout recovery routinely fires a stampede of auto-questions that hijack a present player's turn. Two "the game just does the wrong thing" bugs on the normal path — the second is a ~10-line SQL fix.
 2. **SEC-2a + SEC-N1 + SEC-N2 (P1)** — force-finish leaks every secret word; a self-guess or brute-force wins any round; anyone can reset any room. The security hardening secured computation but not authorization; `mystery_rooms` must be locked and the RPCs must verify their caller.
-3. **LAUNCH-1 (P1)** — shipped builds point the privacy/terms/support links (and the App Store Connect privacy URL) at a 404 placeholder domain. Concrete Guideline 5.1.1 rejection.
+3. ~~**LAUNCH-1 (P1)** — privacy/terms/support links point at a 404.~~ **Withdrawn: false positive.** The pages are genuinely hosted at the configured subpath; this was inferred from the repo instead of confirmed with the owner, and it was wrong (§15).
 4. **LAUNCH-2 (P1)** — push is fully wired but has no `aps-environment` entitlement, so it silently sends nothing. The one re-engagement channel is dead on arrival.
 5. **CHAT-1 (P1)** — own messages can vanish on a stalled socket and get resent as duplicates, on the exact mobile app-switch path this game lives on.
 6. **UX-1/UX-2/UX-3 (P1)** — the first modal a new player sees isn't an accessible dialog; core in-game controls are below 44px; and the Browse screen still shows a false "no lobbies" dead-end offline.
@@ -479,7 +479,7 @@ Clear Phase 0 + Phase 1 and this is a confident soft-launch candidate — the UI
 2. **SEC-2a** Revoke client UPDATE on `mystery_rooms` (stops force-finish leaking every secret). *P1*
 3. **SEC-N1** Bind `submit_mystery_guess` to the caller; reject self-target; server-side guess cooldown. *P1*
 4. **SEC-N2** Guard `play_again_mystery`/`submit_mystery_word` to the room's host/member. *P1*
-5. **LAUNCH-1** Inject `VITE_SITE_BASE` in CI; verify privacy/terms/support URLs resolve. *P1*
+5. ~~**LAUNCH-1** Fix the privacy/terms/support URLs.~~ Withdrawn — false positive; they already resolve (§15). *(Slot intentionally left rather than renumbered, so the IDs still line up with the sections above.)*
 6. **LAUNCH-2** Add the `aps-environment` push entitlement (+ APNs secrets, CI check). *P1*
 7. **CHAT-1** Reconcile own chat message from the insert's returned row, not the echo. *P1*
 8. **UX-1** Move both How-to-Play modals to the accessible Dialog. *P1*

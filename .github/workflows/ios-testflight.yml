@@ -14,16 +14,14 @@
 #   VITE_SUPABASE_ANON_KEY — the project's anon/public key (same page)
 #   VITE_REVENUECAT_IOS_KEY — RevenueCat → Project → API Keys → the "Apple App
 #                             Store" public app key (starts with "appl_")
-#   VITE_SITE_BASE         — the ORIGIN where this app's web build (and with it
-#                             public/privacy.html, support.html, terms.html) is
-#                             deployed — whatever domain that is, with NO
-#                             trailing path. Native needs it spelled out because
-#                             the Capacitor webview's origin isn't a real
-#                             address; the web build resolves these same-origin
-#                             on its own and needs no configuration. The in-app
-#                             legal links AND the App Store Connect privacy URL
-#                             use this, so the build FAILS below if it's unset
-#                             rather than shipping a dead link (LAUNCH-1).
+# Optional:
+#   VITE_SITE_BASE         — only needed if the privacy/support/terms pages move.
+#                             They're published at the base baked into
+#                             src/lib/links.js (currently
+#                             https://www.jinnieoclock.com/whatsmypick), which is
+#                             what the in-app links and the App Store Connect
+#                             privacy URL use. Set this secret to override that
+#                             base — include the full path, not just the domain.
 #
 # Signing is fully MANUAL and explicit: a real Distribution certificate is
 # imported into a CI keychain and a real App Store provisioning profile is
@@ -66,18 +64,13 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_REVENUECAT_IOS_KEY: ${{ secrets.VITE_REVENUECAT_IOS_KEY }}
-          # The origin the privacy/support/terms pages deploy at. Load-bearing:
-          # the in-app legal links and the App Store privacy URL both use it, and
-          # a wrong/empty value is an App Review rejection (LAUNCH-1).
+          # Optional override for where the privacy/support/terms pages are
+          # published. Unset is fine — links.js carries the correct base.
           VITE_SITE_BASE: ${{ secrets.VITE_SITE_BASE }}
           # Optional — crash reporting. Leave the secret unset and the build
           # ships zero Sentry code (see src/main.jsx).
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
         run: |
-          if [ -z "$VITE_SITE_BASE" ]; then
-            echo "::error::VITE_SITE_BASE secret is not set. Set it to the origin where this app's web build is deployed (the domain serving privacy.html / support.html / terms.html, no trailing path) and open all three links to confirm they resolve — otherwise the in-app legal links and the App Store privacy URL 404 (LAUNCH-1)."
-            exit 1
-          fi
           npm ci
           npm run ios
 
