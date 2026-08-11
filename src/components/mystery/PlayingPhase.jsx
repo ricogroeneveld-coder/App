@@ -339,7 +339,12 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
         MysteryPlayer.filter({ room_code: roomCode }),
       ]);
       const active = (freshPlayers || []).filter(p => !p.is_eliminated && !p.word_revealed);
-      const missing = active.filter(p => !(freshQs || []).some(q =>
+      // Fill only for OTHERS, never for myself. I'm demonstrably present (I'm
+      // the one enforcing), so if I haven't submitted yet I'm probably still
+      // typing — stubbing my own hint with "—" would throw away what I wrote
+      // and leave me with two hint rows once I hit send. The break simply stays
+      // open until I submit, which is correct: I can act, the absent player can't.
+      const missing = active.filter(p => p.user_id !== me.id && !(freshQs || []).some(q =>
         q.question_text?.startsWith('[HINT]') && q.asker_id === p.user_id && Number(q.round_number) === hintPhaseNumber));
       if (!missing.length) { done = true; return; }
       await Promise.all(missing.map(p => MysteryQuestion.create({
