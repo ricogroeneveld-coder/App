@@ -24,7 +24,7 @@ export default function PracticeGame() {
   const myName = getGuestIdentity().name || t.playerFallback;
 
   const [phase, setPhase] = useState('setup'); // setup | play | end
-  const [difficulty, setDifficulty] = useState('normal');
+  const difficulty = 'normal';
   const [myWord, setMyWord] = useState(null);
   const [setupSearch, setSetupSearch] = useState('');
   const [botName, setBotName] = useState(randomBotName);
@@ -181,19 +181,6 @@ export default function PracticeGame() {
           </div>
 
           <p className="text-sm text-slate-300 mb-3">{t.practiceSubtitle}</p>
-
-          <p className="section-label mb-1.5">{t.practiceDifficulty}</p>
-          <div className="grid grid-cols-3 gap-2 mb-4">
-            {['easy', 'normal', 'hard'].map(d => (
-              <button key={d} onClick={() => setDifficulty(d)}
-                className={`h-11 rounded-xl text-sm font-bold transition-all duration-150 active:scale-[0.97] ${
-                  difficulty === d
-                    ? 'bg-violet-500/30 ring-2 ring-violet-400/70 text-white'
-                    : 'bg-white/5 ring-1 ring-white/15 text-slate-300 hover:ring-white/30'}`}>
-                {d === 'easy' ? t.practiceEasy : d === 'normal' ? t.practiceNormal : t.practiceHard}
-              </button>
-            ))}
-          </div>
 
           <p className="section-label mb-1.5">{t.practicePickWord}</p>
           <div className="relative mb-2">

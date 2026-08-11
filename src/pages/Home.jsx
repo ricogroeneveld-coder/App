@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MysteryRoom, MysteryPlayer } from '@/api/db';
 import { useToast } from '@/components/ui/use-toast';
-import { Settings, X, ChevronRight, Crown, Users, HelpCircle, Globe, Lock } from 'lucide-react';
+import { Settings, X, ChevronRight, Crown, Users, HelpCircle, Globe, Lock, Bot } from 'lucide-react';
 import { getGuestIdentity, setGuestName, hasGuestName, MAX_NAME_LENGTH } from '@/lib/guestIdentity';
 import { Link } from 'react-router-dom';
 import { useLang } from '@/lib/LanguageContext';
@@ -293,6 +293,18 @@ export default function Home() {
                 </span>
                 <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
               </button>
+              {/* Play vs bots — local practice match, no room is created */}
+              <button onClick={() => { setShowCreateSheet(false); navigate('/practice'); }} disabled={loading !== null}
+                className="glass-panel w-full p-3 flex items-center gap-3 text-left transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5 hover:ring-white/20 disabled:opacity-60">
+                <span className="w-11 h-11 rounded-xl bg-gradient-to-b from-[#0a2233] to-[#040d16] ring-1 ring-sky-400/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0">
+                  <Bot className="w-5 h-5 text-sky-300 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />
+                </span>
+                <span className="flex-1 min-w-0">
+                  <span className="block text-sm font-extrabold text-white leading-tight">{t.practiceMode}</span>
+                  <span className="block text-xs font-medium text-slate-400 leading-tight">{t.practiceModeDesc}</span>
+                </span>
+                <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+              </button>
             </div>
           </motion.div>
         </div>
@@ -448,15 +460,6 @@ export default function Home() {
               <span className="w-10 h-10 rounded-full bg-gradient-to-b from-[#062217] to-[#020c08] ring-1 ring-green-400/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0">
                 <ChevronRight className="w-6 h-6 text-green-300 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />
               </span>
-            </Link>
-
-            {/* Practice vs bot — slim row, prototype entry (fully local, no room) */}
-            <Link to="/practice"
-              className="w-full h-12 -mt-2 rounded-2xl bg-white/[0.04] ring-1 ring-white/15 backdrop-blur-md px-4 flex items-center gap-2.5 transition-all duration-150 active:scale-[0.98] hover:ring-white/30">
-              <span className="text-lg" aria-hidden>🤖</span>
-              <span className="flex-1 min-w-0 text-left text-sm font-bold text-slate-200 truncate">{t.practiceMode}</span>
-              <span className="shrink-0 px-1.5 py-px rounded bg-violet-500/25 ring-1 ring-violet-400/40 text-violet-200 text-[9px] font-extrabold tracking-wide">BETA</span>
-              <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
             </Link>
           </div>
           </motion.div>
