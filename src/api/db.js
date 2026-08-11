@@ -91,3 +91,23 @@ export const MysteryPlayer = createEntity('mystery_players');
 export const MysteryQuestion = createEntity('mystery_questions');
 export const MysteryGuess = createEntity('mystery_guesses');
 export const MysteryChat = createEntity('mystery_chats');
+
+// Secret words live in their own table with NO select policy and are NOT in
+// the Realtime publication (migration 0007), so a raw secret never reaches a
+// client. Write-only from the browser: a player sets/updates/clears their own
+// word; correctness is judged server-side by the submit_mystery_guess RPC.
+export const MysterySecret = {
+  async set(roomCode, userId, word) {
+    const { error } = await supabase
+      .from('mystery_secrets')
+      .upsert(
+        { room_code: roomCode, user_id: userId, word, updated_date: new Date().toISOString() },
+        { onConflict: 'room_code,user_id' }
+      );
+    if (error) throw error;
+  },
+  async clearRoom(roomCode) {
+    const { error } = await supabase.from('mystery_secrets').delete().eq('room_code', roomCode);
+    if (error) throw error;
+  },
+};

@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MysteryQuestion, MysteryRoom } from '@/api/db';
+import { MysteryQuestion, MysteryRoom, MysteryPlayer } from '@/api/db';
 import { supabase } from '@/lib/supabaseClient';
+import { serverNow } from '@/lib/serverTime';
+import { track } from '@/lib/analytics';
+import { notifyUser } from '@/lib/push';
 import { leaveRoom } from '@/lib/roomLifecycle';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -11,6 +14,7 @@ import ChatPanel from '@/components/mystery/ChatPanel';
 import EmojiRain from '@/components/mystery/EmojiRain';
 import RoomTabBar from '@/components/mystery/RoomTabBar';
 import useUnreadChat from '@/components/mystery/useUnreadChat';
+import { Dialog } from '@/components/ui/dialog';
 import { BookOpen, MessageCircleQuestion, Trophy, Mic, Users, MessageCircle, Zap, Timer, Lightbulb, CheckCircle2, LogOut, Sparkles, X } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { toDisplayWord, shortCategory } from '@/lib/wordLists';
@@ -33,8 +37,21 @@ const ENFORCE_GRACE_MS = 6000;
 const ENFORCE_STAGGER_MS = 4000;
 const MAX_QUESTION_LENGTH = 200;
 const MAX_HINT_LENGTH = 120;
+// How long a question may wait on answers before any client force-completes it
+// so an absent (backgrounded / dropped) answerer can't freeze the room (STUCK-1).
+const ANSWER_TIMER_MS = 45000;
 
-const nextDeadline = () => new Date(Date.now() + QUESTION_TIMER_SECONDS * 1000).toISOString();
+const nextDeadline = () => new Date(serverNow() + QUESTION_TIMER_SECONDS * 1000).toISOString();
+
+// The next asker's user_id after `fromId` in the given (join-ordered) asking
+// roster — used to advance the turn by identity, not by a positional index
+// into a changing array (GAME-1).
+const nextAskerId = (fromId, askers) => {
+  const sorted = [...askers].sort((a, b) => new Date(a.created_date).getTime() - new Date(b.created_date).getTime());
+  if (!sorted.length) return null;
+  const i = sorted.findIndex(p => p.user_id === fromId);
+  return sorted[(i + 1) % sorted.length]?.user_id || sorted[0].user_id;
+};
 
 export default function PlayingPhase({ room, players, questions, guesses, me, myPlayer, roomCode, reload }) {
   const { toast } = useToast();
@@ -51,6 +68,10 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
   const [timeLeft, setTimeLeft] = useState(null);
   const [autoAsking, setAutoAsking] = useState(false);
   const timerRef = useRef(null);
+  // Single in-flight guard for posting a question (GAME-4): the manual "Ask"
+  // path and the timer/auto path share it, so a tap landing on the same tick
+  // the timer expires can't post two questions / double-advance the turn.
+  const postingRef = useRef(false);
   const [emojiRainEmote, setEmojiRainEmote] = useState(null);
   const [emojiRainTrigger, setEmojiRainTrigger] = useState(0);
   const [correctGuessAlert, setCorrectGuessAlert] = useState(null); // { guesserName, targetName, word }
@@ -66,9 +87,15 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
   const [cardPlayer, setCardPlayer] = useState(null);
   const profiles = usePeerProfiles(players);
   const activePlayers = players.filter(p => !p.is_eliminated && !p.word_revealed);
-  // Asking rotation includes word_revealed players (they can still ask and guess others)
-  const askingPlayers = players.filter(p => !p.is_eliminated);
-  const questioner = askingPlayers[room.current_questioner_index % Math.max(askingPlayers.length, 1)];
+  // Asking rotation includes word_revealed players (they can still ask and guess
+  // others). Ordered by join time and keyed by user_id — NOT by a positional
+  // index into this shrinking array (GAME-1) — so an elimination or a join can't
+  // silently hand someone else the current turn.
+  const askingPlayers = [...players.filter(p => !p.is_eliminated)]
+    .sort((a, b) => new Date(a.created_date).getTime() - new Date(b.created_date).getTime());
+  const questioner = askingPlayers.find(p => p.user_id === room.current_questioner_id)
+    // Fallback for legacy rooms created before current_questioner_id existed.
+    || askingPlayers[room.current_questioner_index % Math.max(askingPlayers.length, 1)];
 
   const latestQuestion = questions[questions.length - 1];
   // "Pending" is derived from the LIVE roster, never trusted from the stored
@@ -150,13 +177,13 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
     // Missing or stale deadline (older room, resume after a hint break where
     // nobody refreshed it): my turn, so my client claims a fresh one. The
     // room update re-runs this effect with the real value.
-    if (!deadlineMs || deadlineMs <= Date.now()) {
+    if (!deadlineMs || deadlineMs <= serverNow()) {
       MysteryRoom.update(room.id, { question_deadline: nextDeadline() }).catch(() => {});
       setTimeLeft(QUESTION_TIMER_SECONDS);
       return;
     }
     const tick = () => {
-      const secs = Math.max(0, Math.ceil((deadlineMs - Date.now()) / 1000));
+      const secs = Math.max(0, Math.ceil((deadlineMs - serverNow()) / 1000));
       setTimeLeft(secs);
       if (secs <= 0) {
         clearInterval(timerRef.current);
@@ -167,7 +194,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
     timerRef.current = setInterval(tick, 1000);
     return () => clearInterval(timerRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMyTurnToAsk, inHintBreak, room.current_questioner_index, room.question_deadline]);
+  }, [isMyTurnToAsk, inHintBreak, room.current_questioner_id, room.current_questioner_index, room.question_deadline]);
 
   // Deadline enforcement by everyone else: if the asker's device is asleep,
   // the first awake client asks on their behalf once the deadline is
@@ -183,47 +210,96 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
         .findIndex(p => p.user_id === me.id);
       if (rank < 0) return;
       const fireAt = new Date(room.question_deadline).getTime() + ENFORCE_GRACE_MS + rank * ENFORCE_STAGGER_MS;
-      if (Date.now() < fireAt) return;
-      const key = `${room.current_questioner_index}:${questions.length}`;
+      if (serverNow() < fireAt) return;
+      const key = `${room.current_questioner_id || room.current_questioner_index}:${questions.length}`;
       if (enforcedKeyRef.current === key) return;
       enforcedKeyRef.current = key;
-      enforceStalledTurn();
+      enforceStalledTurn(key);
     }, 1000);
     return () => clearInterval(iv);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room, questions, players, me?.id, currentQuestionPending, inHintBreak]);
 
-  const enforceStalledTurn = async () => {
+  const enforceStalledTurn = async (key) => {
+    let done = false;
     try {
       // Re-check against fresh state — the asker may have just submitted, or
-      // another enforcer may have beaten us to it.
-      const [freshRooms, freshQs] = await Promise.all([
+      // another enforcer may have beaten us to it. Derive the questioner and
+      // the next turn from the FRESH roster (GAME-1), not stale props.
+      const [freshRooms, freshQs, freshPlayers] = await Promise.all([
         MysteryRoom.filter({ room_code: roomCode }),
         MysteryQuestion.filter({ room_code: roomCode }),
+        MysteryPlayer.filter({ room_code: roomCode }),
       ]);
       const fr = freshRooms?.[0];
       if (!fr || fr.status !== 'playing') return;
-      if (fr.current_questioner_index !== room.current_questioner_index) return;
+      const freshAskers = (freshPlayers || []).filter(p => !p.is_eliminated);
+      const currentId = fr.current_questioner_id
+        || freshAskers[fr.current_questioner_index % Math.max(freshAskers.length, 1)]?.user_id;
+      // Someone already advanced the turn, or a new question landed — stand down.
+      if (currentId !== (room.current_questioner_id || questioner?.user_id)) return;
       if ((freshQs?.length || 0) > questions.length) return;
+      const asker = freshAskers.find(p => p.user_id === currentId) || questioner;
+      if (!asker) return;
       const prevTexts = (freshQs || []).slice(-8).map(q => q.question_text);
       const autoQ = getRandomQuestion(fr.category, prevTexts) || 'Is it bigger than a cat?';
       await MysteryQuestion.create({
         room_code: roomCode,
         round_number: fr.round_number,
         question_text: autoQ,
-        asker_id: questioner.user_id,
-        asker_name: questioner.display_name,
+        asker_id: asker.user_id,
+        asker_name: asker.display_name,
         is_ai: true,
         answers: {},
         status: 'answering'
       });
+      const nextId = nextAskerId(asker.user_id, freshAskers);
       await MysteryRoom.update(fr.id, {
         round_number: fr.round_number + 1,
-        current_questioner_index: (fr.current_questioner_index + 1) % Math.max(askingPlayers.length, 1),
+        current_questioner_id: nextId,
+        current_questioner_index: (fr.current_questioner_index + 1) % Math.max(freshAskers.length, 1),
         question_deadline: nextDeadline(),
       });
-    } catch { /* next enforcer tick retries via a new key */ }
+      done = true;
+    } catch { /* fall through: release the latch so a later tick can retry */ }
+    finally {
+      // Only keep the one-shot latch if we actually advanced; a failed write
+      // must be retryable instead of permanently disarming this client (GAME-5).
+      if (!done && enforcedKeyRef.current === key) enforcedKeyRef.current = '';
+    }
   };
+
+  // Answer-freeze breaker (STUCK-1): the turn-deadline machinery above only
+  // covers an absent ASKER. If a non-asker backgrounds their phone mid-question
+  // it would otherwise wait on their answer forever. Once a question has been
+  // waiting past ANSWER_TIMER_MS (+ the same staggered grace so only one client
+  // usually fires), force it complete server-side; missing answers simply don't
+  // become clues. currentQuestionPending then clears and the game proceeds.
+  const answerEnforcedRef = useRef('');
+  useEffect(() => {
+    if (room.status !== 'playing' || inHintBreak) return;
+    const iv = setInterval(() => {
+      const q = questions[questions.length - 1];
+      if (!q || q.status !== 'answering') return;
+      if (!currentQuestionPending) return;
+      if (!me?.id) return;
+      // Stagger among the players who still need to answer (plus the asker),
+      // so a whole room doesn't fire at once.
+      const waiters = activePlayers.filter(p => p.user_id !== q.asker_id);
+      const rank = waiters.findIndex(p => p.user_id === me.id);
+      const myRank = rank < 0 ? waiters.length : rank;
+      const startedAt = q.created_date ? new Date(q.created_date).getTime() : serverNow();
+      const fireAt = startedAt + ANSWER_TIMER_MS + ENFORCE_GRACE_MS + myRank * ENFORCE_STAGGER_MS;
+      if (serverNow() < fireAt) return;
+      if (answerEnforcedRef.current === q.id) return;
+      answerEnforcedRef.current = q.id;
+      Promise.resolve(supabase.rpc('resolve_stalled_question', { p_question_id: q.id }))
+        .then(({ error }) => { if (error) answerEnforcedRef.current = ''; })
+        .catch(() => { answerEnforcedRef.current = ''; });
+    }, 1000);
+    return () => clearInterval(iv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [room.status, inHintBreak, questions, activePlayers, currentQuestionPending, me?.id]);
 
   const handleAutoQuestion = async (isTimeout = false) => {
     if (autoAsking) return;
@@ -246,18 +322,32 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
       // Picked locally from the static question bank — no server round-trip needed.
       const autoQ = getRandomQuestion(room.category, prevTexts) || 'Is it something you can hold in one hand?';
       await submitQuestionText(autoQ, true);
-    } catch(e) {
-      await submitQuestionText('Is it bigger than a cat?', true);
     } finally {
       setAutoAsking(false);
     }
   };
 
   const submitQuestionText = async (text, isAI = false) => {
+    if (postingRef.current) return;
+    postingRef.current = true;
     try {
+      // Fresh-state re-check (GAME-4): a device waking after the deadline can
+      // fire a stale-props auto-ask even though an enforcer already advanced the
+      // turn. Bail if it's no longer my turn or a newer question already landed,
+      // so we never post a duplicate question or double-advance.
+      const [freshRooms, freshQs] = await Promise.all([
+        MysteryRoom.filter({ room_code: roomCode }),
+        MysteryQuestion.filter({ room_code: roomCode }),
+      ]);
+      const fr = freshRooms?.[0];
+      if (!fr || fr.status !== 'playing') return;
+      const currentId = fr.current_questioner_id
+        || askingPlayers[fr.current_questioner_index % Math.max(askingPlayers.length, 1)]?.user_id;
+      if (currentId !== me.id) return;
+      if ((freshQs?.length || 0) > questions.length) return;
       await MysteryQuestion.create({
         room_code: roomCode,
-        round_number: room.round_number,
+        round_number: fr.round_number,
         question_text: text.trim().slice(0, MAX_QUESTION_LENGTH),
         asker_id: me.id,
         asker_name: myPlayer?.display_name,
@@ -266,15 +356,23 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
         status: 'answering'
       });
       setQuestionText('');
-      const nextIdx = (room.current_questioner_index + 1) % Math.max(askingPlayers.length, 1);
-      await MysteryRoom.update(room.id, {
-        round_number: room.round_number + 1,
-        current_questioner_index: nextIdx,
+      const nextId = nextAskerId(me.id, askingPlayers);
+      await MysteryRoom.update(fr.id, {
+        round_number: fr.round_number + 1,
+        // Advance by identity so eliminations/joins can't skip or repeat a turn.
+        current_questioner_id: nextId,
+        current_questioner_index: (fr.current_questioner_index + 1) % Math.max(askingPlayers.length, 1),
         // Next asker's shared deadline — see the timer/enforcement effects.
         question_deadline: nextDeadline()
       });
+      // Nudge the next asker back into the app if they've stepped away (no-op
+      // until APNs is configured, and never for ourselves).
+      if (nextId && nextId !== me.id) notifyUser(nextId, 'turn');
+      track('question_asked', { auto: !!isAI });
     } catch(e) {
       toast({ title: t.errorTitle, description: e.message, variant: 'destructive' });
+    } finally {
+      postingRef.current = false;
     }
   };
 
@@ -305,6 +403,14 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
         q_id: qId, answerer_id: me.id, answer,
       });
       if (error) {
+        // Only fall back to the legacy client-side merge when the RPC genuinely
+        // isn't deployed. On ANY other error (5xx/timeout — where the RPC may
+        // even have succeeded) the old merge would overwrite the whole answers
+        // map with stale local data and erase other players' answers, exactly
+        // the lost-update bug migration 0006 fixed (GAME-2).
+        const missing = error.code === 'PGRST202' || error.code === '42883'
+          || /does not exist|could not find the function/i.test(error.message || '');
+        if (!missing) throw error;
         const q = questions.find(q => q.id === qId);
         const updated = { ...(q?.answers || {}), [me.id]: answer };
         const nonAskers = activePlayers.filter(p => p.user_id !== q?.asker_id);
@@ -432,7 +538,11 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
           down with length and may wrap to two lines; ellipsis only kicks in
           past that. */}
       {(() => {
-        const myWord = showMyWord ? (toDisplayWord(myPlayer?.secret_word, lang) || '—') : '••••••';
+        // My own word lives in localStorage (SEC-1 keeps it off the player row
+        // until reveal); fall back to the row's value once I've been revealed.
+        let myOwnWord = myPlayer?.secret_word || '';
+        if (!myOwnWord) { try { myOwnWord = localStorage.getItem(`wmp_myword_${roomCode}`) || ''; } catch { /* ignore */ } }
+        const myWord = showMyWord ? (toDisplayWord(myOwnWord, lang) || '—') : '••••••';
         const myWordSize = !showMyWord || myWord.length <= 8 ? 'text-sm'
           : myWord.length <= 14 ? 'text-xs'
           : myWord.length <= 20 ? 'text-[11px]'
@@ -484,18 +594,15 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
       {/* Leave confirmation */}
       <AnimatePresence>
         {showLeaveConfirm && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
-              className="glass-card bg-slate-900/95 p-5 max-w-sm w-full">
-              <p className="font-extrabold text-lg mb-1">{t.leaveQuestion}</p>
-              <p className="text-slate-400 text-sm mb-4">{t.leaveBody}</p>
-              <div className="flex gap-2.5">
-                <Button onClick={() => setShowLeaveConfirm(false)} variant="ghost" className="flex-1 h-11 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10">{t.cancel}</Button>
-                <Button onClick={leaveGame} className="flex-1 h-11 rounded-xl bg-rose-500 hover:bg-rose-600 border-0 font-bold">{t.leave}</Button>
-              </div>
-            </motion.div>
-          </motion.div>
+          <Dialog onClose={() => setShowLeaveConfirm(false)} titleId="playing-leave-title"
+            panelClassName="glass-card bg-slate-900/95 p-5 max-w-sm">
+            <p id="playing-leave-title" className="font-extrabold text-lg mb-1">{t.leaveQuestion}</p>
+            <p className="text-slate-400 text-sm mb-4">{t.leaveBody}</p>
+            <div className="flex gap-2.5">
+              <Button onClick={() => setShowLeaveConfirm(false)} variant="ghost" className="flex-1 h-11 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10">{t.cancel}</Button>
+              <Button onClick={leaveGame} className="flex-1 h-11 rounded-xl bg-rose-500 hover:bg-rose-600 border-0 font-bold">{t.leave}</Button>
+            </div>
+          </Dialog>
         )}
       </AnimatePresence>
 
@@ -748,7 +855,6 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
           myPlayer={myPlayer}
           roomCode={roomCode}
           room={room}
-          questions={questions}
           onClose={() => setGuessTarget(null)}
           reload={reload}
         />

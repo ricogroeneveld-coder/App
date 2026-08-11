@@ -10,6 +10,9 @@ import { devUnlockAll, devResetProfile, ensureAuth, grantBetaCosmetics } from '@
 import { configurePurchases } from '@/lib/payments';
 import { restoreIdentityFromCloud, startCloudBackup, watchForLateBackup, isTestFlightBuild } from '@/lib/cloudBackup';
 import { isNativeApp, isDevToolsEnabled } from '@/lib/platform';
+import { syncServerTime } from '@/lib/serverTime';
+import { initAnalytics } from '@/lib/analytics';
+import { registerPush } from '@/lib/push';
 // Core play path stays eager (Home + joining a game via link must never wait
 // on a second network fetch); everything else code-splits out of the main
 // chunk — it was one 950 kB bundle, which slows first paint on the web build.
@@ -109,11 +112,15 @@ function App() {
   });
   useEffect(() => {
     startCloudBackup();
+    // Clock-skew-proof time base for the game timers (GAME-3), and a first
+    // analytics ping so the funnel has an app_open even for a bounce.
+    syncServerTime();
+    initAnalytics();
     // Establish the anonymous session eagerly on native — waiting for the
     // first profile write meant a quiet session (daily reward already
     // claimed, no round played) never signed in, never synced, and never
     // wrote an iCloud backup.
-    if (isNativeApp()) ensureAuth();
+    if (isNativeApp()) { ensureAuth(); registerPush(); }
     if (booted) return;
     let live = true;
     Promise.race([

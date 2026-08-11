@@ -105,13 +105,13 @@
     overscroll-behavior: none;
     height: 100%;
     overflow: hidden;
-    /* WebKit's automatic text-size-adjust (built for reading long-form
-       text without pinch-zooming) can inflate rendered font sizes on its
-       own — independent of the classic "input under 16px" zoom-on-focus
-       bug — most noticeably right when an input takes focus. Every size
-       here is already an explicit, deliberate choice, so opt out. */
-    -webkit-text-size-adjust: 100%;
-    text-size-adjust: 100%;
+    /* Leave text-size-adjust at `auto` so iOS Dynamic Type / OS text scaling
+       (Settings → Accessibility → Larger Text) actually scales the UI — an
+       accessibility requirement. Locking this to 100% opted the whole app
+       out of Dynamic Type. The classic "input under 16px zooms on focus"
+       bug is handled separately by using >=16px font sizes on inputs. */
+    -webkit-text-size-adjust: auto;
+    text-size-adjust: auto;
   }
   #root {
     height: 100%;
@@ -416,7 +416,13 @@
   /* Respect reduced-motion: decorative animation collapses to a single
      instant frame. Functional transitions (press feedback) stay usable. */
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
+    /* Exempt .animate-spin so loaders keep spinning — a frozen loader reads
+       as a hang. Without :not(.animate-spin) here, this broad `*` rule with
+       !important would override the later `*:not(.animate-spin)` exemption
+       and freeze spinners under Reduce Motion. */
+    *:not(.animate-spin),
+    *:not(.animate-spin)::before,
+    *:not(.animate-spin)::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;

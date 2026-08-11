@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 const TOAST_LIMIT = 20;
 // How long a toast stays on screen before it dismisses itself.
 const TOAST_AUTO_DISMISS = 3500;
+// Error/destructive toasts stay longer so the message is readable (and has
+// time to be announced by screen readers) before it auto-dismisses.
+const TOAST_AUTO_DISMISS_DESTRUCTIVE = 7000;
 // How long after dismissal (exit animation) before removal from the DOM.
 const TOAST_REMOVE_DELAY = 1000;
 
@@ -137,8 +140,16 @@ function toast({ ...props }) {
     },
   });
 
-  // Auto-dismiss — alerts should never require a manual close.
-  setTimeout(dismiss, TOAST_AUTO_DISMISS);
+  // Auto-dismiss — alerts should never require a manual close. Callers may
+  // override with an explicit `duration` (ms); destructive toasts default to
+  // a longer, more readable dwell time.
+  const duration =
+    typeof props.duration === "number"
+      ? props.duration
+      : props.variant === "destructive"
+        ? TOAST_AUTO_DISMISS_DESTRUCTIVE
+        : TOAST_AUTO_DISMISS;
+  setTimeout(dismiss, duration);
 
   return {
     id,

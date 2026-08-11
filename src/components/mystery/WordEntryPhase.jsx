@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { MysteryPlayer, MysteryRoom } from '@/api/db';
+import { MysteryPlayer, MysteryRoom, MysterySecret } from '@/api/db';
 import { leaveRoom } from '@/lib/roomLifecycle';
+import { normalizeWord } from '@/lib/normalizeWord';
+import { serverNow } from '@/lib/serverTime';
+import { track } from '@/lib/analytics';
 import { useToast } from '@/components/ui/use-toast';
 import { Lock, Check, Clock, Pencil, ArrowLeft, Palette, MessageCircle, Timer } from 'lucide-react';
 import { WORD_LISTS, WORD_LISTS_NL, PREMIUM_WORD_LISTS, shortCategory } from '@/lib/wordLists';
@@ -13,6 +16,7 @@ import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import usePeerProfiles from '@/components/progression/usePeerProfiles';
 import ChatPanel from './ChatPanel';
 import RoomTabBar from './RoomTabBar';
+import { Dialog } from '@/components/ui/dialog';
 import QuickEquip from './QuickEquip';
 import EmojiRain from './EmojiRain';
 import useUnreadChat from './useUnreadChat';
@@ -64,14 +68,14 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
     if (!deadlineMs) {
       if (isHost) {
         MysteryRoom.update(room.id, {
-          question_deadline: new Date(Date.now() + WORD_ENTRY_TIMER_SECONDS * 1000).toISOString(),
+          question_deadline: new Date(serverNow() + WORD_ENTRY_TIMER_SECONDS * 1000).toISOString(),
         }).catch(() => {});
       }
       setWordTimeLeft(WORD_ENTRY_TIMER_SECONDS);
       return;
     }
     const tick = () => {
-      const secs = Math.max(0, Math.ceil((deadlineMs - Date.now()) / 1000));
+      const secs = Math.max(0, Math.ceil((deadlineMs - serverNow()) / 1000));
       setWordTimeLeft(secs);
       if (secs <= 0) {
         clearInterval(wordTimerRef.current);
@@ -93,9 +97,10 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
     const iv = setInterval(async () => {
       const rank = players.filter(p => p.word_submitted).findIndex(p => p.user_id === me?.id);
       if (rank < 0) return;
-      if (Date.now() < deadlineMs + ENFORCE_GRACE_MS + rank * ENFORCE_STAGGER_MS) return;
+      if (serverNow() < deadlineMs + ENFORCE_GRACE_MS + rank * ENFORCE_STAGGER_MS) return;
       if (enforcedRef.current) return;
       enforcedRef.current = true;
+      let enforced = false;
       try {
         const fresh = await MysteryPlayer.filter({ room_code: roomCode });
         const stalled = (fresh || []).filter(p => !p.word_submitted);
@@ -104,13 +109,30 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
           // Not enough locked-in players left for a game — reset everyone
           // back to the lobby (same rule as the self-timeout path).
           await Promise.all((fresh || []).map(p =>
-            MysteryPlayer.update(p.id, { secret_word: '', word_submitted: false })
+            MysteryPlayer.update(p.id, { word_submitted: false })
           ));
+          await MysterySecret.clearRoom(roomCode).catch(() => {});
           await MysteryRoom.update(room.id, { status: 'lobby', question_deadline: null });
         } else {
+          // Remove the stalled players — and if the host was one of them, hand
+          // the room off to a survivor so the game isn't stranded (STUCK-2).
+          const survivors = (fresh || []).filter(p => p.word_submitted);
           await Promise.all(stalled.map(p => MysteryPlayer.delete(p.id)));
+          if (stalled.some(p => p.user_id === room.host_id) && survivors.length) {
+            await MysteryRoom.update(room.id, {
+              host_id: survivors[0].user_id,
+              host_name: survivors[0].display_name,
+            });
+          }
         }
+        enforced = true;
       } catch { /* another enforcer got it, or we're offline — theirs counts */ }
+      finally {
+        // Only latch the one-shot after a SUCCESSFUL write, so a failed
+        // attempt (offline blip) can retry next tick instead of this client
+        // permanently disarming (GAME-5).
+        if (!enforced) enforcedRef.current = false;
+      }
     }, 1000);
     return () => clearInterval(iv);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -126,8 +148,9 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
         // fresh attempt) shouldn't carry the other player's already-locked
         // word into a restart where they never get asked to lock in again.
         await Promise.all(players.map(p =>
-          MysteryPlayer.update(p.id, { secret_word: '', word_submitted: false })
+          MysteryPlayer.update(p.id, { word_submitted: false })
         ));
+        await MysterySecret.clearRoom(roomCode).catch(() => {});
         await MysteryRoom.update(room.id, { status: 'lobby', question_deadline: null });
       } catch (e) { /* ignore */ }
       return;
@@ -148,14 +171,27 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
   const submitWord = async () => {
     const displayWord = isCustom ? cleanText(customInput.trim()) : selected;
     if (!displayWord) { toast({ title: isCustom ? t.enterWordFirst : t.pickWordFirst, variant: 'destructive' }); return; }
+    // A custom word that normalizes to empty (emoji, punctuation-only, a
+    // non-Latin script, or one that got fully profanity-masked) can never be
+    // guessed correct — which would make the round unfinishable (STUCK-3).
+    // Reject it before locking in. List words are always valid.
+    if (isCustom && !normalizeWord(displayWord)) {
+      toast({ title: t.pickAnotherWord, variant: 'destructive' });
+      return;
+    }
     setSubmitting(true);
     try {
       // Always store the English word so AI/guessing logic works correctly
       const word = nlToEn ? (nlToEn[displayWord] || displayWord) : displayWord;
-      await MysteryPlayer.update(myPlayer.id, {
-        secret_word: word,
-        word_submitted: true
-      });
+      // The secret goes to the write-only mystery_secrets table — it is never
+      // sent to other clients or over Realtime (SEC-1). mystery_players only
+      // records readiness; the word becomes public just when we're revealed.
+      await MysterySecret.set(roomCode, me.id, word);
+      await MysteryPlayer.update(myPlayer.id, { word_submitted: true });
+      // Keep MY own word on THIS device so the in-game "My Word" reminder still
+      // works — the secret is no longer stored on my player row (SEC-1), and a
+      // player must still be able to see their own pick (survives reload).
+      try { localStorage.setItem(`wmp_myword_${roomCode}`, word); } catch { /* ignore */ }
     } catch(e) {
       toast({ title: t.errorTitle, description: e.message, variant: 'destructive' });
     } finally {
@@ -165,11 +201,28 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
 
   const startPlaying = async () => {
     try {
+      // Re-verify against LIVE state that everyone locked a word in — a player
+      // can auto-join in the gap before the host taps, and starting with an
+      // unsubmitted (empty-word) player makes them unguessable and the round
+      // unfinishable (STUCK-3).
+      const fresh = await MysteryPlayer.filter({ room_code: roomCode });
+      const roster = fresh || [];
+      if (roster.length < 2 || roster.some(p => !p.word_submitted)) {
+        toast({ title: t.waitingForOthers, variant: 'destructive' });
+        return;
+      }
+      // Turn order is keyed by user_id so it survives eliminations/joins
+      // (GAME-1); the first asker is the earliest-joined player.
+      const firstAsker = [...roster].sort((a, b) =>
+        new Date(a.created_date).getTime() - new Date(b.created_date).getTime())[0];
       await MysteryRoom.update(room.id, {
-        status: 'playing', current_questioner_index: 0, round_number: 1,
+        status: 'playing', current_questioner_index: 0,
+        current_questioner_id: firstAsker?.user_id || null,
+        round_number: 1,
         // First asker's shared turn deadline (see PlayingPhase).
-        question_deadline: new Date(Date.now() + 30 * 1000).toISOString(),
+        question_deadline: new Date(serverNow() + 30 * 1000).toISOString(),
       });
+      track('game_started', { players: roster.length, category: room.category });
     } catch(e) {
       toast({ title: t.errorTitle, description: e.message, variant: 'destructive' });
     }
@@ -214,20 +267,17 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
 
       <AnimatePresence>
         {showLeaveConfirm && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
-              className="glass-card bg-slate-900/95 p-5 max-w-sm w-full">
-              <p className="font-extrabold text-lg mb-1">{t.leaveQuestion}</p>
-              <p className="text-slate-400 text-sm mb-4">{t.leaveBody}</p>
-              <div className="flex gap-2.5">
-                <button onClick={() => setShowLeaveConfirm(false)}
-                  className="flex-1 h-11 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 font-semibold">{t.cancel}</button>
-                <button onClick={confirmLeave}
-                  className="flex-1 h-11 rounded-xl bg-rose-500 hover:bg-rose-600 border-0 font-bold text-white">{t.leave}</button>
-              </div>
-            </motion.div>
-          </motion.div>
+          <Dialog onClose={() => setShowLeaveConfirm(false)} titleId="word-leave-title"
+            panelClassName="glass-card bg-slate-900/95 p-5 max-w-sm">
+            <p id="word-leave-title" className="font-extrabold text-lg mb-1">{t.leaveQuestion}</p>
+            <p className="text-slate-400 text-sm mb-4">{t.leaveBody}</p>
+            <div className="flex gap-2.5">
+              <button onClick={() => setShowLeaveConfirm(false)}
+                className="flex-1 h-11 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 font-semibold">{t.cancel}</button>
+              <button onClick={confirmLeave}
+                className="flex-1 h-11 rounded-xl bg-rose-500 hover:bg-rose-600 border-0 font-bold text-white">{t.leave}</button>
+            </div>
+          </Dialog>
         )}
       </AnimatePresence>
       {tab === 'word' && (

@@ -4,8 +4,17 @@ import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ToastProvider = React.forwardRef(({ ...props }, ref) => (
+  // This wrapper is the single live region that holds the toasts, so it
+  // carries the live-region semantics: VoiceOver announces new toasts as
+  // they appear. aria-atomic="false" so only the newly added toast is
+  // announced (role="status" would otherwise imply atomic=true and re-read
+  // every visible toast). Destructive toasts override this to assertive
+  // per-toast (see toaster.jsx).
   <div
     ref={ref}
+    role="status"
+    aria-live="polite"
+    aria-atomic="false"
     className="pointer-events-none fixed bottom-0 z-[100] flex max-h-screen w-full flex-col p-4 sm:right-0 sm:flex-col md:max-w-[420px]"
     style={{ paddingBottom: 'var(--toast-bottom-offset)' }}
     {...props}

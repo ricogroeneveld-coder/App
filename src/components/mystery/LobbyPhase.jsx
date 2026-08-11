@@ -22,6 +22,7 @@ import PlayerCardModal from '@/components/progression/PlayerCardModal';
 import BannerArt from '@/components/progression/BannerArt';
 import usePeerProfiles from '@/components/progression/usePeerProfiles';
 import { cosmeticById, RARITIES } from '@/lib/cosmetics';
+import { Dialog } from '@/components/ui/dialog';
 
 export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
   const { toast } = useToast();
@@ -160,20 +161,17 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
           carries the same accidental-tap protection as exiting mid-round */}
       <AnimatePresence>
         {showLeaveConfirm && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
-              className="glass-card bg-slate-900/95 p-5 max-w-sm w-full">
-              <p className="font-extrabold text-lg mb-1">{t.leaveQuestion}</p>
-              <p className="text-slate-400 text-sm mb-4">{t.leaveBody}</p>
-              <div className="flex gap-2.5">
-                <button onClick={() => setShowLeaveConfirm(false)}
-                  className="flex-1 h-11 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 font-semibold">{t.cancel}</button>
-                <button onClick={leaveGame}
-                  className="flex-1 h-11 rounded-xl bg-rose-500 hover:bg-rose-600 border-0 font-bold text-white">{t.leave}</button>
-              </div>
-            </motion.div>
-          </motion.div>
+          <Dialog onClose={() => setShowLeaveConfirm(false)} titleId="lobby-leave-title"
+            panelClassName="glass-card bg-slate-900/95 p-5 max-w-sm">
+            <p id="lobby-leave-title" className="font-extrabold text-lg mb-1">{t.leaveQuestion}</p>
+            <p className="text-slate-400 text-sm mb-4">{t.leaveBody}</p>
+            <div className="flex gap-2.5">
+              <button onClick={() => setShowLeaveConfirm(false)}
+                className="flex-1 h-11 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 font-semibold">{t.cancel}</button>
+              <button onClick={leaveGame}
+                className="flex-1 h-11 rounded-xl bg-rose-500 hover:bg-rose-600 border-0 font-bold text-white">{t.leave}</button>
+            </div>
+          </Dialog>
         )}
       </AnimatePresence>
 

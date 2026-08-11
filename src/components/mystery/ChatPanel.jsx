@@ -98,8 +98,13 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
     if (nearBottomRef.current) setNewBelow(0);
   };
 
+  // Each send is independent (its own optimistic bubble id), so concurrent
+  // sends are fine — we deliberately do NOT gate on an in-flight flag, which
+  // used to silently DROP a second message typed while the first was still in
+  // flight on a slow network (CHAT-1). `sending` now only briefly disables the
+  // button; it never aborts a send.
   const sendText = async (trimmed, retryId) => {
-    if (!trimmed || sending) return;
+    if (!trimmed) return;
     setSending(true);
     const emote = extractEmote(trimmed);
     // Optimistic update — a retry reuses the same bubble id instead of
@@ -139,11 +144,12 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
     }
   };
 
-  const send = async () => {
+  const send = () => {
     const trimmed = cleanText(text.trim()).slice(0, MAX_MESSAGE_LENGTH);
-    if (!trimmed || sending) return;
+    if (!trimmed) return;
     setText('');
-    await sendText(trimmed);
+    // Fire-and-forget so a rapid follow-up isn't blocked/dropped (CHAT-1).
+    sendText(trimmed);
   };
 
   const retry = (msg) => sendText(msg.message, msg.id);
