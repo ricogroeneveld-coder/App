@@ -166,13 +166,15 @@ jobs:
             echo "::error::Archived app is missing the iCloud kv-store entitlement — check App.entitlements and the profile."
             exit 1
           fi
-          # Push notifications (LAUNCH-2): without aps-environment the app never
-          # gets an APNs token and notify-turn silently sends nothing. Fail loudly
-          # if the capability didn't make it into the signed app — tick Push
-          # Notifications on the App ID and regenerate the provisioning profile.
-          if ! codesign -d --entitlements - "$APP_PATH" 2>/dev/null | grep -q "aps-environment"; then
-            echo "::error::Archived app is missing the aps-environment (push) entitlement. Enable Push Notifications on the App ID (developer.apple.com), regenerate + re-download the App Store profile, and update the IOS_PROVISIONING_PROFILE secret."
-            exit 1
+          # Push notifications (LAUNCH-2): only REQUIRED when App.entitlements
+          # actually asks for it. Same source-of-truth rule as the profile check
+          # above — if push is deliberately off, a missing aps-environment in the
+          # signed app is the expected outcome, not a failure.
+          if plutil -extract 'aps-environment' raw ios/App/App/App.entitlements >/dev/null 2>&1; then
+            if ! codesign -d --entitlements - "$APP_PATH" 2>/dev/null | grep -q "aps-environment"; then
+              echo "::error::Archived app is missing the aps-environment (push) entitlement even though App.entitlements requests it. Enable Push Notifications on the App ID (developer.apple.com), regenerate + re-download the App Store profile, and update the IOS_PROVISIONING_PROFILE secret."
+              exit 1
+            fi
           fi
           codesign -d --entitlements - "$APP_PATH" 2>/dev/null | grep -A1 "ubiquity\|aps-environment" || true
 
