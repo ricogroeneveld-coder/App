@@ -162,6 +162,24 @@ export const BANNERS = [
   { id: 'bn_rainbow',  type: 'banner', name: 'Rainbow Road',   rarity: 'mythic', source: { type: 'shop', price: 5000 }, shine: true,
     css: `${dots([[20, 22, 1.5, 0.9], [78, 48, 1, 0.7]])}, linear-gradient(100deg, rgba(255,139,216,0.55) 0%, rgba(255,211,107,0.5) 25%, rgba(125,255,168,0.45) 50%, rgba(125,185,255,0.5) 75%, rgba(201,139,255,0.55) 100%), linear-gradient(160deg, #1e1b4b 0%, #0c0724 100%)`,
     motifs: [{ e: '🌈', x: '72%', y: '24%', s: 24, o: 0.95 }, { e: '✨', x: '14%', y: '40%', s: 14, o: 0.85 }] },
+  // Art-first shop banners (no collection) — painted scenes with a plain
+  // gradient fallback while the image loads.
+  { id: 'bn_creek',       type: 'banner', name: 'Firefly Creek', rarity: 'rare',      source: { type: 'shop', price: 300 },
+    css: 'linear-gradient(160deg, #0d3b2e 0%, #06251c 55%, #02120d 100%)' },
+  { id: 'bn_castle',      type: 'banner', name: 'Cloud Castle',  rarity: 'epic',      source: { type: 'shop', price: 800 },
+    css: 'linear-gradient(150deg, #6d28d9 0%, #3b1a8f 55%, #17073a 100%)' },
+  { id: 'bn_cabin',       type: 'banner', name: 'Cozy Cabin',    rarity: 'epic',      source: { type: 'shop', price: 800 },
+    css: 'linear-gradient(160deg, #1e3a8a 0%, #16255c 55%, #080f2b 100%)' },
+  { id: 'bn_elderwood',   type: 'banner', name: 'Elderwood',     rarity: 'epic',      source: { type: 'shop', price: 800 },
+    css: 'linear-gradient(160deg, #4c1d95 0%, #2a1150 55%, #0e0524 100%)' },
+  { id: 'bn_lanterngrove',type: 'banner', name: 'Lantern Grove', rarity: 'epic',      source: { type: 'shop', price: 800 },
+    css: 'linear-gradient(150deg, #7c3aed 0%, #7c2d12 60%, #1c0a2e 100%)' },
+  { id: 'bn_pagoda',      type: 'banner', name: 'Sky Pagoda',    rarity: 'legendary', source: { type: 'shop', price: 2000 }, shine: true,
+    css: 'linear-gradient(150deg, #b06104 0%, #6b2d5b 55%, #221033 100%)' },
+  { id: 'bn_skyship',     type: 'banner', name: 'Skyship',       rarity: 'legendary', source: { type: 'shop', price: 2000 }, shine: true,
+    css: 'linear-gradient(150deg, #c2410c 0%, #6b21a8 60%, #1e0a38 100%)' },
+  { id: 'bn_cosmos',      type: 'banner', name: 'Deep Cosmos',   rarity: 'legendary', source: { type: 'shop', price: 2000 }, shine: true,
+    css: 'linear-gradient(150deg, #312e81 0%, #1c1554 55%, #090420 100%)' },
 ];
 
 // Avatar frames — the ring instantly communicates rarity: silver → colored
