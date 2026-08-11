@@ -204,6 +204,18 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
     }
   };
 
+  // Host drops a player who never locked a word in (usually one who
+  // backgrounded during word entry). Without this the host had no way to
+  // proceed and no indication why — the start button simply never appeared.
+  const removeStalledPlayer = async (p) => {
+    try {
+      await MysteryPlayer.delete(p.id);
+      toast({ title: t.playerRemoved(p.display_name) });
+    } catch (e) {
+      toast({ title: t.errorTitle, description: t.tryAgain, variant: 'destructive' });
+    }
+  };
+
   const startPlaying = async () => {
     try {
       // Re-verify against LIVE state that everyone locked a word in — a player
@@ -400,6 +412,19 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
                   </span>
                 </span>
                 <span className={`w-full text-center text-[9px] font-semibold truncate ${p.user_id === me?.id ? 'text-violet-300' : 'text-slate-400'}`}>{p.display_name}</span>
+                {/* The host was previously stuck with no button and no
+                    explanation when someone backgrounded before locking a word
+                    in — "Everyone Ready" only renders once EVERY player has
+                    submitted, so one absent player blocked the game until the
+                    60s enforcement pass. Let the host drop a player who hasn't
+                    locked in, so they can start straight away. */}
+                {isHost && !p.word_submitted && p.user_id !== me?.id && (
+                  <button onClick={() => removeStalledPlayer(p)}
+                    className="mt-0.5 px-1.5 h-6 min-w-[2.75rem] rounded-md bg-rose-500/15 ring-1 ring-rose-400/30 text-rose-300 text-[9px] font-bold active:scale-95 transition"
+                    aria-label={t.removePlayerLabel(p.display_name)}>
+                    {t.remove}
+                  </button>
+                )}
               </div>
             );
           })}

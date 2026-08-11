@@ -46,6 +46,14 @@ const ANSWER_TIMER_MS = 45000;
 // game during a hint break (GAME-N1) — the hint-phase analogue of ANSWER_TIMER_MS.
 const HINT_TIMER_MS = 60000;
 
+// If a turn's shared deadline is already this close to expiring when the asker
+// first actually sees the turn (they were backgrounded / still loading when it
+// started — most commonly on the very first turn, whose deadline is minted at
+// game start), give them one fresh timer. Otherwise they return to 3 seconds
+// left, or to an auto-question already posted in their name. Granted at most
+// ONCE per turn, so it can't be farmed by backgrounding repeatedly.
+const MIN_TURN_SECONDS = 12;
+
 const nextDeadline = () => new Date(serverNow() + QUESTION_TIMER_SECONDS * 1000).toISOString();
 
 // The next asker's user_id after `fromId` in the given (join-ordered) asking
@@ -73,6 +81,8 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
   const [timeLeft, setTimeLeft] = useState(null);
   const [autoAsking, setAutoAsking] = useState(false);
   const timerRef = useRef(null);
+  // Latches the one-per-turn fresh-timer grant (see MIN_TURN_SECONDS).
+  const turnGraceRef = useRef('');
   // Single in-flight guard for posting a question (GAME-4): the manual "Ask"
   // path and the timer/auto path share it, so a tap landing on the same tick
   // the timer expires can't post two questions / double-advance the turn.
@@ -182,7 +192,16 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
     // Missing or stale deadline (older room, resume after a hint break where
     // nobody refreshed it): my turn, so my client claims a fresh one. The
     // room update re-runs this effect with the real value.
-    if (!deadlineMs || deadlineMs <= serverNow()) {
+    //
+    // Also claim one when barely any time is left: the deadline starts running
+    // the moment the turn begins, whether or not the asker's app is awake, so a
+    // player who was backgrounded (or was still loading into the playing screen
+    // after word entry — the first turn's deadline is minted at game start)
+    // would come back to a few seconds. One grant per turn, latched below.
+    const turnKey = `${room.current_questioner_id || room.current_questioner_index}:${questions.length}`;
+    const tooLittleLeft = deadlineMs && deadlineMs - serverNow() < MIN_TURN_SECONDS * 1000;
+    if (!deadlineMs || deadlineMs <= serverNow() || (tooLittleLeft && turnGraceRef.current !== turnKey)) {
+      if (tooLittleLeft) turnGraceRef.current = turnKey;
       MysteryRoom.update(room.id, { question_deadline: nextDeadline() }).catch(() => {});
       setTimeLeft(QUESTION_TIMER_SECONDS);
       return;
