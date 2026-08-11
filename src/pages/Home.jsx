@@ -449,6 +449,15 @@ export default function Home() {
                 <ChevronRight className="w-6 h-6 text-green-300 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />
               </span>
             </Link>
+
+            {/* Practice vs bot — slim row, prototype entry (fully local, no room) */}
+            <Link to="/practice"
+              className="w-full h-12 -mt-2 rounded-2xl bg-white/[0.04] ring-1 ring-white/15 backdrop-blur-md px-4 flex items-center gap-2.5 transition-all duration-150 active:scale-[0.98] hover:ring-white/30">
+              <span className="text-lg" aria-hidden>🤖</span>
+              <span className="flex-1 min-w-0 text-left text-sm font-bold text-slate-200 truncate">{t.practiceMode}</span>
+              <span className="shrink-0 px-1.5 py-px rounded bg-violet-500/25 ring-1 ring-violet-400/40 text-violet-200 text-[9px] font-extrabold tracking-wide">BETA</span>
+              <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+            </Link>
           </div>
           </motion.div>
         )}

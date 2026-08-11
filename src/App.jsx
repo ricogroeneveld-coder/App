@@ -19,6 +19,7 @@ import { registerPush } from '@/lib/push';
 import Home from '@/pages/Home';
 import MysteryGame from '@/pages/MysteryGame';
 const BrowseLobbies = lazy(() => import('@/pages/BrowseLobbies'));
+const PracticeGame = lazy(() => import('@/pages/PracticeGame'));
 const ProfileSettings = lazy(() => import('@/pages/ProfileSettings'));
 const Profile = lazy(() => import('@/pages/Profile'));
 const Login = lazy(() => import('@/pages/Login'));
@@ -45,6 +46,7 @@ const AnimatedRoutes = () => {
           <Routes location={location}>
             <Route path="/" element={<Home />} />
             <Route path="/browse-lobbies" element={<BrowseLobbies />} />
+            <Route path="/practice" element={<PracticeGame />} />
             <Route path="/mystery/:code" element={<MysteryGame />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile-settings" element={<ProfileSettings />} />
