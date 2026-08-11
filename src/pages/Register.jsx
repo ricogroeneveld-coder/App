@@ -12,9 +12,11 @@ import AppleIcon from "@/components/AppleIcon";
 import { toast } from "@/components/ui/use-toast";
 import { safeReturnTo } from "@/lib/authReturnTo";
 import { friendlyAuthError } from "@/lib/authErrors";
+import { useLang } from "@/lib/LanguageContext";
 
 export default function Register() {
   const navigate = useNavigate();
+  const { t } = useLang();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -28,7 +30,7 @@ export default function Register() {
     e.preventDefault();
     setError("");
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t.authPasswordsNoMatch);
       return;
     }
     setLoading(true);
@@ -61,8 +63,8 @@ export default function Register() {
       return;
     }
     toast({
-      title: "Code sent",
-      description: "Check your email for the new code.",
+      title: t.authCodeSent,
+      description: t.authCodeSentDesc,
     });
   };
 
@@ -77,8 +79,8 @@ export default function Register() {
     return (
       <AuthLayout
         icon={Mail}
-        title="Verify your email"
-        subtitle={`We sent a code to ${email}`}
+        title={t.authVerifyEmail}
+        subtitle={t.authSentCodeTo(email)}
       >
         {error && (
           <div role="alert" aria-live="assertive" className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
@@ -111,16 +113,16 @@ export default function Register() {
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Verifying...
+              {t.authVerifying}
             </>
           ) : (
-            "Verify"
+            t.authVerify
           )}
         </Button>
         <p className="text-center text-sm text-muted-foreground mt-4">
-          Didn't receive the code?{" "}
+          {t.authDidntReceive}{" "}
           <button onClick={handleResend} className="text-primary font-medium hover:underline">
-            Resend
+            {t.authResend}
           </button>
         </p>
       </AuthLayout>
@@ -130,16 +132,16 @@ export default function Register() {
   return (
     <AuthLayout
       icon={UserPlus}
-      title="Create your account"
-      subtitle="Sign up to get started"
+      title={t.authCreateAccountTitle}
+      subtitle={t.authSignUpToStart}
       footer={
         <>
-          Already have an account?{" "}
+          {t.authHaveAccount}{" "}
           <Link
             to={"/login" + (returnTo !== "/" ? "?returnTo=" + encodeURIComponent(returnTo) : "")}
             className="text-primary font-medium hover:underline"
           >
-            Log in
+            {t.authLogIn}
           </Link>
         </>
       }
@@ -151,7 +153,7 @@ export default function Register() {
           onClick={() => handleOAuth("apple")}
         >
           <AppleIcon className="w-5 h-5 mr-2" />
-          Continue with Apple
+          {t.authContinueApple}
         </Button>
         <Button
           variant="outline"
@@ -159,7 +161,7 @@ export default function Register() {
           onClick={() => handleOAuth("google")}
         >
           <GoogleIcon className="w-5 h-5 mr-2" />
-          Continue with Google
+          {t.authContinueGoogle}
         </Button>
       </div>
 
@@ -168,7 +170,7 @@ export default function Register() {
           <div className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-3 text-muted-foreground">or</span>
+          <span className="bg-card px-3 text-muted-foreground">{t.authOr}</span>
         </div>
       </div>
 
@@ -180,7 +182,7 @@ export default function Register() {
 
       <form onSubmit={handleSubmit} className="space-y-3.5">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t.authEmail}</Label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
@@ -197,7 +199,7 @@ export default function Register() {
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">{t.authPassword}</Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
@@ -213,7 +215,7 @@ export default function Register() {
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="confirm">Confirm Password</Label>
+          <Label htmlFor="confirm">{t.authConfirmPassword}</Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
@@ -232,10 +234,10 @@ export default function Register() {
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Creating account...
+              {t.authCreatingAccount}
             </>
           ) : (
-            "Create account"
+            t.authCreateAccount
           )}
         </Button>
       </form>

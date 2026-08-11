@@ -304,6 +304,16 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
           </div>
         </motion.div>
 
+        {/* UX-9: an explicit, in-context warning that running out the clock
+            means removal — a fleeting toast at the moment of the kick was too
+            easy to miss. Only when a kick (not a lobby reset) would actually
+            happen, i.e. 3+ players. */}
+        {!submitted && wordTimeLeft !== null && wordTimeLeft <= 15 && players.length > 2 && (
+          <div className="mb-2.5 rounded-xl bg-rose-500/15 ring-1 ring-rose-400/40 px-3 py-2 text-center text-[12px] font-semibold text-rose-200">
+            ⏳ {t.lockInOrRemoved}
+          </div>
+        )}
+
         {!submitted ? (
           <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.1 }} className="space-y-2.5">
             {isCustom ? (

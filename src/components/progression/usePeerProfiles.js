@@ -3,6 +3,12 @@ import { supabase } from '@/lib/supabaseClient';
 import { fetchProfilesFor, getProfile, subscribeProfile } from '@/lib/playerProfile';
 import { getGuestIdentity } from '@/lib/guestIdentity';
 
+// NET-3: how long to let the id-set settle before rebuilding the realtime
+// channel. In chat, senders trickle in one message at a time, so keying the
+// subscription directly on `ids` tore the channel down and re-created it on
+// every new distinct sender. Debouncing coalesces a burst into one rebuild.
+const IDSET_DEBOUNCE_MS = 500;
+
 /**
  * Map of user_id → progression profile for everyone in `players` (any array of
  * objects with a user_id). Our own profile always comes from the local store
@@ -14,10 +20,21 @@ export default function usePeerProfiles(players) {
   const [profiles, setProfiles] = useState({});
   const ids = [...new Set((players || []).map(p => p.user_id).filter(Boolean))].sort().join(',');
 
+  // NET-3: `stableIds` lags `ids` by a short debounce, and the heavy effect
+  // (fetch + realtime channel) keys off `stableIds`, so a rapid trickle of
+  // new senders no longer churns the channel on every arrival. The first
+  // value is applied immediately (state initialized from `ids`).
+  const [stableIds, setStableIds] = useState(ids);
+  useEffect(() => {
+    if (ids === stableIds) return;
+    const timer = setTimeout(() => setStableIds(ids), IDSET_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [ids, stableIds]);
+
   useEffect(() => {
     let live = true;
     const myId = getGuestIdentity().id;
-    const idSet = new Set(ids ? ids.split(',') : []);
+    const idSet = new Set(stableIds ? stableIds.split(',') : []);
     setProfiles(prev => ({ ...prev, [myId]: getProfile() }));
 
     const refetch = () => {
@@ -64,7 +81,7 @@ export default function usePeerProfiles(players) {
       window.removeEventListener('pageshow', wake);
       clearInterval(interval);
     };
-  }, [ids]);
+  }, [stableIds]);
 
   return profiles;
 }

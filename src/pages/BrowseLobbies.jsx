@@ -33,6 +33,26 @@ export default function BrowseLobbies() {
   // room_code → player count, so lobby rows can show "3/12" — players pick
   // a lobby by how full it is, and the list said nothing about that.
   const [lobbyCounts, setLobbyCounts] = useState({});
+  // Latest room codes on screen, read by the periodic count refresh (NET-2)
+  // without forcing that interval to restart on every list change.
+  const codesRef = useRef([]);
+
+  // NET-2: the "3/12" counts come from mystery_players, but this screen only
+  // subscribes to mystery_rooms — so a player joining/leaving an already-listed
+  // lobby never refreshed its count. Re-query JUST the counts (one cheap query,
+  // no room refetch) rather than subscribing to mystery_players: that table has
+  // no is_public filter, so such a subscription would wake this screen on every
+  // player's every move across ALL rooms app-wide.
+  const fetchCounts = async (codes) => {
+    if (!codes.length) { setLobbyCounts({}); return; }
+    try {
+      const { data } = await supabase.from('mystery_players')
+        .select('room_code').in('room_code', codes);
+      const counts = {};
+      (data || []).forEach(p => { counts[p.room_code] = (counts[p.room_code] || 0) + 1; });
+      setLobbyCounts(counts);
+    } catch (e) { /* keep last counts on a transient failure */ }
+  };
 
   const fetchLobbies = async () => {
     setLobbiesLoading(true);
@@ -40,15 +60,8 @@ export default function BrowseLobbies() {
       const rooms = await MysteryRoom.filter({ status: 'lobby', is_public: true }, '-created_date', 20);
       setPublicLobbies(rooms || []);
       const codes = (rooms || []).map(r => r.room_code);
-      if (codes.length) {
-        const { data } = await supabase.from('mystery_players')
-          .select('room_code').in('room_code', codes);
-        const counts = {};
-        (data || []).forEach(p => { counts[p.room_code] = (counts[p.room_code] || 0) + 1; });
-        setLobbyCounts(counts);
-      } else {
-        setLobbyCounts({});
-      }
+      codesRef.current = codes;
+      await fetchCounts(codes);
     } catch (e) {
       setPublicLobbies([]);
     } finally {
@@ -94,13 +107,31 @@ export default function BrowseLobbies() {
   }, []);
 
   useEffect(() => {
+    let disposed = false;
+    let debounceTimer = null;
+    // NET-1: the public-room subscription fired a full 2-query refetch on EVERY
+    // public-room event app-wide, with no debounce — a burst (a busy lobby's
+    // rapid updates) meant a storm of refetches. Coalesce bursts into one
+    // refetch (~500ms, mirrors MysteryGame's pattern), and guard the callback
+    // so a pending timer can't fire a refetch after unmount / wakeEpoch swap.
+    const debouncedFetch = () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => { if (!disposed) fetchLobbies(); }, 500);
+    };
     fetchLobbies();
     // Server-side filter: only public rooms' events reach this screen.
-    const unsub = MysteryRoom.subscribe(() => { fetchLobbies(); },
+    const unsub = MysteryRoom.subscribe(() => { if (!disposed) debouncedFetch(); },
       undefined, 'is_public=eq.true');
-    return unsub;
+    return () => { disposed = true; clearTimeout(debounceTimer); unsub(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wakeEpoch]);
+
+  // NET-2: periodic refresh of just the counts while mounted (see fetchCounts).
+  useEffect(() => {
+    const iv = setInterval(() => { fetchCounts(codesRef.current); }, 15000);
+    return () => clearInterval(iv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const joinLobby = async (room) => {
     const guest = getGuestIdentity();

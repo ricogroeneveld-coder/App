@@ -55,7 +55,7 @@ export default function Notebook({ players, questions, guesses, me, myPlayer }) 
     <div className="max-w-lg mx-auto" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       {/* Player tabs */}
       <div className="flex items-center gap-3 mb-5">
-        <button onClick={() => setPageIdx(Math.max(0, pageIdx-1))} disabled={pageIdx === 0}
+        <button onClick={() => setPageIdx(Math.max(0, pageIdx-1))} disabled={pageIdx === 0} aria-label="Previous player"
           className="w-11 h-11 flex items-center justify-center rounded-xl bg-gradient-to-b from-white/[0.07] to-black/20 ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-white/10 disabled:opacity-30 transition active:scale-[0.98]">
           <ChevronLeft className="w-4 h-4" />
         </button>
@@ -69,7 +69,7 @@ export default function Notebook({ players, questions, guesses, me, myPlayer }) 
             {isEliminated && <Trophy className="w-4 h-4 text-amber-400 shrink-0" />}
           </div>
         </div>
-        <button onClick={() => setPageIdx(Math.min(opponents.length-1, pageIdx+1))} disabled={pageIdx >= opponents.length-1}
+        <button onClick={() => setPageIdx(Math.min(opponents.length-1, pageIdx+1))} disabled={pageIdx >= opponents.length-1} aria-label="Next player"
           className="w-11 h-11 flex items-center justify-center rounded-xl bg-gradient-to-b from-white/[0.07] to-black/20 ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-white/10 disabled:opacity-30 transition active:scale-[0.98]">
           <ChevronRight className="w-4 h-4" />
         </button>
@@ -78,7 +78,7 @@ export default function Notebook({ players, questions, guesses, me, myPlayer }) 
       {/* Dot indicators */}
       <div className="flex justify-center gap-1.5 mb-5">
         {opponents.map((_,i) => (
-          <button key={i} onClick={() => setPageIdx(i)} className="p-1.5 -m-0.5 flex items-center justify-center">
+          <button key={i} onClick={() => setPageIdx(i)} aria-label={`Go to player ${i+1}`} className="p-1.5 -m-0.5 flex items-center justify-center">
             <span className={`w-2 h-2 rounded-full transition ${i === pageIdx ? 'bg-violet-400' : 'bg-white/20'}`} />
           </button>
         ))}

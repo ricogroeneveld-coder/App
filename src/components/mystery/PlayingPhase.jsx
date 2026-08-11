@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { serverNow } from '@/lib/serverTime';
 import { track } from '@/lib/analytics';
 import { notifyUser } from '@/lib/push';
+import { breakStreakOnLeave } from '@/lib/playerProfile';
 import { leaveRoom } from '@/lib/roomLifecycle';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -242,7 +243,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
       const asker = freshAskers.find(p => p.user_id === currentId) || questioner;
       if (!asker) return;
       const prevTexts = (freshQs || []).slice(-8).map(q => q.question_text);
-      const autoQ = getRandomQuestion(fr.category, prevTexts) || 'Is it bigger than a cat?';
+      const autoQ = getRandomQuestion(fr.category, prevTexts, lang) || 'Is it bigger than a cat?';
       await MysteryQuestion.create({
         room_code: roomCode,
         round_number: fr.round_number,
@@ -319,8 +320,9 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
     }
     try {
       const prevTexts = questions.slice(-8).map(q => q.question_text);
-      // Picked locally from the static question bank — no server round-trip needed.
-      const autoQ = getRandomQuestion(room.category, prevTexts) || 'Is it something you can hold in one hand?';
+      // Picked locally from the static question bank — no server round-trip
+      // needed. `lang` selects the Dutch bank in NL games (LOC-2).
+      const autoQ = getRandomQuestion(room.category, prevTexts, lang) || 'Is it something you can hold in one hand?';
       await submitQuestionText(autoQ, true);
     } finally {
       setAutoAsking(false);
@@ -461,6 +463,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
   };
 
   const leaveGame = async () => {
+    breakStreakOnLeave(); // ECON-9: forfeit the win streak on a live-match rage quit
     try {
       if (myPlayer) {
         const remaining = players.filter(p => p.id !== myPlayer.id && !p.is_eliminated);
@@ -568,9 +571,9 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
         </div>
 
         <button
-          onClick={() => navigator.clipboard?.writeText(roomCode)}
+          onClick={() => { navigator.clipboard?.writeText(roomCode).then(() => toast({ title: t.linkCopied })).catch(() => {}); }}
           className="shrink-0 self-stretch flex flex-col items-center justify-center px-2 rounded-xl bg-violet-500/10 ring-1 ring-violet-400/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-violet-500/20 transition active:scale-[0.98]"
-          title={t.room}
+          title={t.room} aria-label={t.room}
         >
           <p className="text-[10px] uppercase tracking-wide text-violet-400/70 leading-none">{t.room}</p>
           <p className="font-bold font-mono tracking-[0.12em] text-violet-200 text-xs leading-tight mt-0.5">{roomCode}</p>
@@ -579,7 +582,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
         <button
           onClick={() => setShowMyWord(v => !v)}
           className={`${wordFlex} self-stretch flex flex-col items-end justify-center px-2.5 py-1 rounded-xl bg-gradient-to-b from-white/[0.06] to-black/[0.12] ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-white/10 transition active:scale-[0.98]`}
-          title={t.myWord}
+          title={t.myWord} aria-label={t.myWord}
         >
           <p className="text-[10px] uppercase tracking-wide text-slate-400 leading-none">{t.myWord}</p>
           <p className={`font-bold text-violet-300 ${myWordSize} leading-[1.15] mt-0.5 text-right w-full`}
@@ -912,7 +915,7 @@ function QuestionCard({ question, players, me }) {
               <div key={p.user_id} className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-white/5 text-[11px]">
                 <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
                 <span className={isMe ? 'text-violet-300 font-medium' : 'text-slate-300'}>{isMe ? t.youShort : p.display_name}</span>
-                <span>{ans === true ? '✅' : ans === false ? '❌' : '—'}</span>
+                <span aria-label={ans === true ? t.answerYes : ans === false ? t.answerNo : undefined}>{ans === true ? '✅' : ans === false ? '❌' : '—'}</span>
               </div>
             );
           })}

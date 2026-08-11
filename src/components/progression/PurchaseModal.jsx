@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lock } from 'lucide-react';
 import { RARITIES, cosmeticById } from '@/lib/cosmetics';
+import { Dialog } from '@/components/ui/dialog';
 import PlayerAvatar, { AvatarFrame, EmblemTile } from './PlayerAvatar';
 import BannerArt from './BannerArt';
 import { useLang } from '@/lib/LanguageContext';
@@ -113,12 +114,10 @@ export default function PurchaseModal({ cosmetic: c, balance, typeLabel, profile
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-6"
-      onClick={phase === 'confirm' ? onClose : undefined}>
-      <motion.div initial={{ opacity: 0, scale: 0.82, y: 14 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ type: 'spring', duration: 0.45 }}
-        onClick={e => e.stopPropagation()}
-        className={`glass-card relative overflow-hidden w-full max-w-xs bg-slate-900/95 p-5 text-center ring-1 ${rar.ring} ${rar.cardGlow}`}>
+    <Dialog onClose={onClose} placement="center" titleId="purchase-title"
+      dismissOnBackdrop={phase === 'confirm'}
+      className="bg-black/70 backdrop-blur-md p-6"
+      panelClassName={`glass-card relative overflow-hidden max-w-xs bg-slate-900/95 p-5 text-center ring-1 ${rar.ring} ${rar.cardGlow}`}>
         {fancy && <span aria-hidden className="fx-shine" />}
 
         {/* Confetti — legendary/mythic celebration */}
@@ -140,7 +139,7 @@ export default function PurchaseModal({ cosmetic: c, balance, typeLabel, profile
         <p className={`text-[10px] font-extrabold uppercase tracking-[0.16em] ${rar.text}`}>
           {rar.label} {typeLabel}
         </p>
-        <p className="text-lg font-extrabold text-white mt-0.5 mb-4">{c.name}</p>
+        <p id="purchase-title" className="text-lg font-extrabold text-white mt-0.5 mb-4">{c.name}</p>
 
         {/* Artwork with celebration burst */}
         <div className="relative flex items-center justify-center min-h-[6rem] mb-4">
@@ -217,7 +216,6 @@ export default function PurchaseModal({ cosmetic: c, balance, typeLabel, profile
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.div>
-    </div>
+    </Dialog>
   );
 }

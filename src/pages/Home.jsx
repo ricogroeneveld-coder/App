@@ -370,7 +370,10 @@ export default function Home() {
                   </span>{' '}
                   <Crown className="inline w-3.5 h-3.5 text-amber-400 -mt-0.5" fill="currentColor" />
                 </span>
-                <span onClick={e => { e.stopPropagation(); navigate('/profile?tab=shop'); }}
+                {/* UX-8: a real, focusable button (was a span with onClick, which
+                    keyboard/SR users couldn't reach) for the Shop shortcut. */}
+                <button type="button" onClick={e => { e.stopPropagation(); navigate('/profile?tab=shop'); }}
+                  aria-label={t.shop}
                   className="mt-0.5 flex items-center gap-1.5 text-[11px] font-bold text-slate-400 leading-tight">
                   <span className="text-amber-300 tabular-nums">{profile?.picks || 0} Picks</span>
                   <span className="text-slate-600">·</span>
@@ -381,7 +384,7 @@ export default function Home() {
                       {t.newBadge}
                     </span>
                   )}
-                </span>
+                </button>
               </span>
               <span className="ml-auto w-10 h-10 rounded-full bg-gradient-to-b from-[#2a1150] to-[#0d0620] ring-1 ring-violet-400/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0">
                 <ChevronRight className="w-6 h-6 text-violet-300 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />

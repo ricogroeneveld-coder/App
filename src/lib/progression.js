@@ -1,8 +1,12 @@
-// Economy configuration — every reward value in one place. Balanced so an
-// average ~10-minute match pays ~35 Picks (a winner ~75), which prices the
-// rarities at: Common ≈ 3 matches, Rare ≈ a casual day, Epic ≈ a week,
-// Legendary ≈ 3 weeks, Mythic ≈ a season. First hour of play reaches the
-// first Common unlock plus 2–3 level-ups.
+// Economy configuration — every reward value in one place. An average
+// ~10-minute match pays ~35 Picks (a winner ~75); casual daily income
+// (a few matches + dailies + login) is ~250 Picks. With the shop prices in
+// cosmetics.js (Common 100 / Rare 300 / Epic 1000 / Legendary 3000 /
+// Mythic 6500) that puts real pacing at roughly: Common ≈ 2–3 matches,
+// Rare ≈ a day, Epic ≈ ~4 days, Legendary ≈ ~1.5 weeks, Mythic ≈ ~3–4 weeks
+// — a genuine long-tail chase that pairs with the daily shop rotation. The
+// top-tier prices are the tuning knob: raise them to stretch the chase.
+// First hour of play reaches the first Common unlock plus 2–3 level-ups.
 
 export const ECONOMY = {
   // Match rewards { picks, xp }
@@ -28,7 +32,7 @@ export function xpToNext(level) {
   return ECONOMY.xpPerLevel(Math.min(level, ECONOMY.maxLevel));
 }
 
-// Convert total XP into { level, into, need }
+// Convert total XP into { level, into, need, maxed }
 export function levelFromXp(totalXp) {
   let level = 1;
   let rest = totalXp;
@@ -36,7 +40,13 @@ export function levelFromXp(totalXp) {
     rest -= xpToNext(level);
     level += 1;
   }
-  return { level, into: rest, need: xpToNext(level) };
+  const need = xpToNext(level);
+  const maxed = level >= ECONOMY.maxLevel;
+  // At the cap, leftover XP kept accumulating in `rest`, so the progress bar
+  // (into/need) overflowed past 100% and read e.g. "5000/1325" forever
+  // (ECON-8). Clamp to a full bar at max level and expose a `maxed` flag so
+  // the UI can show MAX instead of a broken ratio.
+  return { level, into: maxed ? need : rest, need, maxed };
 }
 
 // ── Challenges ─────────────────────────────────────────────────────────────
@@ -55,10 +65,15 @@ export const WEEKLY = [
   { id: 'w_win5',   stat: 'wins',  target: 5,  picks: 120, name: 'Win 5 games' },
 ];
 
+// Season 1 pays PICKS ONLY. The Founder collection (em_galaxy / t_founder /
+// bd_champion) is stashed for a later release (col_founder is hidden), so
+// those unlocks are intentionally NOT attached here — the season must never
+// imply a cosmetic reward it can't actually grant (ECON-3). Re-attach the
+// `unlock` fields when the Founder set is un-stashed.
 export const SEASON = [
-  { id: 's_play40',  stat: 'plays',   target: 40, picks: 300, name: 'Complete 40 games',   unlock: 'em_galaxy' },
-  { id: 's_guess25', stat: 'guesses', target: 25, picks: 250, name: '25 correct guesses',  unlock: 't_founder' },
-  { id: 's_win15',   stat: 'wins',    target: 15, picks: 400, name: 'Win 15 games',        unlock: 'bd_champion' },
+  { id: 's_play40',  stat: 'plays',   target: 40, picks: 300, name: 'Complete 40 games' },
+  { id: 's_guess25', stat: 'guesses', target: 25, picks: 250, name: '25 correct guesses' },
+  { id: 's_win15',   stat: 'wins',    target: 15, picks: 400, name: 'Win 15 games' },
 ];
 
 export const SEASON_ID = 'S1';

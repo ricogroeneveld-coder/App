@@ -7,6 +7,7 @@ import { cleanText } from '@/lib/cleanText';
 import { isMuted, subscribeMutes } from '@/lib/mutes';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import usePeerProfiles from '@/components/progression/usePeerProfiles';
+import { subscribeRoomChat } from './useUnreadChat';
 
 const EMOTES = ['😂', '🔥', '👀', '💀', '🤔', '😱', '🎉', '👏', '😏', '🤯'];
 // Hard cap on one message — matches nothing in particular except sanity:
@@ -17,6 +18,12 @@ const EMOTE_LABELS = { '😂': 'Laughing', '🔥': 'Fire', '👀': 'Eyes', '💀
 // Near-bottom threshold (px) — within this, a new message still auto-scrolls;
 // further up, the reader is treated as browsing history and left alone.
 const AUTOSCROLL_THRESHOLD = 80;
+// NET-8: cap the in-memory message list so a long/spammy room can't grow the
+// array (and the DOM) without bound — keep only the most recent N.
+const CHAT_HISTORY_CAP = 200;
+// CHAT-6: ignore a send fired within this window of the previous one, a
+// lightweight client-side rate limit against accidental/abusive spam.
+const SEND_COOLDOWN_MS = 600;
 
 function formatTime(iso) {
   if (!iso) return '';
@@ -26,6 +33,28 @@ function formatTime(iso) {
 
 function extractEmote(text) {
   return EMOTES.find(e => text.includes(e)) || null;
+}
+
+function timeOf(msg) {
+  // Optimistic bubbles have no created_date yet — treat them as "now" so they
+  // sort to the end (newest) until the real, timestamped row replaces them.
+  return msg?.created_date ? new Date(msg.created_date).getTime() : Infinity;
+}
+
+// NET-4 / CHAT-8: merge a row into the list — dedupe by id (realtime can
+// redeliver, and a real row supersedes its optimistic twin), insert by
+// created_date order (not pure arrival order), and cap the list (NET-8).
+function mergeMessage(list, row) {
+  if (!row?.id) return list;
+  const next = list.filter(m =>
+    m.id !== row.id &&
+    // drop the optimistic bubble this real row replaces, so both never show
+    !(m._pending && m.user_id === row.user_id && m.message === row.message));
+  const ts = timeOf(row);
+  let i = next.length;
+  while (i > 0 && timeOf(next[i - 1]) > ts) i--;
+  next.splice(i, 0, row);
+  return next.length > CHAT_HISTORY_CAP ? next.slice(next.length - CHAT_HISTORY_CAP) : next;
 }
 
 export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
@@ -39,6 +68,11 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
   const scrollRef = useRef(null);
   const pendingIdRef = useRef(0);
   const nearBottomRef = useRef(true);
+  // Mirror of `messages` kept in sync inside the state updater, so the realtime
+  // handler can tell a genuinely NEW message from a redelivery without waiting
+  // a render (used for the "N new" pill — CHAT-8).
+  const messagesRef = useRef([]);
+  const lastSendRef = useRef(0);
   const profiles = usePeerProfiles(messages);
 
   // Re-fetch + re-subscribe when the tab wakes — the background-suspended
@@ -59,34 +93,78 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
   const [, setMuteEpoch] = useState(0);
   useEffect(() => subscribeMutes(() => setMuteEpoch(n => n + 1)), []);
 
+  // History (re)fetch — also re-runs on wake so a suspended socket that missed
+  // messages is reconciled. NEWEST 60, then restore chronological order —
+  // ascending+limit returned the OLDEST 60, so busy rooms reopened chat onto
+  // stale history.
   useEffect(() => {
-    // NEWEST 60, then restore chronological order — ascending+limit returned
-    // the OLDEST 60, so busy rooms reopened chat onto stale history.
+    let live = true;
     MysteryChat.filter({ room_code: roomCode }, '-created_date', 60)
-      .then(msgs => setMessages((msgs || []).reverse()));
-
-    const unsub = MysteryChat.subscribe((event) => {
-      if (event.type === 'create' && event.data?.room_code === roomCode) {
-        setMessages(prev => [...prev, event.data]);
-        const emote = extractEmote(event.data.message);
-        if (emote && !isMuted(event.data.user_id)) onEmoteRain(emote);
-      }
-    }, undefined, `room_code=eq.${roomCode}`);
-    return unsub;
+      .then(msgs => {
+        if (!live) return;
+        const ordered = (msgs || []).slice().reverse();
+        messagesRef.current = ordered;
+        setMessages(ordered);
+      })
+      .catch(() => { /* keep whatever we already have on a transient failure */ });
+    return () => { live = false; };
   }, [roomCode, wakeEpoch]);
+
+  // Realtime — shared, ref-counted per-room channel (NET-3). Reconnection is
+  // owned by the shared subscriber, so this no longer depends on wakeEpoch.
+  useEffect(() => {
+    const unsub = subscribeRoomChat(roomCode, (event) => {
+      const row = event.data;
+      if (!row || row.room_code !== roomCode) return;
+
+      // NET-4 / CHAT-8: remove moderated/deleted messages live (DELETE matches
+      // the OLD row — see db.js subscribe).
+      if (event.type === 'delete') {
+        setMessages(prev => {
+          const next = prev.filter(m => m.id !== row.id);
+          messagesRef.current = next;
+          return next;
+        });
+        return;
+      }
+
+      if (event.type !== 'create') return;
+
+      // "N new" pill counts only GENUINELY new messages from OTHERS while the
+      // reader is scrolled up — never my own optimistic add/remove churn, and
+      // never a redelivery of a message already in the list (CHAT-8).
+      const isNew = !messagesRef.current.some(m => m.id === row.id);
+      setMessages(prev => {
+        const next = mergeMessage(prev, row);
+        messagesRef.current = next;
+        return next;
+      });
+      if (isNew && row.user_id !== me?.id && !nearBottomRef.current) {
+        setNewBelow(n => n + 1);
+      }
+
+      // Emote rain (kept for API parity — every current caller passes a no-op
+      // and drives real rain through useUnreadChat instead).
+      const emote = extractEmote(row.message || '');
+      if (emote && !isMuted(row.user_id)) onEmoteRain(emote);
+    });
+    return unsub;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomCode, me?.id]);
 
   const scrollToBottom = (behavior = 'smooth') => {
     bottomRef.current?.scrollIntoView({ behavior });
     setNewBelow(0);
   };
 
-  // Only follow new messages while already near the bottom — a reader who's
+  // Only follow new content while already near the bottom — a reader who's
   // scrolled up to read history shouldn't get yanked away on every arrival.
+  // This covers my own sends and others' messages alike; the "N new" pill
+  // (newBelow) is incremented separately in the realtime handler so it counts
+  // only genuine new messages from others, not my optimistic churn (CHAT-8).
   useEffect(() => {
     if (nearBottomRef.current) {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    } else {
-      setNewBelow(n => n + 1);
     }
   }, [messages]);
 
@@ -147,6 +225,13 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
   const send = () => {
     const trimmed = cleanText(text.trim()).slice(0, MAX_MESSAGE_LENGTH);
     if (!trimmed) return;
+    // CHAT-6: swallow sends fired within the cooldown of the last one. This is
+    // distinct from CHAT-1's "never drop a legitimately-typed follow-up": a
+    // human can't type + submit two real messages inside 600ms, so this only
+    // eats key-repeat / rapid-fire spam, not real conversation.
+    const now = Date.now();
+    if (now - lastSendRef.current < SEND_COOLDOWN_MS) return;
+    lastSendRef.current = now;
     setText('');
     // Fire-and-forget so a rapid follow-up isn't blocked/dropped (CHAT-1).
     sendText(trimmed);
@@ -166,12 +251,17 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
           {messages.filter(msg => !isMuted(msg.user_id)).map(msg => {
             const isMe = msg.user_id === me?.id;
             const clickable = msg._failed;
+            // CHAT-5: cleanText only ran on SEND, so a modified/hostile client
+            // could push raw slurs straight to everyone. Filter again at RENDER
+            // time (message body + display name) so received text is masked too.
+            const safeName = cleanText(msg.display_name) || msg.display_name;
+            const safeMessage = cleanText(msg.message);
             return (
               <motion.div key={msg.id}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : ''}`}>
-                <PlayerAvatar profile={profiles[msg.user_id]} name={msg.display_name} color={msg.color} size={24} />
+                <PlayerAvatar profile={profiles[msg.user_id]} name={safeName} color={msg.color} size={24} />
                 <div
                   onClick={clickable ? () => retry(msg) : undefined}
                   role={clickable ? 'button' : undefined}
@@ -180,8 +270,8 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
                   className={`max-w-[75%] px-3 py-2 rounded-2xl text-sm transition-opacity ${clickable ? 'cursor-pointer' : ''} ${
                   msg._pending ? 'opacity-50' : msg._failed ? 'opacity-70 ring-1 ring-rose-500/50' : 'opacity-100'
                 } ${isMe ? 'bg-gradient-to-b from-violet-500 to-violet-700 text-white rounded-br-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_2px_6px_-2px_rgba(0,0,0,0.4)]' : 'bg-white/10 text-white rounded-bl-sm ring-1 ring-white/5'}`}>
-                  {!isMe && <p className="text-[10px] font-semibold mb-0.5 opacity-60">{msg.display_name}</p>}
-                  <p>{msg.message}</p>
+                  {!isMe && <p className="text-[10px] font-semibold mb-0.5 opacity-60">{safeName}</p>}
+                  <p>{safeMessage}</p>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     {msg._failed
                       ? <p className="text-[10px] text-rose-400">{t.chatFailed}</p>
