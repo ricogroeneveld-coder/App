@@ -123,6 +123,10 @@ export default function ProfileSettings() {
     }
     // Chat messages carry the display name — they're part of "my data".
     try { await supabase.from('mystery_chats').delete().eq('user_id', guest.id); } catch { /* best-effort */ }
+    // Analytics events, push tokens, and reports this user FILED are
+    // insert-only for clients — a definer RPC removes them (migration 0019)
+    // so "delete my data" actually matches the privacy policy's promise.
+    try { await supabase.rpc('wipe_guest_data', { p_user: guest.id }); } catch { /* pre-0019 project */ }
     await deleteProfileData();
     try {
       localStorage.removeItem('wmp_reported');

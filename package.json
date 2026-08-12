@@ -10,6 +10,7 @@
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
+    "test:e2e": "node tests/e2e-practice.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

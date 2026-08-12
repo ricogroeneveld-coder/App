@@ -114,15 +114,9 @@ function App() {
   });
   useEffect(() => {
     startCloudBackup();
-    // Clock-skew-proof time base for the game timers (GAME-3), and a first
-    // analytics ping so the funnel has an app_open even for a bounce.
+    // Clock-skew-proof time base for the game timers (GAME-3). Safe before
+    // the iCloud gate: it never reads the guest identity.
     syncServerTime();
-    initAnalytics();
-    // Establish the anonymous session eagerly on native — waiting for the
-    // first profile write meant a quiet session (daily reward already
-    // claimed, no round played) never signed in, never synced, and never
-    // wrote an iCloud backup.
-    if (isNativeApp()) { ensureAuth(); registerPush(); }
     if (booted) return;
     let live = true;
     Promise.race([
@@ -139,11 +133,21 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
-    // TestFlight builds gift the Beta Tester cosmetic set. Runs once boot
-    // settles: immediately on existing installs (booted starts true — they
-    // never enter the iCloud restore path above), after the restore race on
-    // fresh installs so the grant lands on the restored profile. Idempotent.
+    // Everything that READS the guest identity waits for the iCloud gate:
+    // initAnalytics()'s app_open calls getGuestIdentity(), which MINTS an id
+    // on first read — running it before restoreIdentityFromCloud() resolved
+    // made the primary restore path bail on every fresh install (it refuses
+    // to overwrite an existing id), silently orphaning the player's backed-up
+    // progression. Existing installs are unaffected: booted starts true.
     if (!booted) return;
+    initAnalytics();
+    // Establish the anonymous session eagerly on native — waiting for the
+    // first profile write meant a quiet session (daily reward already
+    // claimed, no round played) never signed in, never synced, and never
+    // wrote an iCloud backup.
+    if (isNativeApp()) { ensureAuth(); registerPush(); }
+    // TestFlight builds gift the Beta Tester cosmetic set. Runs once boot
+    // settles so the grant lands on the restored profile. Idempotent.
     isTestFlightBuild().then(tf => { if (tf) grantBetaCosmetics(); });
   }, [booted]);
   if (!booted) return null; // dark launch background shows through

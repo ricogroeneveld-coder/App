@@ -6,7 +6,7 @@ import { serverNow } from '@/lib/serverTime';
 // hit Supabase exactly as before.
 import * as practice from '@/lib/practice/localGame';
 
-const rpcMissing = (error) => error && (error.code === 'PGRST202' || error.code === '42883'
+export const rpcMissing = (error) => error && (error.code === 'PGRST202' || error.code === '42883'
   || /does not exist|could not find the function/i.test(error.message || ''));
 
 // Thin wrapper around Supabase's client that mimics the small slice of the
