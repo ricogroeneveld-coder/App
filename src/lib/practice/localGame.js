@@ -1,7 +1,7 @@
 // Local practice game: an in-memory stand-in for the Supabase backend so the
 // REAL game screens (LobbyPhase → WordEntryPhase → PlayingPhase →
 // FinishedPhase) run unchanged against a room that lives only on this device,
-// with bot opponents driven by the honest fact matrix in householdBot.js.
+// with bot opponents driven by the honest fact matrices in botKnowledge.js.
 //
 // Room codes are prefixed "BOT" — the letter O is excluded from real room-code
 // generation (Home.jsx), so a practice code can never collide with a live
@@ -12,9 +12,10 @@
 import { serverNow } from '@/lib/serverTime';
 import { normalizeWord } from '@/lib/normalizeWord';
 import {
-  WORDS, QUESTIONS, PRACTICE_CATEGORY, makeCommit, answerFor,
-  filterCandidates, pickBotQuestion, BOT_NAMES,
-} from './householdBot';
+  PRACTICE_CATEGORIES, DEFAULT_PRACTICE_CATEGORY, matrixFor, wordsFor,
+  makeCommit, answerFor, filterCandidates, pickBotQuestion, hintQuestions,
+  matchQuestion, fallbackAnswer, BOT_NAMES,
+} from './botKnowledge';
 
 const PREFIX = 'BOT';
 const TABLES = ['mystery_rooms', 'mystery_players', 'mystery_questions', 'mystery_guesses', 'mystery_chats'];
@@ -41,7 +42,6 @@ const state = {
   pending: new Map(),        // action key → timeout id
   interval: null,
   wordCycle: 0,              // bumps every play-again so word keys re-arm
-  matchCache: new Map(),     // normalized question text → matched QUESTIONS id | null
 };
 
 // ── ownership checks (used by db.js to route) ──────────────────────────────
@@ -87,10 +87,10 @@ export async function create(table, fields) {
 export async function update(table, id, patch) {
   const row = rows(table).find(r => r.id === id);
   if (!row) throw new Error(`local ${table}: row not found`);
-  // The bots' honesty matrix only covers Household Objects — a practice room
-  // is pinned to it, so a category change from the lobby selector is a no-op.
-  if (table === 'mystery_rooms' && patch.category && patch.category !== PRACTICE_CATEGORY) {
-    patch = { ...patch, category: PRACTICE_CATEGORY };
+  // Practice rooms only allow categories the bots have an honesty matrix for
+  // (the lobby selector is filtered to these too — this is the backstop).
+  if (table === 'mystery_rooms' && patch.category && !PRACTICE_CATEGORIES.includes(patch.category)) {
+    patch = { ...patch, category: row.category || DEFAULT_PRACTICE_CATEGORY };
   }
   Object.assign(row, patch, { updated_date: nowIso() });
   emit(table, 'update', row);
@@ -117,6 +117,7 @@ export function subscribe(table, callback, onStatus) {
 
 // ── views over the store (mirror PlayingPhase's derived state) ─────────────
 function room() { return rows('mystery_rooms')[0] || null; }
+function activeMatrix() { return matrixFor(room()?.category); }
 function players() { return rows('mystery_players'); }
 function sortedQuestions() {
   // Same ordering the UI sees: MysteryGame sorts by round_number (stable).
@@ -320,7 +321,7 @@ export async function rpc(name, params = {}) {
     // keeps it, so the host lands back in the lobby with Start ready to tap.
     await update('mystery_rooms', r.id, {
       status: 'lobby', round_number: 1, current_questioner_index: 0,
-      current_questioner_id: null, question_deadline: null, category: PRACTICE_CATEGORY,
+      current_questioner_id: null, question_deadline: null, category: r.category || DEFAULT_PRACTICE_CATEGORY,
     });
     resetBotWords();
     return ok({ ok: true });
@@ -334,51 +335,6 @@ export async function secretSubmit(roomCode, userId, word) {
   if (data && data.ok === false) throw new Error(data.reason || 'submit_failed');
 }
 export async function secretClearRoom(_roomCode) { state.secrets.clear(); }
-
-// ── question matching (free-text → matrix id) ──────────────────────────────
-const STOP = new Set([
-  'is', 'it', 'the', 'a', 'an', 'does', 'do', 'can', 'you', 'your', 'to', 'of', 'in', 'on', 'for',
-  'with', 'when', 'would', 'usually', 'made',
-  'het', 'een', 'de', 'je', 'kun', 'kan', 'er', 'op', 'voor', 'met', 'bij', 'zou', 'meestal',
-  'heeft', 'vind', 'vindt', 'van', 'ermee', 'erop',
-]);
-const norm = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
-const tokens = (s) => new Set(norm(s).split(' ').filter(w => w && !STOP.has(w)));
-
-function matchQuestion(text) {
-  const key = norm(text);
-  if (!key) return null;
-  if (state.matchCache.has(key)) return state.matchCache.get(key);
-  let found = null;
-  for (const q of QUESTIONS) {
-    if (norm(q.en) === key || norm(q.nl) === key) { found = q.id; break; }
-  }
-  if (!found) {
-    const tk = tokens(text);
-    let best = null, bestScore = 0;
-    for (const q of QUESTIONS) {
-      for (const label of [q.en, q.nl]) {
-        const lt = tokens(label);
-        const inter = [...tk].filter(w => lt.has(w)).length;
-        const union = new Set([...tk, ...lt]).size || 1;
-        const score = inter / union;
-        if (score > bestScore) { bestScore = score; best = q.id; }
-      }
-    }
-    if (bestScore >= 0.6) found = best;
-  }
-  state.matchCache.set(key, found);
-  return found;
-}
-
-// Deterministic fallback for questions the matrix doesn't cover: consistent
-// per (bot word, question) so re-asking never contradicts an earlier answer.
-function fallbackAnswer(word, text) {
-  const s = `${word}|${norm(text)}`;
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
-  return (h & 1) === 0;
-}
 
 // ── the bot driver ─────────────────────────────────────────────────────────
 function schedule(key, delayMs, fn) {
@@ -412,7 +368,7 @@ function resetBotWords() {
 function botRow(bot) { return players().find(p => p.user_id === bot.userId); }
 
 function candidatesFor(bot, targetUid) {
-  if (!bot.candidates.has(targetUid)) bot.candidates.set(targetUid, WORDS);
+  if (!bot.candidates.has(targetUid)) bot.candidates.set(targetUid, wordsFor(room()?.category));
   return bot.candidates.get(targetUid);
 }
 
@@ -433,7 +389,7 @@ function tick() {
         });
       });
     });
-    if (!r.category) schedule('category', 400, () => update('mystery_rooms', r.id, { category: PRACTICE_CATEGORY }));
+    if (!r.category) schedule('category', 400, () => update('mystery_rooms', r.id, { category: DEFAULT_PRACTICE_CATEGORY }));
     return;
   }
 
@@ -444,8 +400,8 @@ function tick() {
       schedule(`word:${bot.userId}:${state.wordCycle}`, rand(1500, 4500), async () => {
         const fresh = botRow(bot);
         if (!fresh || fresh.word_submitted || room()?.status !== 'word_entry') return;
-        bot.word = pick(WORDS);
-        bot.commit = makeCommit(bot.word);
+        bot.word = pick(wordsFor(room()?.category));
+        bot.commit = makeCommit(activeMatrix(), bot.word);
         bot.candidates = new Map();
         bot.asked = new Set();
         bot.processed = new Set();
@@ -462,9 +418,10 @@ function tick() {
     const hint = hintState();
 
     // 1. Learn from every recorded answer (bots hear everyone's answers).
+    const matrix = activeMatrix();
     for (const q of qs) {
       if (isHint(q)) continue;
-      const matched = matchQuestion(q.question_text);
+      const matched = matchQuestion(matrix, q.question_text);
       for (const [uid, ans] of Object.entries(q.answers || {})) {
         for (const bot of state.bots) {
           if (uid === bot.userId) continue;
@@ -472,7 +429,7 @@ function tick() {
           if (bot.processed.has(key)) continue;
           bot.processed.add(key);
           if (matched && Math.random() >= FORGET_P) {
-            bot.candidates.set(uid, filterCandidates(candidatesFor(bot, uid), matched, ans === true));
+            bot.candidates.set(uid, filterCandidates(matrix, candidatesFor(bot, uid), matched, ans === true));
           }
         }
       }
@@ -490,10 +447,10 @@ function tick() {
           const fresh = botRow(bot);
           if (!q || q.status !== 'answering' || !fresh || fresh.is_eliminated || fresh.word_revealed) return;
           if ((q.answers || {})[bot.userId] !== undefined) return;
-          const matched = matchQuestion(q.question_text);
+          const matched = matchQuestion(activeMatrix(), q.question_text);
           const answer = matched && bot.word
-            ? answerFor(bot.word, matched, bot.commit || {})
-            : fallbackAnswer(bot.word || '?', q.question_text);
+            ? answerFor(activeMatrix(), bot.word, matched, bot.commit || {})
+            : fallbackAnswer();
           await rpc('submit_mystery_answer', { q_id: q.id, answerer_id: bot.userId, answer });
         });
       }
@@ -509,11 +466,12 @@ function tick() {
           const h = hintState();
           if (!h.inPhase || h.submitted(bot.userId) || !bot.word) return;
           const langKey = room()?.language === 'nl' ? 'nl' : 'en';
-          const truths = QUESTIONS.filter(q =>
-            !bot.hinted.has(q.id) && answerFor(bot.word, q.id, bot.commit || {}));
-          const q = truths.length ? pick(truths) : pick(QUESTIONS);
+          const bank = hintQuestions(activeMatrix());
+          const truths = bank.filter(q =>
+            !bot.hinted.has(q.id) && answerFor(activeMatrix(), bot.word, q.id, bot.commit || {}));
+          const q = truths.length ? pick(truths) : pick(bank);
           bot.hinted.add(q.id);
-          const yes = answerFor(bot.word, q.id, bot.commit || {});
+          const yes = answerFor(activeMatrix(), bot.word, q.id, bot.commit || {});
           await create('mystery_questions', {
             room_code: state.roomCode, round_number: h.phaseNumber,
             question_text: `[HINT] ${q[langKey]} ${yes ? '✅' : '❌'}`,
@@ -568,15 +526,16 @@ function tick() {
           const fresh = botRow(bot);
           if (!fresh || fresh.is_eliminated) return;
           const opponents = players().filter(p => p.user_id !== bot.userId && !p.is_eliminated && !p.word_revealed);
+          const m = activeMatrix();
           const focus = opponents
             .map(p => candidatesFor(bot, p.user_id))
             .filter(c => c.length > 1)
-            .sort((a, b) => a.length - b.length)[0] || WORDS;
+            .sort((a, b) => a.length - b.length)[0] || wordsFor(room()?.category);
           const alreadyAsked = new Set([...bot.asked]);
           for (const q of sortedQuestions()) {
-            if (!isHint(q)) { const m = matchQuestion(q.question_text); if (m) alreadyAsked.add(m); }
+            if (!isHint(q)) { const mm = matchQuestion(m, q.question_text); if (mm) alreadyAsked.add(mm); }
           }
-          const q = pickBotQuestion(focus, [...alreadyAsked], 'normal') || pickBotQuestion(focus, [...bot.asked], 'normal');
+          const q = pickBotQuestion(m, focus, [...alreadyAsked], 'normal') || pickBotQuestion(m, focus, [...bot.asked], 'normal');
           if (!q) return;
           bot.asked.add(q.id);
           const langKey = rr.language === 'nl' ? 'nl' : 'en';
@@ -631,7 +590,6 @@ export function destroy() {
   state.tables = {};
   state.secrets.clear();
   state.bots = [];
-  state.matchCache.clear();
   state.ggSent = new Set();
   state.roomCode = null;
   state.humanId = null;
@@ -661,7 +619,7 @@ export function createPracticeGame({ hostId, hostName, lang }) {
   void create('mystery_rooms', {
     room_code: state.roomCode, host_id: hostId, host_name: hostName || '',
     status: 'lobby', current_questioner_index: 0, round_number: 1, max_rounds: 10,
-    is_public: false, language: lang || 'en', category: PRACTICE_CATEGORY, question_deadline: null,
+    is_public: false, language: lang || 'en', category: DEFAULT_PRACTICE_CATEGORY, question_deadline: null,
   });
   if (hostName) {
     void create('mystery_players', {

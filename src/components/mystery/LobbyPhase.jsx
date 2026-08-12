@@ -12,6 +12,7 @@ import { useLang } from '@/lib/LanguageContext';
 import GameBackground from '@/components/GameBackground';
 import lobbyTitleImage from '../../../lobby-title.webp';
 import CategorySelector from './CategorySelector';
+import { PRACTICE_CATEGORIES } from '@/lib/practice/botKnowledge';
 import ChatPanel from './ChatPanel';
 import RoomTabBar from './RoomTabBar';
 import QuickEquip from './QuickEquip';
@@ -40,8 +41,8 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
   const [startCountdown, setStartCountdown] = useState(3);
   const profiles = usePeerProfiles(players);
   const isHost = room.host_id === me?.id;
-  // Practice-vs-bots rooms are pinned to the one category the bots can answer
-  // honestly about — hide the category picker instead of offering a dead one.
+  // Practice-vs-bots room: the category picker is limited to the categories
+  // the bots have an honesty matrix for (see botKnowledge.js).
   const isPractice = roomCode?.startsWith('BOT');
   const meta = categoryMeta(selectedCategory);
   const [rain, setRain] = useState({ emote: null, trigger: 0 });
@@ -250,6 +251,8 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
             selectedCategory={selectedCategory}
             onSelect={selectCategory}
             onClose={() => setShowCategorySelector(false)}
+            // Practice rooms: only categories the bots can answer honestly about.
+            allowedCategories={isPractice ? PRACTICE_CATEGORIES : undefined}
           />
         )}
       </AnimatePresence>
@@ -342,7 +345,7 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
 
         <div className="space-y-2">
           {/* Selected Category — host only, entire card is tappable */}
-          {isHost && !isPractice && (
+          {isHost && (
             <motion.button type="button" onClick={() => setShowCategorySelector(true)}
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
               className="glass-card w-full px-4 py-2.5 flex items-center justify-between gap-3 text-left transition-all duration-150 active:scale-[0.98]">
@@ -421,7 +424,7 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
             </motion.div>
           )}
 
-          {(!isHost || isPractice) && room.category && (() => {
+          {!isHost && room.category && (() => {
             const guestMeta = categoryMeta(room.category);
             return (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
