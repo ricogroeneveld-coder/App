@@ -40,6 +40,9 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
   const [startCountdown, setStartCountdown] = useState(3);
   const profiles = usePeerProfiles(players);
   const isHost = room.host_id === me?.id;
+  // Practice-vs-bots rooms are pinned to the one category the bots can answer
+  // honestly about — hide the category picker instead of offering a dead one.
+  const isPractice = roomCode?.startsWith('BOT');
   const meta = categoryMeta(selectedCategory);
   const [rain, setRain] = useState({ emote: null, trigger: 0 });
   const unreadChat = useUnreadChat(roomCode, me?.id, tab === 'chat',
@@ -339,7 +342,7 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
 
         <div className="space-y-2">
           {/* Selected Category — host only, entire card is tappable */}
-          {isHost && (
+          {isHost && !isPractice && (
             <motion.button type="button" onClick={() => setShowCategorySelector(true)}
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
               className="glass-card w-full px-4 py-2.5 flex items-center justify-between gap-3 text-left transition-all duration-150 active:scale-[0.98]">
@@ -418,7 +421,7 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
             </motion.div>
           )}
 
-          {!isHost && room.category && (() => {
+          {(!isHost || isPractice) && room.category && (() => {
             const guestMeta = categoryMeta(room.category);
             return (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
