@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MysteryQuestion, MysteryRoom, MysteryPlayer } from '@/api/db';
-import { supabase } from '@/lib/supabaseClient';
+import { MysteryQuestion, MysteryRoom, MysteryPlayer, gameRpc } from '@/api/db';
 import { serverNow } from '@/lib/serverTime';
 import { track } from '@/lib/analytics';
 import { notifyUser } from '@/lib/push';
@@ -320,7 +319,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
       if (serverNow() < fireAt) return;
       if (answerEnforcedRef.current === q.id) return;
       answerEnforcedRef.current = q.id;
-      Promise.resolve(supabase.rpc('resolve_stalled_question', { p_question_id: q.id }))
+      Promise.resolve(gameRpc('resolve_stalled_question', { p_question_id: q.id }))
         .then(({ error }) => { if (error) answerEnforcedRef.current = ''; })
         .catch(() => { answerEnforcedRef.current = ''; });
     }, 1000);
@@ -505,7 +504,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
       // Atomic server-side merge (migration 0006): the old client-side
       // read-modify-write lost one of two simultaneous answers. Falls back
       // to the legacy merge if the RPC hasn't been deployed.
-      const { error } = await supabase.rpc('submit_mystery_answer', {
+      const { error } = await gameRpc('submit_mystery_answer', {
         q_id: qId, answerer_id: me.id, answer,
       });
       if (error) {
@@ -567,7 +566,9 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
   };
 
   const leaveGame = async () => {
-    breakStreakOnLeave(); // ECON-9: forfeit the win streak on a live-match rage quit
+    // ECON-9: forfeit the win streak on a live-match rage quit — but not for
+    // a practice match, which never counts toward the streak either way.
+    if (!roomCode?.startsWith('BOT')) breakStreakOnLeave();
     try {
       if (myPlayer) {
         const remaining = players.filter(p => p.id !== myPlayer.id && !p.is_eliminated);

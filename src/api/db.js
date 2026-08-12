@@ -1,5 +1,10 @@
 import { supabase } from '@/lib/supabaseClient';
 import { serverNow } from '@/lib/serverTime';
+// Practice-vs-bots rooms (codes prefixed "BOT" — a prefix real room codes can
+// never generate, their alphabet excludes O) live entirely in an in-memory
+// store on this device. Everything below routes those rooms to it; real rooms
+// hit Supabase exactly as before.
+import * as practice from '@/lib/practice/localGame';
 
 const rpcMissing = (error) => error && (error.code === 'PGRST202' || error.code === '42883'
   || /does not exist|could not find the function/i.test(error.message || ''));
@@ -40,6 +45,14 @@ function withTimeout(thenable, table) {
   return Promise.race([Promise.resolve(thenable), timeout]).finally(() => clearTimeout(timer));
 }
 
+// Gameplay RPC dispatcher: local practice rooms resolve in-memory, everything
+// else goes to the real Postgres function. Same `{ data, error }` shape as
+// `supabase.rpc`, so call sites treat both identically.
+export async function gameRpc(name, params) {
+  if (practice.ownsRpc(name, params)) return practice.rpc(name, params);
+  return supabase.rpc(name, params);
+}
+
 function createEntity(table) {
   return {
     /**
@@ -49,6 +62,7 @@ function createEntity(table) {
      * @param {number} [limit]
      */
     async filter(query = {}, sort, limit) {
+      if (practice.ownsCode(query.room_code)) return practice.filter(table, query, sort, limit);
       let q = supabase.from(table).select('*');
       for (const [key, value] of Object.entries(query)) {
         q = q.eq(key, value);
@@ -63,6 +77,7 @@ function createEntity(table) {
     },
 
     async create(fields) {
+      if (practice.ownsCode(fields?.room_code)) return practice.create(table, fields);
       const { data, error } = await withTimeout(
         supabase.from(table).insert(fields).select().single(), table); // NET-6
       if (error) throw error;
@@ -70,6 +85,7 @@ function createEntity(table) {
     },
 
     async update(id, patch) {
+      if (practice.ownsId(id)) return practice.update(table, id, patch);
       const { data, error } = await withTimeout(
         supabase.from(table).update(patch).eq('id', id).select().single(), table); // NET-6
       if (error) throw error;
@@ -77,6 +93,7 @@ function createEntity(table) {
     },
 
     async delete(id) {
+      if (practice.ownsId(id)) return practice.remove(table, id);
       const { error } = await withTimeout(
         supabase.from(table).delete().eq('id', id), table); // NET-6
       if (error) throw error;
@@ -100,6 +117,7 @@ function createEntity(table) {
      *   match against the OLD row (REPLICA IDENTITY FULL makes that work).
      */
     subscribe(callback, onStatus, filter) {
+      if (practice.ownsSubscribeFilter(filter)) return practice.subscribe(table, callback, onStatus);
       const channelName = `${table}-${Math.random().toString(36).slice(2)}`;
       const channel = supabase
         .channel(channelName)
@@ -128,7 +146,7 @@ export const MysteryRoom = createEntity('mystery_rooms');
 // Returns { ok, reason }. Falls back to a best-effort direct write only if the
 // RPC isn't deployed yet (in which case status isn't revoked either).
 MysteryRoom.setStatus = async (roomCode, from, to, opts = {}) => {
-  const { data, error } = await supabase.rpc('mystery_set_status', {
+  const { data, error } = await gameRpc('mystery_set_status', {
     p_room: roomCode, p_from: from, p_to: to, p_questioner_id: opts.questionerId ?? null,
   });
   if (!error) return data || { ok: true };
@@ -166,6 +184,7 @@ export const MysterySecret = {
   // direct writes if the RPC isn't deployed yet (needs the mystery_secrets
   // insert policy present).
   async submit(roomCode, userId, word) {
+    if (practice.ownsCode(roomCode)) return practice.secretSubmit(roomCode, userId, word);
     const { data, error } = await supabase.rpc('submit_mystery_word', {
       p_room: roomCode, p_user: userId, p_word: word,
     });
@@ -184,6 +203,7 @@ export const MysterySecret = {
     if (pErr) throw pErr;
   },
   async set(roomCode, userId, word) {
+    if (practice.ownsCode(roomCode)) return practice.secretSubmit(roomCode, userId, word);
     const { error } = await supabase
       .from('mystery_secrets')
       .upsert(
@@ -193,6 +213,7 @@ export const MysterySecret = {
     if (error) throw error;
   },
   async clearRoom(roomCode) {
+    if (practice.ownsCode(roomCode)) return practice.secretClearRoom(roomCode);
     const { error } = await supabase.from('mystery_secrets').delete().eq('room_code', roomCode);
     if (error) throw error;
   },

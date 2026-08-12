@@ -408,6 +408,10 @@ const translations = {
     authNewPasswordSubtitle: 'Enter your new password below',
     authNewPassword: 'New Password',
     authResettingPassword: 'Resetting...',
+
+    // Practice vs bots (Create Game sheet entry)
+    practiceMode: 'Practice vs Bot',
+    practiceModeDesc: 'Solo & offline',
   },
   nl: {
     // Home
@@ -824,6 +828,10 @@ const translations = {
     authNewPasswordSubtitle: 'Voer hieronder je nieuwe wachtwoord in',
     authNewPassword: 'Nieuw wachtwoord',
     authResettingPassword: 'Herstellen...',
+
+    // Practice vs bots (Create Game sheet entry)
+    practiceMode: 'Oefenen tegen de bot',
+    practiceModeDesc: 'Solo & offline',
   }
 };
 

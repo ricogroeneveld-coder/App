@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import { Button } from '@/components/ui/button';
-import { MysteryPlayer, MysteryQuestion, MysteryGuess, MysteryRoom, MysterySecret } from '@/api/db';
+import { MysteryPlayer, MysteryQuestion, MysteryGuess, MysteryRoom, MysterySecret, gameRpc } from '@/api/db';
 import { supabase } from '@/lib/supabaseClient';
 import { leaveRoom } from '@/lib/roomLifecycle';
 import { track } from '@/lib/analytics';
@@ -169,7 +169,7 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
       // directly since 0007 (SEC-2) — so a client-side reset now hits
       // "permission denied". Fall back to the old path only if the RPC isn't
       // deployed (older projects where the column wasn't revoked).
-      const { data, error } = await supabase.rpc('play_again_mystery', { p_room: roomCode });
+      const { data, error } = await gameRpc('play_again_mystery', { p_room: roomCode });
       if (!error) {
         // 0012 returns { ok, reason }; only a finished room can be reset.
         if (data && data.ok === false) { setLoading(false); return; }
