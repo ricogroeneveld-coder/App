@@ -33,9 +33,15 @@ function SelectionCard({ emoji, label, selected, onClick }) {
   );
 }
 
-export default function CategorySelector({ selectedCategory, onSelect, onClose }) {
+// `allowedCategories` (optional): restrict the picker to a fixed list — used
+// by practice-vs-bots lobbies, where only categories with a bot fact matrix
+// are playable. When set, the premium packs section is hidden too.
+export default function CategorySelector({ selectedCategory, onSelect, onClose, allowedCategories }) {
   const { t } = useLang();
   const { toast } = useToast();
+  const freeCategories = allowedCategories
+    ? CATEGORIES.filter(c => allowedCategories.includes(c))
+    : CATEGORIES;
   const [view, setView] = useState('categories'); // 'categories' | 'packPreview' | 'packCategories'
   const [activePack, setActivePack] = useState(null);
   const [buying, setBuying] = useState(false);
@@ -113,12 +119,13 @@ export default function CategorySelector({ selectedCategory, onSelect, onClose }
 
               <p className="section-label mb-2 px-1">{t.selectCategory}</p>
               <div className="grid grid-cols-2 gap-2 mb-5">
-                {CATEGORIES.map(cat => (
+                {freeCategories.map(cat => (
                   <SelectionCard key={cat} emoji={CATEGORY_EMOJIS[cat] || '🎯'} label={cat}
                     selected={selectedCategory === cat} onClick={() => onSelect(cat)} />
                 ))}
               </div>
 
+              {!allowedCategories && (<>
               <p className="section-label mb-2 px-1">{t.moreCategories}</p>
               <div className="space-y-2">
                 {PACKS.map(pack => {
@@ -149,6 +156,7 @@ export default function CategorySelector({ selectedCategory, onSelect, onClose }
                   );
                 })}
               </div>
+              </>)}
             </motion.div>
           )}
 

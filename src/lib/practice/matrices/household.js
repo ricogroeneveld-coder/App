@@ -1,34 +1,12 @@
-// Practice-mode bot for the 'Household Objects' category (prototype).
-//
-// The bot is honest by construction: instead of "understanding" questions it
-// answers from a hand-authored fact matrix (word × question → yes/no/sometimes),
-// the same way 20Q-style toys work. Questions are the category's real question
-// bank, so practice teaches the exact vocabulary of a live game.
-//
-// 'sometimes' cells are genuinely ambiguous in real life (is a table found in
-// the kitchen?). The bot commits to one interpretation of its own word at game
-// start (so its answers never contradict each other), and when *reading* the
-// human's answers it never eliminates a 'sometimes' word — consistent with
-// either answer.
-import { WORD_LISTS, WORD_LISTS_NL } from '@/lib/wordLists';
+// Practice-bot fact matrix — Household Objects.
+// q(id, en, nl, yesList, someList, extra) — every word not listed is NO.
+// 'extra' rows are answer-only: they widen what free-text questions the bots
+// can answer HONESTLY, but bots never ask them (they stick to the real bank).
+const q = (id, en, nl, yes, some = [], extra = false) => ({ id, en, nl, yes, some, extra });
 
-export const PRACTICE_CATEGORY = 'Household Objects';
-
-// Canonical (EN) word list — display names localize by index, same convention
-// as WordEntryPhase.
-export const WORDS = WORD_LISTS[PRACTICE_CATEGORY];
-const WORDS_NL = WORD_LISTS_NL[PRACTICE_CATEGORY];
-
-export function displayWord(word, lang) {
-  if (lang !== 'nl') return word;
-  const i = WORDS.indexOf(word);
-  return i >= 0 ? (WORDS_NL[i] || word) : word;
-}
-
-// q(id, en, nl, yesList, someList) — every word not listed is a NO.
-const q = (id, en, nl, yes, some = []) => ({ id, en, nl, yes, some });
-
-export const QUESTIONS = [
+export default {
+  category: 'Household Objects',
+  questions: [
   q('kitchen', 'Is it found in the kitchen?', 'Vind je het in de keuken?',
     ['Refrigerator', 'Microwave', 'Oven', 'Knife', 'Mug', 'Kettle', 'Toaster', 'Coffee Machine'],
     ['Washing Machine', 'Table', 'Chair', 'Clock', 'Towel', 'Soap', 'Broom']),
@@ -181,95 +159,72 @@ export const QUESTIONS = [
   q('dangerous', 'Is it dangerous to children?', 'Is het gevaarlijk voor kinderen?',
     ['Knife'],
     ['Oven', 'Kettle', 'Toaster']),
-];
 
-// Dev-only typo guard: every word referenced by the matrix must exist in the
-// category's word list, or the bot silently answers "no" for it.
-if (import.meta.env.DEV) {
-  for (const question of QUESTIONS) {
-    for (const w of [...question.yes, ...question.some]) {
-      if (!WORDS.includes(w)) console.warn(`[householdBot] unknown word "${w}" in question "${question.id}"`);
-    }
-  }
-}
-
-export function questionById(id) {
-  return QUESTIONS.find(x => x.id === id);
-}
-
-function cellFor(word, question) {
-  if (question.yes.includes(word)) return 'yes';
-  if (question.some.includes(word)) return 'some';
-  return 'no';
-}
-
-// The bot's committed interpretation of its own word: every 'sometimes' cell
-// is resolved to a fixed yes/no at game start, so its answers stay
-// self-consistent no matter how often you probe the same fact.
-export function makeCommit(word) {
-  const commit = {};
-  for (const question of QUESTIONS) {
-    if (cellFor(word, question) === 'some') commit[question.id] = Math.random() < 0.5;
-  }
-  return commit;
-}
-
-// Honest answer about the bot's own word.
-export function answerFor(word, questionId, commit) {
-  const question = questionById(questionId);
-  const cell = cellFor(word, question);
-  if (cell === 'some') return !!commit[questionId];
-  return cell === 'yes';
-}
-
-// Bot learning: keep every word consistent with the human's answer. A
-// 'sometimes' word is consistent with either answer, so it survives.
-// If the answer would empty the set (the human answered subjectively or made
-// a mistake), the bot learns nothing rather than "knowing" the impossible.
-export function filterCandidates(candidates, questionId, humanSaidYes) {
-  const question = questionById(questionId);
-  const next = candidates.filter(w => {
-    const cell = cellFor(w, question);
-    return cell === 'some' || (cell === 'yes') === humanSaidYes;
-  });
-  return next.length > 0 ? next : candidates;
-}
-
-// Information gain: prefer the question that splits the candidate set closest
-// to 50/50 ('sometimes' counts half toward each side).
-function splitScore(question, candidates) {
-  let yesWeight = 0;
-  for (const w of candidates) {
-    const cell = cellFor(w, question);
-    if (cell === 'yes') yesWeight += 1;
-    else if (cell === 'some') yesWeight += 0.5;
-  }
-  return Math.abs(yesWeight - candidates.length / 2); // lower is better
-}
-
-export function pickBotQuestion(candidates, askedIds, difficulty) {
-  const open = QUESTIONS.filter(question => !askedIds.includes(question.id));
-  if (open.length === 0) return null;
-  if (difficulty === 'easy') return open[Math.floor(Math.random() * open.length)];
-  const ranked = [...open].sort((a, b) => splitScore(a, candidates) - splitScore(b, candidates));
-  const pool = difficulty === 'hard' ? ranked.slice(0, 2) : ranked.slice(0, 5);
-  return pool[Math.floor(Math.random() * pool.length)];
-}
-
-// Guess when the candidate set is small enough for the difficulty. Returns
-// the word to guess, or null to keep asking.
-export function maybeBotGuess(candidates, difficulty) {
-  const threshold = difficulty === 'easy' ? 1 : 2;
-  if (candidates.length === 0 || candidates.length > threshold) return null;
-  return candidates[Math.floor(Math.random() * candidates.length)];
-}
-
-// Easy bots occasionally "forget" to process an answer entirely.
-export function botForgets(difficulty) {
-  return difficulty === 'easy' && Math.random() < 0.35;
-}
-
-export const BOT_NAMES = ['Rico (BOT)', 'Koen (BOT)', 'Vietje (BOT)', 'Louis (BOT)', 'Jinnie (BOT)'];
-export function randomBotName() {
-  return BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
-}
+  // ── Answer-only extras: common free-text phrasings, honest by lookup ──────
+  q('x_alive', 'Is it alive?', 'Leeft het?', [], [], true),
+  q('x_animal', 'Is it an animal?', 'Is het een dier?', [], [], true),
+  q('x_person', 'Is it a person?', 'Is het een persoon?', [], [], true),
+  q('x_place', 'Is it a place?', 'Is het een plek?', [], ['Shower', 'Toilet'], true),
+  q('x_thing', 'Is it a thing?', 'Is het een ding?',
+    ['Chair', 'Table', 'Sofa', 'Bed', 'Wardrobe', 'Refrigerator', 'Microwave', 'Oven', 'Washing Machine',
+     'Television', 'Lamp', 'Mirror', 'Pillow', 'Toothbrush', 'Toilet', 'Vacuum Cleaner', 'Knife', 'Mug',
+     'Kettle', 'Toaster', 'Coffee Machine', 'Remote Control', 'Bookshelf', 'Desk', 'Clock', 'Towel',
+     'Soap', 'Shower', 'Phone Charger', 'Broom'], [], true),
+  q('x_eat', 'Can you eat it?', 'Kun je het eten?', [], [], true),
+  q('x_food', 'Is it food?', 'Is het eten?', [], [], true),
+  q('x_manmade', 'Is it man-made?', 'Is het door mensen gemaakt?',
+    ['Chair', 'Table', 'Sofa', 'Bed', 'Wardrobe', 'Refrigerator', 'Microwave', 'Oven', 'Washing Machine',
+     'Television', 'Lamp', 'Mirror', 'Pillow', 'Toothbrush', 'Toilet', 'Vacuum Cleaner', 'Knife', 'Mug',
+     'Kettle', 'Toaster', 'Coffee Machine', 'Remote Control', 'Bookshelf', 'Desk', 'Clock', 'Towel',
+     'Soap', 'Shower', 'Phone Charger', 'Broom'], [], true),
+  q('x_natural', 'Is it natural?', 'Is het natuurlijk?', [], [], true),
+  q('x_soft', 'Is it soft?', 'Is het zacht?',
+    ['Pillow', 'Towel'], ['Sofa', 'Bed'], true),
+  q('x_round', 'Is it round?', 'Is het rond?',
+    [], ['Clock', 'Mirror', 'Mug'], true),
+  q('x_expensive', 'Is it expensive?', 'Is het duur?',
+    ['Refrigerator', 'Washing Machine', 'Television', 'Sofa', 'Oven'],
+    ['Bed', 'Coffee Machine', 'Wardrobe', 'Vacuum Cleaner', 'Microwave', 'Desk', 'Bookshelf', 'Table', 'Shower'], true),
+  q('x_cheap', 'Is it cheap?', 'Is het goedkoop?',
+    ['Soap', 'Toothbrush', 'Mug', 'Towel', 'Broom'],
+    ['Knife', 'Pillow', 'Clock', 'Lamp', 'Phone Charger', 'Remote Control'], true),
+  q('x_common', 'Is it common?', 'Is het gewoon?',
+    ['Chair', 'Table', 'Sofa', 'Bed', 'Wardrobe', 'Refrigerator', 'Microwave', 'Oven', 'Washing Machine',
+     'Television', 'Lamp', 'Mirror', 'Pillow', 'Toothbrush', 'Toilet', 'Vacuum Cleaner', 'Knife', 'Mug',
+     'Kettle', 'Toaster', 'Coffee Machine', 'Remote Control', 'Bookshelf', 'Desk', 'Clock', 'Towel',
+     'Soap', 'Shower', 'Phone Charger', 'Broom'], [], true),
+  q('x_rare', 'Is it rare?', 'Is het zeldzaam?', [], [], true),
+  q('x_famous', 'Is it famous?', 'Is het beroemd?', [], [], true),
+  q('x_brand', 'Is it a brand?', 'Is het een merk?', [], [], true),
+  q('x_modern', 'Is it modern?', 'Is het modern?',
+    ['Television', 'Microwave', 'Coffee Machine', 'Phone Charger', 'Remote Control', 'Washing Machine', 'Vacuum Cleaner'],
+    ['Toaster', 'Kettle', 'Refrigerator', 'Lamp'], true),
+  q('x_kids', 'Is it something kids know about?', 'Kennen kinderen het?',
+    ['Chair', 'Table', 'Sofa', 'Bed', 'Wardrobe', 'Refrigerator', 'Microwave', 'Oven', 'Washing Machine',
+     'Television', 'Lamp', 'Mirror', 'Pillow', 'Toothbrush', 'Toilet', 'Vacuum Cleaner', 'Knife', 'Mug',
+     'Kettle', 'Toaster', 'Coffee Machine', 'Remote Control', 'Bookshelf', 'Desk', 'Clock', 'Towel',
+     'Soap', 'Shower', 'Phone Charger', 'Broom'], [], true),
+  q('x_everyday', 'Is it found in everyday life?', 'Kom je het in het dagelijks leven tegen?',
+    ['Chair', 'Table', 'Sofa', 'Bed', 'Wardrobe', 'Refrigerator', 'Microwave', 'Oven', 'Washing Machine',
+     'Television', 'Lamp', 'Mirror', 'Pillow', 'Toothbrush', 'Toilet', 'Vacuum Cleaner', 'Knife', 'Mug',
+     'Kettle', 'Toaster', 'Coffee Machine', 'Remote Control', 'Bookshelf', 'Desk', 'Clock', 'Towel',
+     'Soap', 'Shower', 'Phone Charger', 'Broom'], [], true),
+  q('x_many', 'Is it used by many people?', 'Wordt het door veel mensen gebruikt?',
+    ['Chair', 'Table', 'Sofa', 'Bed', 'Wardrobe', 'Refrigerator', 'Microwave', 'Oven', 'Washing Machine',
+     'Television', 'Lamp', 'Mirror', 'Pillow', 'Toothbrush', 'Toilet', 'Vacuum Cleaner', 'Knife', 'Mug',
+     'Kettle', 'Toaster', 'Coffee Machine', 'Remote Control', 'Bookshelf', 'Desk', 'Clock', 'Towel',
+     'Soap', 'Shower', 'Phone Charger', 'Broom'], [], true),
+  q('x_loud', 'Is it loud?', 'Is het luid?',
+    ['Vacuum Cleaner'], ['Washing Machine', 'Television', 'Kettle', 'Coffee Machine', 'Microwave'], true),
+  q('x_colourful', 'Is it colourful?', 'Is het kleurrijk?',
+    [], ['Towel', 'Pillow', 'Mug'], true),
+  q('x_moving', 'Does it have moving parts?', 'Heeft het bewegende delen?',
+    ['Washing Machine', 'Vacuum Cleaner', 'Clock', 'Toaster', 'Coffee Machine', 'Microwave'],
+    ['Oven', 'Refrigerator', 'Kettle', 'Remote Control', 'Lamp'], true),
+  q('x_wear', 'Can you wear it?', 'Kun je het dragen?', [], ['Towel'], true),
+  q('x_shoebox', 'Is it bigger than a shoebox?', 'Is het groter dan een schoenendoos?',
+    ['Chair', 'Table', 'Sofa', 'Bed', 'Wardrobe', 'Refrigerator', 'Microwave', 'Oven', 'Washing Machine',
+     'Television', 'Bookshelf', 'Desk', 'Vacuum Cleaner', 'Toilet', 'Shower', 'Broom'],
+    ['Lamp', 'Mirror', 'Coffee Machine', 'Pillow', 'Towel'], true),
+  ],
+};

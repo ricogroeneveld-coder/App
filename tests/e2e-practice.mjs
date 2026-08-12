@@ -74,7 +74,7 @@ async function main() {
   await page.waitForSelector('text=3 / 12 players', { timeout: 15000 });
   const lobbyText = await page.locator('body').innerText();
   if (!/Household/.test(lobbyText)) throw new Error('category not preset to Household');
-  if (/Change Category/.test(lobbyText)) throw new Error('category picker visible in a bot lobby');
+  if (!/Change Category/.test(lobbyText)) throw new Error('category picker missing in bot lobby');
   if (!/\(BOT\)/.test(lobbyText)) throw new Error('bot players not visible');
 
   console.log('3. Start (3-2-1 countdown) → word entry');
