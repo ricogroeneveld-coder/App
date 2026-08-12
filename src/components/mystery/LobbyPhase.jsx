@@ -67,6 +67,9 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
     return () => { supabase.removeChannel(channel); };
   }, [roomCode, me?.id]);
   const isAway = (p) => {
+    // Practice bots have no device, so they never appear in presence —
+    // they're always "here" by definition.
+    if (p.user_id?.startsWith('bot_')) return false;
     if (!presentIds || p.user_id === me?.id) return false;
     if (presentIds.has(p.user_id)) return false;
     const age = Date.now() - new Date(p.created_date).getTime();

@@ -409,27 +409,9 @@ const translations = {
     authNewPassword: 'New Password',
     authResettingPassword: 'Resetting...',
 
-    // Practice vs bot (prototype)
+    // Practice vs bots (Create Game sheet entry)
     practiceMode: 'Practice vs Bot',
     practiceModeDesc: 'Solo & offline',
-    practiceSubtitle: 'A 1-on-1 against a bot that answers honestly about its secret word. Take turns asking questions — guess its word before it guesses yours!',
-    practiceNoRewards: 'Practice games earn no Picks or XP',
-    practicePickWord: 'Pick your secret word',
-    practiceStart: 'Start',
-    practiceExit: 'Back to Home',
-    practiceAgain: 'Play again',
-    practiceLose: 'The bot guessed your word!',
-    practiceBotWordWas: (word) => `The bot's word was “${word}”`,
-    practiceNarrowed: (n) => `It had narrowed your word down to ${n} ${n === 1 ? 'option' : 'options'}.`,
-    practiceBotAsks: (name) => `${name} asks:`,
-    practiceBotThinking: (name) => `${name} is thinking…`,
-    practiceBotGuessIntro: (name) => `${name} makes a guess!`,
-    practiceAnswerHonestly: 'Answer honestly about your word',
-    practiceMakeGuess: "Guess the bot's word",
-    practiceSearchQuestions: 'Search questions…',
-    practiceGuessLine: (word) => `guesses “${word}” —`,
-    practiceGuessRight: 'correct!',
-    practiceGuessWrongShort: 'wrong!',
   },
   nl: {
     // Home
@@ -847,27 +829,9 @@ const translations = {
     authNewPassword: 'Nieuw wachtwoord',
     authResettingPassword: 'Herstellen...',
 
-    // Practice vs bot (prototype)
+    // Practice vs bots (Create Game sheet entry)
     practiceMode: 'Oefenen tegen de bot',
     practiceModeDesc: 'Solo & offline',
-    practiceSubtitle: 'Een 1-tegen-1 tegen een bot die eerlijk antwoordt over zijn geheime woord. Stel om de beurt vragen — raad zijn woord voordat hij het jouwe raadt!',
-    practiceNoRewards: 'Oefenspellen leveren geen Picks of XP op',
-    practicePickWord: 'Kies je geheime woord',
-    practiceStart: 'Start',
-    practiceExit: 'Terug naar Home',
-    practiceAgain: 'Opnieuw spelen',
-    practiceLose: 'De bot heeft jouw woord geraden!',
-    practiceBotWordWas: (word) => `Het woord van de bot was “${word}”`,
-    practiceNarrowed: (n) => `Hij had jouw woord teruggebracht tot ${n} ${n === 1 ? 'optie' : 'opties'}.`,
-    practiceBotAsks: (name) => `${name} vraagt:`,
-    practiceBotThinking: (name) => `${name} denkt na…`,
-    practiceBotGuessIntro: (name) => `${name} doet een gok!`,
-    practiceAnswerHonestly: 'Antwoord eerlijk over jouw woord',
-    practiceMakeGuess: 'Raad het woord van de bot',
-    practiceSearchQuestions: 'Zoek vragen…',
-    practiceGuessLine: (word) => `gokt “${word}” —`,
-    practiceGuessRight: 'goed!',
-    practiceGuessWrongShort: 'fout!',
   }
 };
 

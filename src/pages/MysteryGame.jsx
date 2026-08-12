@@ -245,6 +245,7 @@ export default function MysteryGame() {
   // load syncs it up.
   useEffect(() => {
     if (!room || room.status !== 'playing') return;
+    if (room.room_code?.startsWith('BOT')) return; // practice never touches the streak
     const onLeave = () => breakStreakOnLeave();
     window.addEventListener('beforeunload', onLeave);
     return () => window.removeEventListener('beforeunload', onLeave);

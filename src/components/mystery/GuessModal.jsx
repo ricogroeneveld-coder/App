@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Dialog } from '@/components/ui/dialog';
-import { supabase } from '@/lib/supabaseClient';
+import { gameRpc } from '@/api/db';
 import { track } from '@/lib/analytics';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -39,7 +39,7 @@ export default function GuessModal({ target, players, guesses, me, myPlayer, roo
       // simultaneous guesses serialize on a row lock so they can't
       // double-award or miss the end (GAME-6). The RPC returns the real word
       // only when the guess is right (public by then).
-      const { data, error } = await supabase.rpc('submit_mystery_guess', {
+      const { data, error } = await gameRpc('submit_mystery_guess', {
         p_room: roomCode,
         p_guesser_id: me.id,
         p_guesser_name: myPlayer?.display_name,

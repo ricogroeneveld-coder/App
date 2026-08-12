@@ -331,6 +331,9 @@ export function challengeState() {
 
 export async function grantMatchRewards({ room, players, guesses, me }) {
   if (!room || !me?.id) return null;
+  // Practice-vs-bots rooms (local "BOT" codes) pay nothing — bots would make
+  // every reward guard trivially farmable, and stats shouldn't count them.
+  if (room.room_code?.startsWith('BOT')) return null;
   const roundKey = `${room.id}:${guesses[guesses.length - 1]?.id || 'r0'}`;
   // ECON-7: serialize concurrent calls for the same round so a double-invoke
   // can't both pass the persisted idempotency check and double-pay.
