@@ -1,0 +1,30 @@
+# Plays a full practice-vs-bots match through the real game screens in
+# headless Chromium (tests/e2e-practice.mjs). Practice rooms run against the
+# in-memory backend, so no Supabase project or secrets are needed — the dummy
+# env vars below only satisfy the client's boot check.
+name: E2E · Practice match
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Build (dummy Supabase env — practice mode never touches it)
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://dummy.supabase.co
+          VITE_SUPABASE_ANON_KEY: dummykey
+      - run: npm run test:e2e

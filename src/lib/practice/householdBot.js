@@ -269,7 +269,7 @@ export function botForgets(difficulty) {
   return difficulty === 'easy' && Math.random() < 0.35;
 }
 
-export const BOT_NAMES = ['Botje 3000', 'Robo Rita', 'Gizmo'];
+export const BOT_NAMES = ['Rico (BOT)', 'Koen (BOT)', 'Vietje (BOT)', 'Louis (BOT)', 'Jinnie (BOT)'];
 export function randomBotName() {
   return BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
 }

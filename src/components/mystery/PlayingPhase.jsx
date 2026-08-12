@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MysteryQuestion, MysteryRoom, MysteryPlayer, gameRpc } from '@/api/db';
+import { MysteryQuestion, MysteryRoom, MysteryPlayer, gameRpc, rpcMissing } from '@/api/db';
 import { serverNow } from '@/lib/serverTime';
 import { track } from '@/lib/analytics';
 import { notifyUser } from '@/lib/push';
@@ -269,23 +269,36 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
       // auto-question generated in the asker's language is unreadable to half
       // the players, and it's stored as plain text so it never re-translates.
       const autoQ = getRandomQuestion(fr.category, prevTexts, fr.language || lang);
-      await MysteryQuestion.create({
-        room_code: roomCode,
-        round_number: fr.round_number,
-        question_text: autoQ,
-        asker_id: asker.user_id,
-        asker_name: asker.display_name,
-        is_ai: true,
-        answers: {},
-        status: 'answering'
+      // Atomic post + turn-advance under a server row lock (migration 0017):
+      // two enforcers passing the fresh-state check in the same window can no
+      // longer both insert — the second gets 'stale'/'not_your_turn' back.
+      const { data, error } = await gameRpc('post_mystery_question', {
+        p_room: roomCode, p_asker: asker.user_id, p_text: autoQ,
+        p_is_ai: true, p_known_count: (freshQs || []).length,
       });
-      const nextId = nextAskerId(asker.user_id, freshAskers);
-      await MysteryRoom.update(fr.id, {
-        round_number: fr.round_number + 1,
-        current_questioner_id: nextId,
-        current_questioner_index: (fr.current_questioner_index + 1) % Math.max(freshAskers.length, 1),
-        question_deadline: nextDeadline(),
-      });
+      if (error) {
+        if (!rpcMissing(error)) throw error;
+        // Pre-0017 fallback: the original two-step client write.
+        await MysteryQuestion.create({
+          room_code: roomCode,
+          round_number: fr.round_number,
+          question_text: autoQ,
+          asker_id: asker.user_id,
+          asker_name: asker.display_name,
+          is_ai: true,
+          answers: {},
+          status: 'answering'
+        });
+        const nextId = nextAskerId(asker.user_id, freshAskers);
+        await MysteryRoom.update(fr.id, {
+          round_number: fr.round_number + 1,
+          current_questioner_id: nextId,
+          current_questioner_index: (fr.current_questioner_index + 1) % Math.max(freshAskers.length, 1),
+          question_deadline: nextDeadline(),
+        });
+      }
+      // ok:false (someone beat us to it) still counts as done — stand down.
+      void data;
       done = true;
     } catch { /* fall through: release the latch so a later tick can retry */ }
     finally {
@@ -436,42 +449,56 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
     if (postingRef.current) return;
     postingRef.current = true;
     try {
-      // Fresh-state re-check (GAME-4): a device waking after the deadline can
-      // fire a stale-props auto-ask even though an enforcer already advanced the
-      // turn. Bail if it's no longer my turn or a newer question already landed,
-      // so we never post a duplicate question or double-advance.
-      const [freshRooms, freshQs] = await Promise.all([
-        MysteryRoom.filter({ room_code: roomCode }),
-        MysteryQuestion.filter({ room_code: roomCode }),
-      ]);
-      const fr = freshRooms?.[0];
-      if (!fr || fr.status !== 'playing') return;
-      const currentId = fr.current_questioner_id
-        || askingPlayers[fr.current_questioner_index % Math.max(askingPlayers.length, 1)]?.user_id;
-      if (currentId !== me.id) return;
-      if ((freshQs?.length || 0) > questions.length) return;
-      await MysteryQuestion.create({
-        room_code: roomCode,
-        round_number: fr.round_number,
-        question_text: text.trim().slice(0, MAX_QUESTION_LENGTH),
-        asker_id: me.id,
-        asker_name: myPlayer?.display_name,
-        is_ai: isAI || false,
-        answers: {},
-        status: 'answering'
+      // Atomic post + turn-advance under a server row lock (migration 0017):
+      // the RPC re-checks turn ownership, the pending question, and the
+      // question count (p_known_count) so a device waking after the deadline
+      // can't double-post or double-advance against a racing enforcer (GAME-4).
+      const { data, error } = await gameRpc('post_mystery_question', {
+        p_room: roomCode, p_asker: me.id,
+        p_text: text.trim().slice(0, MAX_QUESTION_LENGTH),
+        p_is_ai: isAI || false, p_known_count: questions.length,
       });
+      if (error) {
+        if (!rpcMissing(error)) throw error;
+        // Pre-0017 fallback: fresh-state re-check + the two-step client write.
+        const [freshRooms, freshQs] = await Promise.all([
+          MysteryRoom.filter({ room_code: roomCode }),
+          MysteryQuestion.filter({ room_code: roomCode }),
+        ]);
+        const fr = freshRooms?.[0];
+        if (!fr || fr.status !== 'playing') return;
+        const currentId = fr.current_questioner_id
+          || askingPlayers[fr.current_questioner_index % Math.max(askingPlayers.length, 1)]?.user_id;
+        if (currentId !== me.id) return;
+        if ((freshQs?.length || 0) > questions.length) return;
+        await MysteryQuestion.create({
+          room_code: roomCode,
+          round_number: fr.round_number,
+          question_text: text.trim().slice(0, MAX_QUESTION_LENGTH),
+          asker_id: me.id,
+          asker_name: myPlayer?.display_name,
+          is_ai: isAI || false,
+          answers: {},
+          status: 'answering'
+        });
+        const nextId = nextAskerId(me.id, askingPlayers);
+        await MysteryRoom.update(fr.id, {
+          round_number: fr.round_number + 1,
+          // Advance by identity so eliminations/joins can't skip or repeat a turn.
+          current_questioner_id: nextId,
+          current_questioner_index: (fr.current_questioner_index + 1) % Math.max(askingPlayers.length, 1),
+          // Next asker's shared deadline — see the timer/enforcement effects.
+          question_deadline: nextDeadline()
+        });
+      } else if (data && data.ok === false) {
+        // Turn already moved on / a newer question landed — same silent
+        // stand-down as the old fresh-state bail.
+        return;
+      }
       setQuestionText('');
-      const nextId = nextAskerId(me.id, askingPlayers);
-      await MysteryRoom.update(fr.id, {
-        round_number: fr.round_number + 1,
-        // Advance by identity so eliminations/joins can't skip or repeat a turn.
-        current_questioner_id: nextId,
-        current_questioner_index: (fr.current_questioner_index + 1) % Math.max(askingPlayers.length, 1),
-        // Next asker's shared deadline — see the timer/enforcement effects.
-        question_deadline: nextDeadline()
-      });
       // Nudge the next asker back into the app if they've stepped away (no-op
       // until APNs is configured, and never for ourselves).
+      const nextId = nextAskerId(me.id, askingPlayers);
       if (nextId && nextId !== me.id) notifyUser(nextId, 'turn');
       track('question_asked', { auto: !!isAI });
     } catch(e) {

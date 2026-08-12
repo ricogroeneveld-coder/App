@@ -211,6 +211,40 @@ export async function rpc(name, params = {}) {
     return ok({ ok: true });
   }
 
+  if (name === 'post_mystery_question') {
+    // Mirror of migration 0017: atomic post + turn advance. Single-threaded
+    // here, but the checks keep parity with the server (and the bots use the
+    // same path as the UI).
+    if (!r || r.status !== 'playing') return ok({ ok: false, reason: 'not_playing' });
+    const askerRow = players().find(p => p.user_id === params.p_asker && !p.is_eliminated);
+    if (!askerRow) return ok({ ok: false, reason: 'not_member' });
+    if (r.current_questioner_id && r.current_questioner_id !== params.p_asker) {
+      return ok({ ok: false, reason: 'not_your_turn' });
+    }
+    const qCount = rows('mystery_questions').length;
+    if (params.p_known_count !== null && params.p_known_count !== undefined && qCount !== params.p_known_count) {
+      return ok({ ok: false, reason: 'stale' });
+    }
+    const latest = latestQuestion();
+    if (latest && !isHint(latest) && questionPending(latest)) {
+      return ok({ ok: false, reason: 'question_pending' });
+    }
+    const text = (params.p_text || '').trim().slice(0, 200);
+    if (!text) return ok({ ok: false, reason: 'empty' });
+    await create('mystery_questions', {
+      room_code: r.room_code, round_number: r.round_number, question_text: text,
+      asker_id: params.p_asker, asker_name: askerRow.display_name,
+      is_ai: !!params.p_is_ai, answers: {}, status: 'answering',
+    });
+    await update('mystery_rooms', r.id, {
+      round_number: r.round_number + 1,
+      current_questioner_id: nextAskerAfter(params.p_asker),
+      current_questioner_index: (r.current_questioner_index + 1) % Math.max(askingPlayers().length, 1),
+      question_deadline: new Date(serverNow() + QUESTION_TIMER_MS).toISOString(),
+    });
+    return ok({ ok: true });
+  }
+
   if (name === 'submit_mystery_answer') {
     const q = rows('mystery_questions').find(x => x.id === params.q_id);
     if (!q) return ok({ ok: false, reason: 'no_question' });
@@ -546,15 +580,8 @@ function tick() {
           if (!q) return;
           bot.asked.add(q.id);
           const langKey = rr.language === 'nl' ? 'nl' : 'en';
-          await create('mystery_questions', {
-            room_code: state.roomCode, round_number: rr.round_number, question_text: q[langKey],
-            asker_id: bot.userId, asker_name: bot.name, is_ai: false, answers: {}, status: 'answering',
-          });
-          await update('mystery_rooms', rr.id, {
-            round_number: rr.round_number + 1,
-            current_questioner_id: nextAskerAfter(bot.userId),
-            current_questioner_index: (rr.current_questioner_index + 1) % Math.max(askingPlayers().length, 1),
-            question_deadline: new Date(serverNow() + QUESTION_TIMER_MS).toISOString(),
+          await rpc('post_mystery_question', {
+            p_room: state.roomCode, p_asker: bot.userId, p_text: q[langKey], p_is_ai: false,
           });
         });
       }
