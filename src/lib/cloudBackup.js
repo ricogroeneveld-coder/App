@@ -1,4 +1,5 @@
-// iCloud reinstall recovery (native iOS only). The guest identity lives in
+// iCloud reinstall recovery (native iOS only; Android gets the same safety
+// net for free from Google's Auto Backup, which includes WebView localStorage). The guest identity lives in
 // localStorage, which dies with an app uninstall — this module mirrors it
 // (plus the anonymous Supabase session tokens) into iCloud's key-value
 // store via the tiny ICloudKV native plugin. A fresh install finds the
@@ -9,7 +10,7 @@
 // player's devices, so a new iPhone picks the profile up automatically.
 import { registerPlugin } from '@capacitor/core';
 import { supabase } from './supabaseClient';
-import { isNativeApp } from './platform';
+import { isIOS } from './platform';
 
 const ICloudKV = registerPlugin('ICloudKV');
 const BACKUP_KEY = 'wmp_identity_backup_v1';
@@ -19,7 +20,7 @@ const BACKUP_KEY = 'wmp_identity_backup_v1';
 // ICloudKV plugin handle (Capacitor allows one registerPlugin per name).
 // Web and plugin failures simply report false.
 export async function isTestFlightBuild() {
-  if (!isNativeApp()) return false;
+  if (!isIOS()) return false;
   try {
     const { value } = await ICloudKV.isTestFlight();
     return value === true;
@@ -60,7 +61,7 @@ async function tryRestore({ allowOverwrite = false } = {}) {
 // getGuestIdentity() mints a fresh id on first read, which would orphan the
 // backup for good.
 export async function restoreIdentityFromCloud() {
-  if (!isNativeApp()) return;
+  if (!isIOS()) return;
   try {
     if (localStorage.getItem(KEY_ID)) return; // existing install — nothing to do
     await tryRestore();
@@ -73,7 +74,7 @@ export async function restoreIdentityFromCloud() {
 // the store's arrival plus a few timed re-checks; on success, reload — the
 // app boots straight into the restored profile.
 export function watchForLateBackup() {
-  if (!isNativeApp() || !isPristine()) return;
+  if (!isIOS() || !isPristine()) return;
   let done = false;
   const attempt = async () => {
     if (done || !isPristine()) return;
@@ -89,7 +90,7 @@ export function watchForLateBackup() {
 }
 
 export async function backupIdentityNow() {
-  if (!isNativeApp()) return;
+  if (!isIOS()) return;
   try {
     const guestId = localStorage.getItem(KEY_ID);
     if (!guestId) return;
@@ -111,14 +112,14 @@ export async function backupIdentityNow() {
 // "Delete my profile" must also forget the backup, or a reinstall would
 // resurrect what the player explicitly deleted.
 export async function clearCloudBackup() {
-  if (!isNativeApp()) return;
+  if (!isIOS()) return;
   try { await ICloudKV.set({ key: BACKUP_KEY, value: '' }); } catch { /* ignore */ }
 }
 
 // Keep the backup current: refresh tokens ROTATE, and only the newest one
 // survives — every auth event rewrites the backup with the live pair.
 export function startCloudBackup() {
-  if (!isNativeApp()) return;
+  if (!isIOS()) return;
   supabase.auth.onAuthStateChange((event) => {
     if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
       backupIdentityNow();
@@ -133,7 +134,10 @@ export function startCloudBackup() {
 // iCloud is disabled (or whose backup silently never wrote) had no way to
 // know a reinstall would wipe their progress until it actually happened.
 export async function backupStatus() {
-  if (!isNativeApp()) return 'web'; // backup only applies to the native build
+  // 'web' means "not applicable, hide the row". Android is included: there is
+  // no iCloud there, and Google's Auto Backup already restores the WebView's
+  // localStorage on reinstall without any UI or action from the player.
+  if (!isIOS()) return 'web';
   try {
     const { value } = await ICloudKV.get({ key: BACKUP_KEY });
     return value ? 'ok' : 'none';
@@ -147,7 +151,7 @@ export async function backupStatus() {
 // so a broken toggle, entitlement, or write is visible instead of guessed.
 export async function cloudBackupDiagnostics() {
   const out = [];
-  out.push(`native: ${isNativeApp() ? 'yes' : 'no (web)'}`);
+  out.push(`ios native: ${isIOS() ? 'yes' : 'no'}`);
   try {
     const { data } = await supabase.auth.getSession();
     if (data?.session) {

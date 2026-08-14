@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The single app background, identical to capacitor.config.json and the
+         iOS launch storyboard, so every platform boots on the same colour. -->
+    <color name="appBackground">#07040F</color>
+</resources>

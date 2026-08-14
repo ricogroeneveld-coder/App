@@ -12,7 +12,7 @@ import { Dialog } from '@/components/ui/dialog';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import { loadProfile, getProfile, subscribeProfile, ensureDailyLogin } from '@/lib/playerProfile';
 import { ALL_COSMETICS, cosmeticById } from '@/lib/cosmetics';
-import { isNativeApp } from '@/lib/platform';
+import { isIOS } from '@/lib/platform';
 import { Keyboard, KeyboardResize } from '@capacitor/keyboard';
 import { track } from '@/lib/analytics';
 import { TERMS_URL, PRIVACY_URL } from '@/lib/links';
@@ -78,7 +78,7 @@ export default function Home() {
   // While the name gate is showing, let the keyboard overlay instead —
   // the input sits in the top half, so nothing important is covered.
   useEffect(() => {
-    if (!isNativeApp() || nameSet) return;
+    if (!isIOS() || nameSet) return;
     Keyboard.setResizeMode({ mode: KeyboardResize.None }).catch(() => {});
     return () => { Keyboard.setResizeMode({ mode: KeyboardResize.Native }).catch(() => {}); };
   }, [nameSet]);

@@ -7,5 +7,11 @@
     "contentInset": "never",
     "backgroundColor": "#07040f",
     "preferredContentMode": "mobile"
+  },
+  "android": {
+    "backgroundColor": "#07040f",
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false,
+    "captureInput": true
   }
 }
