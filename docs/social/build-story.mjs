@@ -1,6 +1,26 @@
-const fs = require('fs');
+// Renders the 1080x1920 "how it works" Instagram story for What's My Pick!
+//
+//   node docs/social/build-story.mjs en /tmp/story-en.html
+//   node docs/social/build-story.mjs nl /tmp/story-nl.html
+//
+// The logo is inlined as a data URI, so the generated page is self-contained
+// and can be opened straight from disk. Screenshot it with:
+//   chromium --headless --window-size=1080,1920 --force-device-scale-factor=1 \
+//            --hide-scrollbars --screenshot=story.png file:///tmp/story-en.html
+//
+// Step copy mirrors the in-app How to Play sheet (`howToPlaySteps` in
+// src/lib/LanguageContext.jsx) — keep the two in sync when either changes.
+// Note the example deliberately says "Pets", not "Huisdieren": category names
+// are NOT translated in the app, so a Dutch player really does see the English
+// one. Only the secret words themselves are localised.
 
-const LOGO = 'data:image/webp;base64,' + fs.readFileSync('/home/user/App/logo.webp').toString('base64');
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const LOGO_PATH = path.join(HERE, '..', '..', 'logo.webp');
+const LOGO = 'data:image/webp;base64,' + fs.readFileSync(LOGO_PATH).toString('base64');
 
 const STARS = [
   [12,12,1.5,.8],[28,6,1,.5],[65,5,1.5,.6],[80,14,1,.5],[92,8,1.5,.7],
@@ -9,16 +29,44 @@ const STARS = [
   [48,22,1,.4],[8,44,1.2,.35],[72,36,1,.45],[36,60,1.2,.3],[60,66,1,.35],
 ].map(([x,y,r,a]) => `radial-gradient(${r}px ${r}px at ${x}% ${y}%, rgba(255,255,255,${a}), transparent)`).join(', ');
 
-const STEPS = [
-  { n: '1', emoji: '👥', title: 'Open a room',            body: 'Share the code with friends — or join a public lobby.' },
-  { n: '2', emoji: '🤫', title: 'Pick a secret word',     body: 'One category, everyone picks their own word. Keep it to yourself.' },
-  { n: '3', emoji: '❓', title: 'Ask yes / no questions', body: 'Take turns. Everyone answers honestly about their own word.' },
-  { n: '4', emoji: '📝', title: 'Collect the clues',      body: 'Every answer lands in your notebook automatically.' },
-  { n: '5', emoji: '🏆', title: 'Guess it first',         body: 'Crack someone’s word and score a point. Most points wins.' },
-];
+const COPY = {
+  en: {
+    lang: 'en',
+    tagline: 'Everyone hides a <b>secret word</b>.<br>First to guess it wins.',
+    ruleLabel: 'How it works',
+    steps: [
+      { emoji: '👥', title: 'Open a room',            body: 'Share the code with friends — or join a public lobby.' },
+      { emoji: '🤫', title: 'Pick a secret word',     body: 'One category, everyone picks their own word. Keep it to yourself.' },
+      { emoji: '❓', title: 'Ask yes / no questions', body: 'Take turns. Everyone answers honestly about their own word.' },
+      { emoji: '📝', title: 'Collect the clues',      body: 'Every answer lands in your notebook automatically.' },
+      { emoji: '🏆', title: 'Guess it first',         body: 'Crack someone’s word and score a point. Most points wins.' },
+    ],
+    exampleTag: 'Like<br>this',
+    example: 'Category <b>Pets</b> · “Does it have fur?” <u>Yes</u> · “Is it bigger than a cat?” <s>No</s> → <b>“Is it a hamster?”</b> 🏆',
+    chips: ['2–12 players', 'Free to play', 'No account'],
+    cta: '🔗 Link in bio · play free',
+  },
+  nl: {
+    lang: 'nl',
+    tagline: 'Iedereen kiest een <b>geheim woord</b>.<br>Wie het eerst raadt, wint.',
+    ruleLabel: 'Zo werkt het',
+    steps: [
+      { emoji: '👥', title: 'Maak een lobby',        body: 'Deel de code met je vrienden — of doe mee in een publiek spel.' },
+      { emoji: '🤫', title: 'Kies een geheim woord', body: 'Eén categorie, iedereen kiest zijn eigen woord. Hou het geheim.' },
+      { emoji: '❓', title: 'Stel ja/nee-vragen',    body: 'Om de beurt. Iedereen antwoordt eerlijk over zijn eigen woord.' },
+      { emoji: '📝', title: 'Verzamel aanwijzingen', body: 'Elk antwoord komt automatisch in je notitieboekje.' },
+      { emoji: '🏆', title: 'Raad als eerste',       body: 'Kraak iemands woord en scoor een punt. Meeste punten wint.' },
+    ],
+    exampleTag: 'Bijv.',
+    example: 'Categorie <b>Pets</b> · “Heeft het vacht?” <u>Ja</u> · “Is het groter dan een kat?” <s>Nee</s> → <b>“Is het een hamster?”</b> 🏆',
+    chips: ['2–12 spelers', 'Gratis spelen', 'Geen account'],
+    cta: '🔗 Link in bio · speel gratis',
+  },
+};
 
-const html = `<!doctype html>
-<html lang="en">
+function render(c) {
+  return `<!doctype html>
+<html lang="${c.lang}">
 <head>
 <meta charset="utf-8">
 <title>What's My Pick — Story</title>
@@ -33,7 +81,7 @@ const html = `<!doctype html>
     position:relative;
   }
   .layer { position:absolute; inset:0; }
-  .stars { background-image:${JSON.stringify(STARS).slice(1,-1).replace(/\\"/g,'"')}; background-size:100% 100%; opacity:.75; }
+  .stars { background-image:${STARS}; background-size:100% 100%; opacity:.75; }
 
   .frame {
     position:absolute; left:0; right:0;
@@ -51,15 +99,10 @@ const html = `<!doctype html>
   }
   .tagline b { color:#ffc53d; font-weight:700; }
 
-  .rule {
-    margin:26px 0 22px;
-    display:flex; align-items:center; gap:20px;
-  }
+  .rule { margin:26px 0 22px; display:flex; align-items:center; gap:20px; }
   .rule i { display:block; width:120px; height:2px; background:linear-gradient(90deg, transparent, rgba(178,140,255,.65)); }
   .rule i:last-child { background:linear-gradient(90deg, rgba(178,140,255,.65), transparent); }
-  .rule span {
-    font-size:26px; font-weight:700; letter-spacing:6px; color:#b28cff; text-transform:uppercase;
-  }
+  .rule span { font-size:26px; font-weight:700; letter-spacing:6px; color:#b28cff; text-transform:uppercase; }
 
   .steps { width:100%; display:flex; flex-direction:column; gap:16px; margin-bottom:18px; }
 
@@ -98,7 +141,7 @@ const html = `<!doctype html>
   .example .tag {
     flex:0 0 auto;
     font-size:21px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase;
-    color:#ffc53d; writing-mode:horizontal-tb;
+    color:#ffc53d;
   }
   .example .qa { flex:1 1 auto; font-size:26px; line-height:1.42; color:#e6dcff; font-weight:400; }
   .example .qa b { color:#fff; font-weight:700; }
@@ -113,9 +156,7 @@ const html = `<!doctype html>
     background:rgba(178,140,255,.14);
     border:1.5px solid rgba(178,140,255,.34);
   }
-  .cta {
-    font-size:32px; font-weight:700; color:#ffc53d; letter-spacing:.3px;
-  }
+  .cta { font-size:32px; font-weight:700; color:#ffc53d; letter-spacing:.3px; }
 </style>
 </head>
 <body>
@@ -129,14 +170,14 @@ const html = `<!doctype html>
   <div class="frame">
     <img class="logo" src="${LOGO}" alt="What's My Pick!">
 
-    <p class="tagline">Everyone hides a <b>secret word</b>.<br>First to guess it wins.</p>
+    <p class="tagline">${c.tagline}</p>
 
-    <div class="rule"><i></i><span>How it works</span><i></i></div>
+    <div class="rule"><i></i><span>${c.ruleLabel}</span><i></i></div>
 
     <div class="steps">
-      ${STEPS.map(s => `
+      ${c.steps.map((s, i) => `
       <div class="step">
-        <div class="num">${s.n}</div>
+        <div class="num">${i + 1}</div>
         <div class="txt">
           <h3><em>${s.emoji}</em>${s.title}</h3>
           <p>${s.body}</p>
@@ -145,24 +186,24 @@ const html = `<!doctype html>
     </div>
 
     <div class="example">
-      <div class="tag">Like<br>this</div>
-      <div class="qa">
-        Category <b>Pets</b> · “Does it have fur?” <u>Yes</u> · “Is it bigger than a cat?” <s>No</s> →
-        <b>“Is it a hamster?”</b> 🏆
-      </div>
+      <div class="tag">${c.exampleTag}</div>
+      <div class="qa">${c.example}</div>
     </div>
 
     <div class="footer">
-      <div class="chips">
-        <div class="chip">2–12 players</div>
-        <div class="chip">Free to play</div>
-        <div class="chip">No account</div>
-      </div>
-      <div class="cta">🔗 Link in bio · play free</div>
+      <div class="chips">${c.chips.map(t => `<div class="chip">${t}</div>`).join('')}</div>
+      <div class="cta">${c.cta}</div>
     </div>
   </div>
 </body>
 </html>`;
+}
 
-fs.writeFileSync(process.argv[2], html);
-console.log('wrote', process.argv[2], (html.length/1024).toFixed(0)+'KB');
+const [lang, out] = process.argv.slice(2);
+const copy = COPY[lang];
+if (!copy) {
+  console.error(`usage: build-story.mjs <${Object.keys(COPY).join('|')}> <out.html>`);
+  process.exit(1);
+}
+fs.writeFileSync(out, render(copy));
+console.log('wrote', out);
