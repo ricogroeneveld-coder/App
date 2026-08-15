@@ -150,12 +150,14 @@ unavailable, exactly like the web build.
 
 You can reuse the App Store assets:
 
-- **Screenshots**: at least 2 phone screenshots (the gameplay and Notebook
-  captures work; Play wants 16:9 or 9:16, 1080×1920 or larger).
-- **Feature graphic**: 1024×500, required. The Instagram story artwork can be
-  re-cropped, or ask and I will generate one.
-- **Short description** (80 chars) and **full description** (4000).
-- **App icon**: 512×512 PNG — export from `assets/icon.png`.
+- **Screenshots**: at least 2 phone screenshots. Four are ready in
+  `store-assets/` (questions + notebook, NL and EN, 1170×2532).
+- **Feature graphic**: 1024×500, required. Ready in
+  `store-assets/feature-graphic-NL.png` and `-EN.png`.
+- **Short description** (80 chars) and **full description** (4000): written for
+  both languages in `store-assets/STORE-LISTING.md`, lengths already verified
+  against Play's limits.
+- **App icon**: 512×512 PNG, ready as `store-assets/play-icon-512.png`.
 - **Privacy policy URL**: the same one the App Store uses
   (`https://www.jinnieoclock.com/whatsmypick/privacy.html`).
 
