@@ -101,3 +101,24 @@ jobs:
           name: app-release-bundle
           path: android/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
+
+      # Play only accepts the .aab, but an .aab cannot be installed directly.
+      # This APK is the one you drag into an emulator or a cloud device farm
+      # (BrowserStack, Firebase Test Lab) to actually play the game, which
+      # matters when you own no Android hardware.
+      - name: Build an installable APK for testing
+        working-directory: android
+        run: |
+          ./gradlew --no-daemon assembleRelease \
+            -PversionName="${{ github.event.inputs.versionName }}" \
+            -PversionCode="${{ github.event.inputs.versionCode }}" \
+            -PstoreFilePath="$RUNNER_TEMP/upload-keystore.jks" \
+            -PstorePassword="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+            -PkeyAliasName="${{ secrets.ANDROID_KEY_ALIAS }}" \
+            -PkeyPassword="${{ secrets.ANDROID_KEY_PASSWORD }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error

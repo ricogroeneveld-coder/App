@@ -93,6 +93,36 @@ in Play Console under **Release → Testing → Internal testing** first.
 Start with **Internal testing**: it goes live in minutes, versus days for
 production review.
 
+The workflow also produces an **`app-release-apk`** artifact. Play itself only
+accepts the `.aab`, but an `.aab` cannot be installed directly, so the APK is
+what you use to actually play the game when you have no Android device (see
+§4a).
+
+## 4a. Testing without owning an Android phone
+
+Publishing needs no device at all. Testing does, and these all work from a
+browser or a desktop:
+
+1. **Pre-launch report (free, zero setup).** The moment you upload a build to
+   any test track, Google runs it automatically on a set of real physical
+   devices and reports crashes, screenshots of every screen it reached,
+   performance and accessibility issues. Play Console → Test and release →
+   Pre-launch report. This is the fastest way to catch an Android-only crash.
+2. **Android emulator (free, most complete).** Install Android Studio on your
+   Mac or PC, create a Pixel virtual device with a **Google Play** system image
+   (important: the plain AOSP images have no Play Store, so purchases cannot be
+   tested), then drag the APK onto the emulator window. This is the only free
+   option where you can complete a test purchase end to end.
+3. **Cloud device farm.** BrowserStack App Live or LambdaTest give you a real
+   Android phone in the browser; upload the APK and play. Both have free
+   trials. Good for checking real-device feel and different screen sizes.
+4. **Someone else's phone.** Add their Google account as an internal tester and
+   send them the opt-in link. Useful anyway, since the game is multiplayer and
+   deserves a real cross-device test.
+
+For in-app purchase testing you need option 2 or 4: the automated report and
+most device farms cannot complete a Play purchase flow.
+
 ## 5. In-app purchases (the 6 category packs)
 
 Play does not share Apple's products; they must be recreated.
