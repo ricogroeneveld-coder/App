@@ -90,8 +90,12 @@ name (e.g. `1.0.0`) and a version code (`1`, then `2`, `3`… — Play rejects a
 re-used code). Download the `app-release-bundle` artifact and upload the `.aab`
 in Play Console under **Release → Testing → Internal testing** first.
 
-Start with **Internal testing**: it goes live in minutes, versus days for
-production review.
+Use **Internal testing** for your own first smoke test: it goes live in minutes.
+
+**Important:** internal testing does NOT count toward the 12-testers/14-days
+requirement below. Only the **Closed testing** track starts that clock, so open
+a closed track as early as you can and let the 14 days run while you do
+everything else.
 
 The workflow also produces an **`app-release-apk`** artifact. Play itself only
 accepts the `.aab`, but an `.aab` cannot be installed directly, so the APK is
@@ -122,6 +126,36 @@ browser or a desktop:
 
 For in-app purchase testing you need option 2 or 4: the automated report and
 most device farms cannot complete a Play purchase flow.
+
+## 4b. The 12 testers / 14 days gate (personal accounts only)
+
+If the developer account is a **personal** account created after 13 November
+2023, Google will not grant production access until you have run a **closed
+test** with at least **12 testers opted in continuously for 14 days**. This is
+a hard gate in Play Console, not a recommendation.
+
+What actually counts:
+
+- **12 distinct Google accounts**, each joining through your closed-test opt-in
+  link and installing on a real device. Friends and family are fine.
+- The track must be **Closed testing**. Internal testing does not count.
+- They must stay opted in for 14 consecutive days. If the count drops below 12
+  the streak resets, so tell testers not to leave the programme.
+- Ask them to actually play. Google reviews whether the test was genuine, and
+  the feedback is worth having anyway.
+
+Two ways to shorten this:
+
+- **Organization accounts are exempt.** If you have a company registration, an
+  organization account skips this entirely. It needs a D-U-N-S number, which is
+  free but takes a few days to obtain.
+- **Start the clock immediately.** Open the closed track with the very first
+  build, even before the listing is finished. The 14 days is the longest lead
+  time in the whole process.
+
+Avoid services that sell "12 testers" packages. Google has been rejecting
+applications and actioning accounts where the testing was not genuine, and a
+blocked account is far more expensive than two weeks of waiting.
 
 ## 5. In-app purchases (the 6 category packs)
 
