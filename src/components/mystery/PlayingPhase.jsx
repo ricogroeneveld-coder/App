@@ -29,7 +29,11 @@ import BannerArt from '@/components/progression/BannerArt';
 import usePeerProfiles from '@/components/progression/usePeerProfiles';
 import { cosmeticById } from '@/lib/cosmetics';
 
-const QUESTION_TIMER_SECONDS = 30;
+// 60s to compose a question. The server mints the same value (migration 0020),
+// and this constant is only used when a client has to claim a deadline itself
+// (stale/missing deadline, or the pre-0017 fallback path) — keep the two in
+// sync or a turn's length depends on who minted it.
+const QUESTION_TIMER_SECONDS = 60;
 // How long past the shared deadline other players wait before asking on the
 // absent player's behalf, plus per-player stagger so at most one client
 // usually fires (the create is double-checked against fresh room state too).

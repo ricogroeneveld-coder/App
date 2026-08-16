@@ -17,6 +17,19 @@ const PULL_THRESHOLD = 70;
 
 const PLAYER_COLORS = ['#6366f1','#ec4899','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ef4444','#14b8a6','#f97316','#06b6d4','#84cc16','#a855f7'];
 
+// The room's language (migration 0014), set from the host's at creation. It
+// decides which bank generated questions come from, and in practice it's the
+// language the room is going to be played in — worth knowing BEFORE you join,
+// which is the whole point of showing it here.
+//
+// Rooms created before 0014 have 'en' (the column default), so falling back to
+// English matches what those rooms actually do.
+const LOBBY_LANGS = {
+  nl: { flag: '🇳🇱', label: 'NL' },
+  en: { flag: '🇬🇧', label: 'EN' },
+};
+const lobbyLang = (code) => LOBBY_LANGS[String(code || 'en').toLowerCase()] || LOBBY_LANGS.en;
+
 export default function BrowseLobbies() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -262,8 +275,17 @@ export default function BrowseLobbies() {
                       <p className="font-bold text-white text-[13px] truncate leading-tight">{t.hostLobby(room.host_name)}</p>
                       <p className="text-[11px] text-slate-400 truncate">
                         <span className="font-mono tracking-[0.12em]">{room.room_code}</span>
+                        <span
+                          className="ml-1.5 mr-0.5 inline-flex items-center gap-1 px-1.5 py-[1px] rounded-full align-middle bg-white/[0.06] ring-1 ring-white/10"
+                          title={lobbyLang(room.language).label}
+                        >
+                          <span className="text-[9px] leading-none">{lobbyLang(room.language).flag}</span>
+                          <span className="text-[9px] font-extrabold tracking-wider text-slate-300 leading-none">
+                            {lobbyLang(room.language).label}
+                          </span>
+                        </span>
                         {room.category && (
-                          <span className="font-medium"> · {categoryMeta(room.category)?.emoji} {shortCategory(room.category)}</span>
+                          <span className="font-medium">· {categoryMeta(room.category)?.emoji} {shortCategory(room.category)}</span>
                         )}
                       </p>
                     </div>

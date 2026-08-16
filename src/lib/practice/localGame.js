@@ -22,7 +22,9 @@ const TABLES = ['mystery_rooms', 'mystery_players', 'mystery_questions', 'myster
 // Chance a bot fails to "process" an answer it heard — softens play so two
 // honest bots don't dissect each other (and the human) with machine precision.
 const FORGET_P = 0.2;
-const QUESTION_TIMER_MS = 30000;
+// Mirrors QUESTION_TIMER_SECONDS in PlayingPhase / migration 0020 — practice
+// must feel exactly like the real thing.
+const QUESTION_TIMER_MS = 60000;
 const WORD_ENTRY_TIMER_MS = 60000;
 
 let idSeq = 1;
