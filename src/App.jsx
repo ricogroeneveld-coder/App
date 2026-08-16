@@ -9,7 +9,7 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import { devUnlockAll, devResetProfile, ensureAuth, grantBetaCosmetics } from '@/lib/playerProfile';
 import { configurePurchases } from '@/lib/payments';
 import { restoreIdentityFromCloud, startCloudBackup, watchForLateBackup, isTestFlightBuild } from '@/lib/cloudBackup';
-import { isNativeApp, isDevToolsEnabled } from '@/lib/platform';
+import { isNativeApp, isDevToolsEnabled, isAndroid } from '@/lib/platform';
 import { syncServerTime } from '@/lib/serverTime';
 import { initAnalytics } from '@/lib/analytics';
 import { registerPush } from '@/lib/push';
@@ -98,9 +98,30 @@ function useDevParam() {
   }, []);
 }
 
+// Android's hardware/gesture Back. Without a listener Capacitor closes the
+// whole app from ANY screen, which on Play reads as a broken app (and drops a
+// player out of a live game). Walk browser history instead, and only exit
+// once there's nothing left to go back to. iOS has no equivalent gesture, so
+// the listener is simply never registered there.
+function useAndroidBackButton() {
+  useEffect(() => {
+    if (!isAndroid()) return;
+    let handle;
+    let disposed = false;
+    import('@capacitor/app').then(({ App: CapApp }) => {
+      CapApp.addListener('backButton', ({ canGoBack }) => {
+        if (canGoBack && window.location.pathname !== '/') window.history.back();
+        else CapApp.exitApp();
+      }).then(h => { if (disposed) h.remove(); else handle = h; });
+    }).catch(() => { /* plugin missing: keep Capacitor's default */ });
+    return () => { disposed = true; try { handle?.remove(); } catch { /* ignore */ } };
+  }, []);
+}
+
 function App() {
   useForcedDarkTheme();
   useDevParam();
+  useAndroidBackButton();
   useEffect(() => { configurePurchases(); }, []);
 
   // Fresh native install: check iCloud for a previous identity BEFORE any

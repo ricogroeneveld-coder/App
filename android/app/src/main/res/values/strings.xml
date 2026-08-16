@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">What\'s My Pick!</string>
+    <string name="title_activity_main">What\'s My Pick!</string>
+    <string name="package_name">com.whatsmypick.app</string>
+    <string name="custom_url_scheme">com.whatsmypick.app</string>
+</resources>

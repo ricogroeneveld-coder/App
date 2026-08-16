@@ -1,0 +1,124 @@
+# Builds a signed Android App Bundle (.aab) for the Play Store.
+#
+# Run it manually from GitHub → Actions → "Android · Play Store" → Run workflow,
+# then download the `app-release-bundle` artifact and upload it in Play Console
+# (Release → Production/Testing → Create new release). See PLAYSTORE.md for the
+# one-time console setup.
+#
+# Required repository secrets (Settings → Secrets and variables → Actions):
+#   ANDROID_KEYSTORE_BASE64   — base64 of your upload keystore (.jks):
+#                               base64 -i upload-keystore.jks | pbcopy
+#   ANDROID_KEYSTORE_PASSWORD — the keystore password
+#   ANDROID_KEY_ALIAS         — the key alias inside the keystore
+#   ANDROID_KEY_PASSWORD      — that key's password
+#   VITE_SUPABASE_URL         — same value the iOS workflow uses
+#   VITE_SUPABASE_ANON_KEY    — same value the iOS workflow uses
+# Optional:
+#   VITE_REVENUECAT_ANDROID_KEY — RevenueCat → Project → API Keys → the
+#                               "Google Play" public key (starts with "goog_").
+#                               Without it the app still runs; the category
+#                               packs just report purchases as unavailable.
+#   VITE_SITE_BASE            — only if the privacy/terms/support pages move.
+#
+# Keep the keystore itself safe and backed up: Play ties your app's identity to
+# it, and losing it means you can never update this listing again (unless Play
+# App Signing is enabled, which is the default for new apps and is recommended).
+
+name: Android · Play Store
+
+on:
+  workflow_dispatch:
+    inputs:
+      versionName:
+        description: 'Version name shown to users (e.g. 1.0.1)'
+        required: true
+        default: '1.0.0'
+      versionCode:
+        description: 'Version code — must be HIGHER than the last upload'
+        required: true
+        default: '1'
+
+jobs:
+  build-bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web app and sync it into the Android project
+        run: npm run android
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_REVENUECAT_ANDROID_KEY: ${{ secrets.VITE_REVENUECAT_ANDROID_KEY }}
+          VITE_SITE_BASE: ${{ secrets.VITE_SITE_BASE }}
+
+      - name: Fail if the web build didn't reach the Android assets
+        run: test -f android/app/src/main/assets/public/index.html
+
+      - name: Write the upload keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/upload-keystore.jks"
+          test -s "$RUNNER_TEMP/upload-keystore.jks"
+
+      - name: Build the signed release bundle
+        working-directory: android
+        run: |
+          ./gradlew --no-daemon bundleRelease \
+            -PversionName="${{ github.event.inputs.versionName }}" \
+            -PversionCode="${{ github.event.inputs.versionCode }}" \
+            -PstoreFilePath="$RUNNER_TEMP/upload-keystore.jks" \
+            -PstorePassword="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+            -PkeyAliasName="${{ secrets.ANDROID_KEY_ALIAS }}" \
+            -PkeyPassword="${{ secrets.ANDROID_KEY_PASSWORD }}"
+
+      - name: Verify the bundle is actually signed
+        run: |
+          BUNDLE=android/app/build/outputs/bundle/release/app-release.aab
+          test -f "$BUNDLE"
+          # An unsigned bundle has no META-INF signature block; Play rejects it
+          # with a confusing error, so catch it here instead.
+          unzip -l "$BUNDLE" | grep -qi "META-INF/.*\.RSA\|META-INF/.*\.EC" \
+            || (echo "::error::bundle is not signed - check the keystore secrets" && exit 1)
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-release-bundle
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+
+      # Play only accepts the .aab, but an .aab cannot be installed directly.
+      # This APK is the one you drag into an emulator or a cloud device farm
+      # (BrowserStack, Firebase Test Lab) to actually play the game, which
+      # matters when you own no Android hardware.
+      - name: Build an installable APK for testing
+        working-directory: android
+        run: |
+          ./gradlew --no-daemon assembleRelease \
+            -PversionName="${{ github.event.inputs.versionName }}" \
+            -PversionCode="${{ github.event.inputs.versionCode }}" \
+            -PstoreFilePath="$RUNNER_TEMP/upload-keystore.jks" \
+            -PstorePassword="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+            -PkeyAliasName="${{ secrets.ANDROID_KEY_ALIAS }}" \
+            -PkeyPassword="${{ secrets.ANDROID_KEY_PASSWORD }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error

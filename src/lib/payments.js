@@ -21,7 +21,7 @@
 
 import { Purchases } from '@revenuecat/purchases-capacitor';
 import { unlockPack, isPackUnlocked, reconcilePacks } from './premiumPacks';
-import { isNativeApp, isDevToolsEnabled } from './platform';
+import { isNativeApp, isDevToolsEnabled, isAndroid } from './platform';
 import { track } from './analytics';
 
 export const PRODUCTS = {
@@ -55,8 +55,13 @@ let configured = false;
 // matters on the native iOS build.
 export async function configurePurchases() {
   if (configured || !isNative()) return;
-  const apiKey = import.meta.env.VITE_REVENUECAT_IOS_KEY;
-  if (!apiKey) return; // build without the key still runs; purchases just stay unavailable
+  // One public key per store: Apple's starts with "appl_", Google Play's with
+  // "goog_". A build missing its platform's key still runs; purchases just
+  // stay unavailable.
+  const apiKey = isAndroid()
+    ? import.meta.env.VITE_REVENUECAT_ANDROID_KEY
+    : import.meta.env.VITE_REVENUECAT_IOS_KEY;
+  if (!apiKey) return;
   configured = true;
   await Purchases.configure({ apiKey });
   // Silent auto-restore: pack unlock flags live in localStorage, which dies
