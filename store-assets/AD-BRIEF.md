@@ -25,7 +25,10 @@ Three-line version, for a voiceover or a landing page:
 ## 2. Full description (the animator's bible)
 
 **What's My Pick!** is a real-time social deduction word game for **2 to 12 players**.
-Think twenty questions, except everyone is hiding something at the same time.
+Everyone is hiding something at the same time, and everyone is hunting at the same time.
+
+**Don't call it "twenty questions" in the ad.** There is no question limit — the game runs
+until one secret is left. The phrase makes people expect a rule that isn't there.
 
 The loop, exactly as it plays:
 
@@ -33,8 +36,9 @@ The loop, exactly as it plays:
    public lobby anyone can drop into. No account, no signup — type a name and you're in.
 2. **The category.** The room agrees on one category: Pets, Actors, Movies, Football
    Players, European Countries, Household Objects — or a custom one they type themselves.
-3. **The secret.** Everyone privately picks their word from that category. Nobody sees
-   anybody else's. This is the moment the whole game hangs on.
+3. **The secret.** A **60-second** clock starts and everyone privately picks their word
+   from that category. Nobody sees anybody else's. This is the moment the whole game
+   hangs on — a dozen people committing to a secret against a shared timer.
 4. **The turn.** On your turn you have **30 seconds** to ask the entire room one yes/no
    question. *"Is it something you'd find in a kitchen?"* Stall too long and the game
    asks a question **for** you, out of its own question bank — your turn never dies quietly.
@@ -81,9 +85,10 @@ Just as good as the right one, and funnier. Red says it with total confidence. T
 hits. And now the whole room knows exactly what Red was thinking. Comedy *and* a mechanic
 in one beat.
 
-**4. The 30-second clock.**
+**4. The clocks.**
 A visible timer draining while a mascot sweats and blurts out something terrible. Urgency
-you can see from across a room, on mute, at 1x speed.
+you can see from across a room, on mute, at 1x speed. Two clocks are worth showing: the
+**60 seconds** to lock in your secret at the start, and the **30 seconds** to ask on your turn.
 
 **5. The auto-question.**
 Time runs out, the game asks a question on your behalf, and it's *good* — and the asker's
@@ -137,7 +142,7 @@ app's own UI floating as holograms between them.
 
 | Time | Picture | Audio / on-screen |
 |---|---|---|
-| 0:00–0:02 | Six mascots around a glowing table. A card slides face-down to each. They peek. Blue's eyes go huge. | *SFX: card whoosh.* Text: **Everyone picks a secret word.** |
+| 0:00–0:02 | Six mascots around a glowing table, a 60-second ring closing above them. A card slides face-down to each. They peek. Blue's eyes go huge. | *SFX: card whoosh.* Text: **60 seconds. Everyone picks a secret word.** |
 | 0:02–0:05 | Blue stands, 30-second ring draining behind their head. | Blue: **"Is it… alive?"** |
 | 0:05–0:08 | Rapid split-screen, five faces snapping in: YES / NO / YES / NO / NO. | *SFX: five distinct answer chimes.* Text: **Everyone answers about their OWN word.** |
 | 0:08–0:11 | Notebook grid fills in over the table. One column narrows to a single glowing row. Red smiles. | *Music drops out. Ticking.* |
@@ -174,5 +179,11 @@ Do not let the animation imply anything the app doesn't do:
   Household Objects.** If you show a word from Fantasy, Food, Pop Culture, Brands, Animal
   or World, it belongs to an optional pack — don't frame it as included.
 - **No "#1", "best", no competitor names.** Both stores reject listings for that.
+- **Don't invent a question limit.** No "20 questions", no "you get 5 guesses". The only
+  hard numbers are the timers (60s to pick, 30s to ask, 45s to answer, 60s hint round),
+  2–12 players, and the hint round every 5 full rounds.
+- **This is not an App Store app preview.** Apple requires every frame of an App Store
+  preview to be device-captured footage of the app itself, 15–30s. An animated ad is for
+  paid social, YouTube and the Play listing's promo video — not that slot.
 - **The chat is user-to-user**, which is why the rating is 13+. Keep any on-screen chat
   content mild.
