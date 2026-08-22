@@ -310,3 +310,67 @@ Snappy hard cuts, punchy camera moves, high energy throughout.
 Voiceover in **both English and Dutch** (the app ships both). Music: fast, playful,
 percussive, building to a hit on the card flip at 0:07. Keep the whole bed under the
 two spoken lines — at this pace there is no room for a narrator on top.
+
+---
+
+## 9. The single master prompt (full video, one generation)
+
+Paste as-is. Attach `mascot-blue.webp` and `mascot-red.webp` as reference images.
+
+```
+A fast-paced 10-second vertical 9:16 animated commercial for a mobile party game.
+3D cartoon, Pixar-style glossy rendering, vibrant, high-contrast, high-energy.
+
+CHARACTERS — keep faces, hair and outfits identical in every shot, never change them:
+BLUE: a young boy, dark brown hair, royal-blue baseball cap with a gold question mark
+on the front, royal-blue hoodie, navy jeans, blue-and-white sneakers, large expressive
+brown eyes, eager and overconfident.
+RED: a young girl, long wavy dark brown hair, red knit beanie, red hoodie, navy jeans,
+red-and-white sneakers, large expressive brown eyes, smug and patient.
+Plus four more stylized cartoon kids of varied appearance around the table.
+
+SETTING: a round table glowing from within, floating in a deep purple-black void.
+Neon violet and electric-blue rim light on every character. Purple cards with gold
+trim. Sparks and dust motes drifting in the air. Shallow depth of field.
+
+ACTION — five fast beats, hard cut between each:
+0-2s: High angle above the table. Six blank purple cards slide fast across the surface,
+one to each kid. Every kid snatches their card and peeks behind it, hugging it to their
+chest. BLUE's eyes go huge with panic and delight. Camera pushes down to table level.
+2-4s: BLUE springs to their feet, slams one hand on the table, points upward with the
+other and asks the group a question with a wide cocky grin. Low-angle push-in on BLUE.
+4-6s: Machine-gun cuts between four other kids in tight close-up, each isolated against
+the purple void, each snapping into frame with a different reaction — a confident nod,
+a firm head shake, a smug grin, a nervous wince. Each face holds a fraction of a second.
+6-8s: Whip-pan to RED, who rises slowly with an enormous smug grin and points straight
+across the table at BLUE. BLUE's blank purple card flips face-up and hovers, spinning
+once. Fast punch-in as BLUE's jaw drops and they collapse face-first onto the table.
+Purple and gold confetti explodes upward, sparkles rain down.
+8-10s: BLUE and RED leap into the air side by side in a triumphant hero pose, fists
+raised, RED holding a purple card high overhead. Confetti fills the frame. They land in
+a freeze-frame pose against the purple void. Locked wide shot, slight upward tilt.
+
+CAMERA: constant motion — push-ins, whip-pans, punch-ins. Never static.
+EDITING: hard cuts on the beat. No dissolves, no fades, no slow motion.
+AUDIO: driving upbeat percussive music building to a hit on the card flip at 7s.
+At 3s BLUE says "Is it alive?" in a bright, playful, challenging kid voice.
+At 7s RED says "Golden Retriever." in a smug, sing-song kid voice.
+Card whooshes, four distinct answer chimes, a reveal sting, a confetti pop, a cheer.
+
+CRITICAL: every card is completely blank. No text, letters, numbers, words or symbols
+anywhere in the video — all on-screen text is added later in the edit.
+```
+
+**Negative prompt:**
+
+```
+text, letters, words, numbers, writing, subtitles, captions, watermark, logos, UI,
+garbled text, extra fingers, deformed hands, morphing faces, changing outfits,
+inconsistent characters, photorealistic skin, live action, slow motion, static camera,
+dull lighting, muted colors, empty frames
+```
+
+**If the model caps at 8 seconds** (Veo 3 does): cut the 4–6s answers beat down to two
+kids instead of four, and let beat 5 be a 1-second freeze. Or generate 0–8s here and
+make the end card a separate still in the edit — cheaper and it gives you a clean plate
+for the logo and CTA anyway.
