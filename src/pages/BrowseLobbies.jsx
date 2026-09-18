@@ -267,6 +267,10 @@ export default function BrowseLobbies() {
                         )}
                       </p>
                     </div>
+                    <span className="shrink-0 text-base leading-none" title={t.questionLanguageLabel(room.language)}
+                      aria-label={t.questionLanguageLabel(room.language)}>
+                      {room.language === 'nl' ? '🇳🇱' : '🇬🇧'}
+                    </span>
                     <span className="shrink-0 flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/10 ring-1 ring-emerald-400/25">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" style={{ animation: 'livePulse 2s ease-in-out infinite' }} />
                       <span className="text-[10px] font-bold text-emerald-300 tabular-nums">
