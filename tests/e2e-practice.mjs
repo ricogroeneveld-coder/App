@@ -4,8 +4,16 @@
 // actual LobbyPhase / WordEntryPhase / PlayingPhase / FinishedPhase components
 // — the code that has historically regressed — with no Supabase project needed.
 //
-// Run:  npm run build && npm run test:e2e
+// Run:  VITE_ENABLE_DEV_TOOLS=1 npm run build && npm run test:e2e
 //   or: E2E_BASE_URL=http://localhost:5173 node tests/e2e-practice.mjs
+//       (that server must ALSO have been built/run with VITE_ENABLE_DEV_TOOLS=1)
+//
+// Practice vs Bots is app-only on a real build (web is join-only — see
+// hasFullApp() in platform.js) and Home no longer links to it at all on
+// web, so this test goes straight to /practice — PracticeGame.jsx lets an
+// isDevToolsEnabled() build through even on web, the same escape hatch the
+// ?dev= URL mechanism already uses. VITE_ENABLE_DEV_TOOLS is never set for
+// a real deployed build (see .env.example).
 //
 // Env:
 //   E2E_BASE_URL   — use an already-running server instead of spawning preview
@@ -61,12 +69,8 @@ async function main() {
   const domClick = (label) => page.evaluate(
     (l) => { [...document.querySelectorAll('button')].find(b => b.textContent.includes(l))?.click(); }, label);
 
-  console.log('1. Home → Create Game → Practice vs Bot');
-  await page.goto(base + '/');
-  await page.waitForSelector('text=Create Game', { timeout: 15000 });
-  await page.click('text=Create Game', { force: true });
-  await page.waitForSelector('text=Practice vs Bot', { timeout: 5000 });
-  await page.click('text=Practice vs Bot');
+  console.log('1. Practice vs Bot (direct /practice route — see file header)');
+  await page.goto(base + '/practice');
 
   console.log('2. Lobby: two bots join, category preset, nobody "away"');
   await page.waitForSelector('text=Start Game', { timeout: 15000 });

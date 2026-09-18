@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MysteryRoom, MysteryPlayer } from '@/api/db';
 import { useToast } from '@/components/ui/use-toast';
-import { Settings, X, ChevronRight, Crown, Users, HelpCircle, Globe, Lock, Bot } from 'lucide-react';
+import { Settings, X, ChevronRight, Crown, Users, HelpCircle, Globe, Lock, Bot, Apple } from 'lucide-react';
 import { getGuestIdentity, setGuestName, hasGuestName, MAX_NAME_LENGTH } from '@/lib/guestIdentity';
 import { Link } from 'react-router-dom';
 import { useLang } from '@/lib/LanguageContext';
@@ -15,7 +15,7 @@ import { ALL_COSMETICS, cosmeticById } from '@/lib/cosmetics';
 import { isIOS, hasFullApp } from '@/lib/platform';
 import { Keyboard, KeyboardResize } from '@capacitor/keyboard';
 import { track } from '@/lib/analytics';
-import { TERMS_URL, PRIVACY_URL } from '@/lib/links';
+import { TERMS_URL, PRIVACY_URL, APP_STORE_URL } from '@/lib/links';
 import heroImage from '../../home-hero.webp';
 
 const PLAYER_COLORS = ['#6366f1','#ec4899','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ef4444','#14b8a6','#f97316','#06b6d4','#84cc16','#a855f7'];
@@ -261,11 +261,10 @@ export default function Home() {
       )}
 
       {/* Game visibility sheet — choosing an option creates the lobby.
-          Practice vs Bots stays available on web (it's local-only: no room
-          is hosted and it pays no rewards, so it doesn't conflict with
-          join-only web), but the two real hosting options below are
-          app-only. */}
-      {showCreateSheet && (
+          App-only: the button that opens it is hidden entirely on web (see
+          below), since web can't create any game at all, practice vs bots
+          included. */}
+      {hasFullApp() && showCreateSheet && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4"
           onClick={() => loading === null && setShowCreateSheet(false)}>
           <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}
@@ -281,8 +280,6 @@ export default function Home() {
             </div>
             <p className="section-label mb-3">{t.gameVisibility}</p>
             <div className="space-y-2.5">
-              {hasFullApp() && (
-              <>
               <button onClick={() => handleCreate(true)} disabled={loading !== null}
                 className="glass-panel w-full p-3 flex items-center gap-3 text-left transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5 hover:ring-white/20 disabled:opacity-60">
                 <span className="w-11 h-11 rounded-xl bg-gradient-to-b from-[#062217] to-[#020c08] ring-1 ring-green-400/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0">
@@ -305,10 +302,8 @@ export default function Home() {
                 </span>
                 <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
               </button>
-              </>
-              )}
               {/* Play vs bots — local practice match, no room is created.
-                  Available on both platforms (see the comment above). */}
+                  App-only, same as the sheet itself (see above). */}
               <button onClick={() => { setShowCreateSheet(false); navigate('/practice'); }} disabled={loading !== null}
                 className="glass-panel w-full p-3 flex items-center gap-3 text-left transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5 hover:ring-white/20 disabled:opacity-60">
                 <span className="w-11 h-11 rounded-xl bg-gradient-to-b from-[#0a2233] to-[#040d16] ring-1 ring-sky-400/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0">
@@ -437,25 +432,46 @@ export default function Home() {
               </>
             )}
 
-            {/* Create Game — opens the sheet above; that sheet hides the
-                real hosting options on web but keeps Practice vs Bots. */}
-            <div className="gold-breathe">
-            <button onClick={() => setShowCreateSheet(true)} disabled={loading !== null}
-              className="relative w-full h-20 rounded-[28px] bg-[linear-gradient(180deg,#fdeeb8_0%,#ffcb45_16%,#e08e05_40%,#a85800_66%,#5e2c00_100%)] shadow-[0_2px_3px_rgba(0,0,0,0.4),0_10px_18px_-8px_rgba(0,0,0,0.55),0_20px_30px_-16px_rgba(0,0,0,0.4),0_0_8px_-8px_rgba(255,180,60,0.22),0_0_0_1px_rgba(255,214,120,0.45),inset_0_1px_1px_rgba(255,255,255,0.2),inset_0_-8px_14px_-6px_rgba(110,45,0,0.42)] px-4 flex items-center gap-2.5 disabled:opacity-60 transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5 hover:brightness-[1.04] overflow-hidden">
-              <span className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(ellipse 55% 60% at 50% -8%, rgba(255,255,255,0.55), transparent 70%)' }} />
-              <span className="pointer-events-none absolute inset-y-0 left-[-45%] w-[45%]" style={{ background: 'linear-gradient(105deg, transparent 15%, rgba(255,255,255,0.45) 50%, transparent 85%)', animation: 'shimmerSweep 5s linear infinite', willChange: 'transform, opacity' }} />
-              <span className="relative w-12 h-12 rounded-2xl bg-gradient-to-b from-[#190c00] to-[#060300] ring-1 ring-[#ffcf7a]/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.45),0_2px_6px_rgba(0,0,0,0.55)] flex items-center justify-center shrink-0">
-                <Crown className="w-6 h-6 text-amber-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" fill="currentColor" />
-              </span>
-              <span className="relative text-left flex-1 min-w-0">
-                <span className="block text-base font-extrabold tracking-tight text-[#2c1500] leading-tight drop-shadow-[0_1px_0_rgba(255,255,255,0.25)]">{loading === 'create' ? t.creating : t.createGame}</span>
-                <span className="block text-xs font-medium text-[#4a2c0c] leading-tight">{t.createGameDesc}</span>
-              </span>
-              <span className="relative w-10 h-10 rounded-full bg-gradient-to-b from-[#190c00] to-[#060300] ring-1 ring-[#ffcf7a]/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.45),0_2px_6px_rgba(0,0,0,0.55)] flex items-center justify-center shrink-0">
-                <ChevronRight className="w-6 h-6 text-amber-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />
-              </span>
-            </button>
-            </div>
+            {hasFullApp() ? (
+              /* Create Game — opens the sheet above (public/private lobby
+                 or practice vs bots). App-only: web can't create any game
+                 at all, so it gets the App Store CTA below instead. */
+              <div className="gold-breathe">
+              <button onClick={() => setShowCreateSheet(true)} disabled={loading !== null}
+                className="relative w-full h-20 rounded-[28px] bg-[linear-gradient(180deg,#fdeeb8_0%,#ffcb45_16%,#e08e05_40%,#a85800_66%,#5e2c00_100%)] shadow-[0_2px_3px_rgba(0,0,0,0.4),0_10px_18px_-8px_rgba(0,0,0,0.55),0_20px_30px_-16px_rgba(0,0,0,0.4),0_0_8px_-8px_rgba(255,180,60,0.22),0_0_0_1px_rgba(255,214,120,0.45),inset_0_1px_1px_rgba(255,255,255,0.2),inset_0_-8px_14px_-6px_rgba(110,45,0,0.42)] px-4 flex items-center gap-2.5 disabled:opacity-60 transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5 hover:brightness-[1.04] overflow-hidden">
+                <span className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(ellipse 55% 60% at 50% -8%, rgba(255,255,255,0.55), transparent 70%)' }} />
+                <span className="pointer-events-none absolute inset-y-0 left-[-45%] w-[45%]" style={{ background: 'linear-gradient(105deg, transparent 15%, rgba(255,255,255,0.45) 50%, transparent 85%)', animation: 'shimmerSweep 5s linear infinite', willChange: 'transform, opacity' }} />
+                <span className="relative w-12 h-12 rounded-2xl bg-gradient-to-b from-[#190c00] to-[#060300] ring-1 ring-[#ffcf7a]/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.45),0_2px_6px_rgba(0,0,0,0.55)] flex items-center justify-center shrink-0">
+                  <Crown className="w-6 h-6 text-amber-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" fill="currentColor" />
+                </span>
+                <span className="relative text-left flex-1 min-w-0">
+                  <span className="block text-base font-extrabold tracking-tight text-[#2c1500] leading-tight drop-shadow-[0_1px_0_rgba(255,255,255,0.25)]">{loading === 'create' ? t.creating : t.createGame}</span>
+                  <span className="block text-xs font-medium text-[#4a2c0c] leading-tight">{t.createGameDesc}</span>
+                </span>
+                <span className="relative w-10 h-10 rounded-full bg-gradient-to-b from-[#190c00] to-[#060300] ring-1 ring-[#ffcf7a]/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.45),0_2px_6px_rgba(0,0,0,0.55)] flex items-center justify-center shrink-0">
+                  <ChevronRight className="w-6 h-6 text-amber-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />
+                </span>
+              </button>
+              </div>
+            ) : (
+              /* Get the App — web's replacement for Create Game. Points at
+                 the real App Store listing (APP_STORE_URL) instead of any
+                 game-creation action. */
+              <a href={APP_STORE_URL} target="_blank" rel="noopener"
+                className="relative block h-20 rounded-[28px] bg-gradient-to-b from-[#3a3a3c] via-[#1c1c1e] to-[#000000] shadow-[0_2px_3px_rgba(0,0,0,0.4),0_10px_18px_-8px_rgba(0,0,0,0.55),0_20px_30px_-16px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.14),inset_0_1px_1px_rgba(255,255,255,0.18)] px-4 flex items-center gap-2.5 transition-all duration-150 hover:-translate-y-0.5 active:scale-[0.98] overflow-hidden">
+                <span className="pointer-events-none absolute inset-x-2 top-1 h-1/2 rounded-t-[24px] bg-gradient-to-b from-white/[0.1] to-transparent" />
+                <span className="w-12 h-12 rounded-2xl bg-gradient-to-b from-[#48484a] to-[#1c1c1e] ring-1 ring-white/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),inset_0_-2px_4px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0">
+                  <Apple className="w-6 h-6 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" fill="currentColor" />
+                </span>
+                <span className="text-left flex-1 min-w-0">
+                  <span className="block text-base font-extrabold tracking-tight text-white leading-tight">{t.getTheApp}</span>
+                  <span className="block text-xs font-medium text-slate-400 leading-tight">{t.getTheAppDesc}</span>
+                </span>
+                <span className="w-10 h-10 rounded-full bg-gradient-to-b from-[#48484a] to-[#1c1c1e] ring-1 ring-white/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),inset_0_-2px_4px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0">
+                  <ChevronRight className="w-6 h-6 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />
+                </span>
+              </a>
+            )}
 
             {/* Join Game */}
             <div className="relative h-20 rounded-[28px] bg-gradient-to-b from-[#2a1150] via-[#1c0b3a] to-[#0d0620] shadow-[0_2px_3px_rgba(0,0,0,0.4),0_10px_18px_-8px_rgba(0,0,0,0.55),0_20px_30px_-16px_rgba(0,0,0,0.4),0_0_14px_-8px_rgba(56,189,248,0.4),0_0_0_1px_rgba(56,189,248,0.45),inset_0_1px_1px_rgba(255,255,255,0.2),inset_0_-8px_14px_-6px_rgba(0,0,0,0.42)] px-4 flex items-center gap-2.5 transition-transform duration-150 hover:-translate-y-0.5 overflow-hidden">

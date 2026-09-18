@@ -20,3 +20,8 @@ const SITE_BASE = String(RAW_BASE).replace(/\/+$/, '');
 export const PRIVACY_URL = `${SITE_BASE}/privacy.html`;
 export const SUPPORT_URL = `${SITE_BASE}/support.html`;
 export const TERMS_URL = `${SITE_BASE}/terms.html`;
+
+// The live App Store listing. The web build is join-only (see hasFullApp()
+// in platform.js) and can't create any game — this is what Home points web
+// visitors at to get the real app instead.
+export const APP_STORE_URL = 'https://apps.apple.com/app/id6799090322';
