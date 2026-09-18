@@ -27,4 +27,10 @@ jobs:
         env:
           VITE_SUPABASE_URL: https://dummy.supabase.co
           VITE_SUPABASE_ANON_KEY: dummykey
+          # Practice vs Bots is app-only on a real build (web is join-only —
+          # see hasFullApp() in platform.js) — this internal, ephemeral CI
+          # build opts into dev tools (never set for a real deployed build)
+          # so PracticeGame.jsx's dev-tools bypass lets this test still
+          # reach it directly, without a UI entry point.
+          VITE_ENABLE_DEV_TOOLS: 1
       - run: npm run test:e2e
