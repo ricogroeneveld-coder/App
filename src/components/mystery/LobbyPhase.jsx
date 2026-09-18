@@ -382,14 +382,15 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
                   </motion.div>
                 );
               })}
-              {players.length === 1 && (
-                <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
-                  onClick={onInvite}
-                  className="w-full py-6 flex flex-col items-center gap-1.5 text-center rounded-2xl border border-dashed border-white/10 hover:border-violet-400/40 hover:bg-white/[0.03] transition-colors">
-                  <Share className="w-4 h-4 text-violet-300" />
-                  <span className="text-xs font-semibold text-slate-400 px-6 leading-relaxed">{t.inviteHint}</span>
-                </motion.button>
-              )}
+              {/* Always visible (not just while the lobby is empty) — stays
+                  pinned under the last player row as people join, since
+                  the host or anyone else can keep inviting more. */}
+              <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
+                onClick={onInvite}
+                className="w-full py-6 flex flex-col items-center gap-1.5 text-center rounded-2xl border border-dashed border-white/10 hover:border-violet-400/40 hover:bg-white/[0.03] transition-colors">
+                <Share className="w-4 h-4 text-violet-300" />
+                <span className="text-xs font-semibold text-slate-400 px-6 leading-relaxed">{t.inviteHint}</span>
+              </motion.button>
             </div>
           </motion.div>
         </div>
