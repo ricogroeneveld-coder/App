@@ -17,7 +17,7 @@ import { shortCategory } from '@/lib/wordLists';
 import { setGuestName, normalizeName, MAX_NAME_LENGTH } from '@/lib/guestIdentity';
 import { SEASON_NAME, todayKey, msUntilNextDay, levelFromXp } from '@/lib/progression';
 import { serverNow } from '@/lib/serverTime';
-import { isDevToolsEnabled } from '@/lib/platform';
+import { isDevToolsEnabled, hasFullApp } from '@/lib/platform';
 
 const TYPE_ORDER = ['emblem', 'banner', 'border', 'title', 'nameColor'];
 
@@ -345,6 +345,12 @@ export default function Profile() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useLang();
+  // Web is join-only — there's no progression/shop to show, so this route
+  // isn't just unlinked (Home.jsx hides the entry point), it actively
+  // bounces a direct visit back to Home instead of rendering.
+  useEffect(() => {
+    if (!hasFullApp()) navigate('/', { replace: true });
+  }, [navigate]);
   const [profile, setProfile] = useState(getProfile());
   const [tab, setTab] = useState(() => {
     const wanted = new URLSearchParams(window.location.search).get('tab');
@@ -495,6 +501,11 @@ export default function Profile() {
     .filter(c => c.source.type === 'level' && !isHiddenCosmetic(c.id) && !profile.owned.includes(c.id))
     .sort((a, b) => a.source.level - b.source.level);
   const ch = challengeState();
+
+  // The redirect effect above fires on mount but this still renders once
+  // before it takes hold — bail out so a join-only web guest never sees a
+  // shop/progression flash before landing back on Home.
+  if (!hasFullApp()) return null;
 
   return (
     <div className="h-dvh overflow-hidden text-white flex flex-col relative"

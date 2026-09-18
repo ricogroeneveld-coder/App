@@ -5,6 +5,7 @@
 import { supabase } from './supabaseClient';
 import { getGuestIdentity } from './guestIdentity';
 import { serverNow } from './serverTime';
+import { hasFullApp } from './platform';
 import {
   ECONOMY, levelFromXp, dailyChallenges, WEEKLY, SEASON, SEASON_ID,
   todayKey, weekKey, loginReward,
@@ -264,6 +265,8 @@ export function grantBetaCosmetics() {
 // ── Daily login ────────────────────────────────────────────────────────────
 
 export async function ensureDailyLogin() {
+  // Web is join-only — no progression economy to hand a daily reward into.
+  if (!hasFullApp()) return null;
   await loadProfile();
   // Use SERVER time, not the device clock (ECON-5): winding the phone clock
   // forward a day used to re-trigger the login reward and bump the streak.
@@ -330,6 +333,8 @@ export function challengeState() {
 // guesses and grants normally.
 
 export async function grantMatchRewards({ room, players, guesses, me }) {
+  // Web is join-only — no progression economy to pay a match reward into.
+  if (!hasFullApp()) return null;
   if (!room || !me?.id) return null;
   // Practice-vs-bots rooms (local "BOT" codes) pay nothing — bots would make
   // every reward guard trivially farmable, and stats shouldn't count them.
@@ -496,6 +501,10 @@ export function breakStreakOnLeave() {
 }
 
 export function purchaseCosmetic(id) {
+  // Web is join-only — no shop to spend Picks in. Defense in depth: the
+  // shop UI itself is unreachable on web (see Profile.jsx's redirect), so
+  // this only matters if it's ever called some other way.
+  if (!hasFullApp()) return { ok: false, reason: 'locked' };
   getProfile();
   const c = cosmeticById(id);
   if (!c || c.source.type !== 'shop') return { ok: false, reason: 'locked' };

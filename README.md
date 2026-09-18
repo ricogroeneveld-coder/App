@@ -145,9 +145,13 @@ alongside any other social login) is why Apple is included here now that
 Google is — it only applies once you offer a third-party login at all.
 
 So: gameplay stays guest-only end to end, exactly like before. Sign-in is
-an extra, fully optional identity layer for anyone who wants an account —
-offered from `ProfileSettings`, never required to create, join, or play a
-game.
+an extra, fully optional identity layer for anyone who wants an account,
+never required to create, join, or play a game. It's no longer surfaced as
+an entry point anywhere in the UI (`ProfileSettings` used to offer it on
+web) now that the web build is join-only — see `hasFullApp()` in
+`src/lib/platform.js`, and AGENTS.md's "Working Notes" — but `/login` and
+`/register` still work for anyone who already has an account and navigates
+there directly.
 
 ## Notes on what changed from the original
 
