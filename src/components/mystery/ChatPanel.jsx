@@ -280,7 +280,7 @@ export default function ChatPanel({ roomCode, me, myPlayer, onEmoteRain }) {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : ''}`}>
-                <PlayerAvatar profile={profiles[msg.user_id]} name={safeName} color={msg.color} size={24} />
+                <PlayerAvatar profile={profiles[msg.user_id]} userId={msg.user_id} name={safeName} color={msg.color} size={24} />
                 <div
                   onClick={clickable ? () => retry(msg) : undefined}
                   role={clickable ? 'button' : undefined}

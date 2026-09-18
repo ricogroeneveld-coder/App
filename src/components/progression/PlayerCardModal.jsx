@@ -7,6 +7,7 @@ import BannerArt from './BannerArt';
 import { cosmeticById, RARITIES, topEquippedRarity } from '@/lib/cosmetics';
 import { reportPlayer, hasReported } from '@/lib/reports';
 import { isMuted, setMuted } from '@/lib/mutes';
+import { isBrowserPlayer, BROWSER_TITLE } from '@/lib/browserPlayer';
 import { useLang } from '@/lib/LanguageContext';
 
 const CARD_BG = '#10141f';
@@ -29,7 +30,9 @@ export default function PlayerCardModal({ player, profile, onClose, onKick = und
     setMutedState(!muted);
   };
   const banner = profile ? cosmeticById(profile.equipped?.banner) : null;
-  const title = profile ? cosmeticById(profile.equipped?.title) : null;
+  const title = profile
+    ? cosmeticById(profile.equipped?.title)
+    : (isBrowserPlayer(player.user_id, profile) ? BROWSER_TITLE : null);
   const nameColor = profile ? cosmeticById(profile.equipped?.nameColor) : null;
   const rar = RARITIES[profile ? topEquippedRarity(profile.equipped) : 'common'];
   const games = profile?.games_played || 0;
@@ -61,7 +64,7 @@ export default function PlayerCardModal({ player, profile, onClose, onKick = und
           <span aria-hidden className="absolute left-5 top-10 w-20 h-4 rounded-full"
             style={{ background: 'radial-gradient(50% 50% at 50% 50%, rgba(0,0,0,0.55), transparent 70%)', filter: 'blur(3px)' }} />
           <div className="relative inline-flex" style={{ filter: 'drop-shadow(0 10px 14px rgba(0,0,0,0.55))' }}>
-            <PlayerAvatar profile={profile} name={player.display_name} color={player.color} size={68} />
+            <PlayerAvatar profile={profile} userId={player.user_id} name={player.display_name} color={player.color} size={68} />
             {profile && (
               <span className="absolute -bottom-1 -right-1.5 min-w-[22px] h-[22px] px-1 rounded-full bg-gradient-to-b from-violet-400 to-violet-700 flex items-center justify-center text-[11px] font-extrabold text-white leading-none shadow-[0_2px_5px_rgba(0,0,0,0.6)]"
                 style={{ boxShadow: `0 0 0 3px ${CARD_BG}, 0 2px 5px rgba(0,0,0,0.6)` }}>

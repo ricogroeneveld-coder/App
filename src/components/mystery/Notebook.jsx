@@ -68,7 +68,7 @@ export default function Notebook({ players, questions, guesses, me, myPlayer }) 
         </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <PlayerAvatar profile={profiles[target.user_id]} name={target.display_name} color={target.color} size={32} />
+            <PlayerAvatar profile={profiles[target.user_id]} userId={target.user_id} name={target.display_name} color={target.color} size={32} />
             <div className="min-w-0">
               <p className="font-semibold truncate">{target.display_name}</p>
               <p className="text-xs text-slate-400">{pageIdx+1} / {opponents.length}</p>
