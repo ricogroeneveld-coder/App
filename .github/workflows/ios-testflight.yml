@@ -64,6 +64,12 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_REVENUECAT_IOS_KEY: ${{ secrets.VITE_REVENUECAT_IOS_KEY }}
+          # The live web deployment (see share.js) — lets the lobby's native
+          # "invite" chooser offer a real browser join link for someone
+          # without the app, instead of that option staying disabled. Not a
+          # secret (it's a public URL), so it's hardcoded rather than pulled
+          # from a repo secret.
+          VITE_APP_URL: https://app-whatsmypick.vercel.app
           # Optional override for where the privacy/support/terms pages are
           # published. Unset is fine — links.js carries the correct base.
           VITE_SITE_BASE: ${{ secrets.VITE_SITE_BASE }}

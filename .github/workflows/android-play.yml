@@ -67,6 +67,12 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_REVENUECAT_ANDROID_KEY: ${{ secrets.VITE_REVENUECAT_ANDROID_KEY }}
           VITE_SITE_BASE: ${{ secrets.VITE_SITE_BASE }}
+          # The live web deployment (see share.js) — lets the lobby's native
+          # "invite" chooser offer a real browser join link for someone
+          # without the app, instead of that option staying disabled. Not a
+          # secret (it's a public URL), so it's hardcoded rather than pulled
+          # from a repo secret.
+          VITE_APP_URL: https://app-whatsmypick.vercel.app
 
       - name: Fail if the web build didn't reach the Android assets
         run: test -f android/app/src/main/assets/public/index.html
