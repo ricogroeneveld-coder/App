@@ -1,4 +1,5 @@
 import { isNativeApp } from './platform';
+import { APP_STORE_URL } from './links';
 
 // The live web deployment's origin (e.g. https://whatsmypick.example.com),
 // used to build a real join link for the native share sheet — see the
@@ -22,21 +23,30 @@ export function hasBrowserJoinLink() { return isNativeApp() ? !!APP_URL : true; 
  * `audience` lets the inviter say who they're inviting, since the two need
  * different content:
  *  - 'app'     — the recipient already has (or will get) the native app, so
- *                just the room code is shared; they enter it on Home.
+ *                the room code is shared, with the App Store listing as the
+ *                share's `url` (so it renders as a real, tappable link —
+ *                covers the "or will get" half: someone who taps it without
+ *                the app yet lands on the download page instead of a dead
+ *                end).
  *  - 'browser' — the recipient should join straight from their phone's
  *                browser, no app involved (an Android friend when this
  *                share comes from the iOS app, or vice versa — MysteryGame.jsx's
- *                invite-link name gate handles the landing). Needs a real,
- *                public URL: on the web build window.location.origin
- *                already is one; on native it isn't (the Capacitor
- *                webview's origin is internal), so this falls back to
- *                VITE_APP_URL instead. If neither is available there's
- *                nothing valid to send, so this returns 'no_link' instead
- *                of handing out a broken one.
+ *                invite-link name gate handles the landing). The join link is
+ *                the share's primary `url` (real, tappable); the App Store
+ *                listing is appended to the message text as a secondary link,
+ *                since Web Share only carries one `url`. Needs a real,
+ *                public URL for the join link itself: on the web build
+ *                window.location.origin already is one; on native it isn't
+ *                (the Capacitor webview's origin is internal), so this falls
+ *                back to VITE_APP_URL instead. If neither is available
+ *                there's nothing valid to send, so this returns 'no_link'
+ *                instead of handing out a broken one.
  *  - omitted   — the original auto behavior (matches the sender's own
  *                platform): a real link on web, room-code-only on native
  *                unless VITE_APP_URL is set. Used where there's no UI to
  *                ask the inviter, and on web where the distinction is moot.
+ *                No App Store link here — this path isn't the native
+ *                "who are you inviting" chooser, so it stays as before.
  *
  * Returns 'shared' | 'copied' | 'cancelled' | 'unsupported' | 'no_link' so
  * the caller can decide what (if anything) to toast.
@@ -45,9 +55,9 @@ export async function shareRoomInvite(roomCode, t, audience) {
   let text, url;
   if (audience === 'app') {
     text = t.shareInviteText(roomCode);
-    url = undefined;
+    url = APP_STORE_URL;
   } else if (audience === 'browser') {
-    text = t.shareInviteBrowserText(roomCode);
+    text = `${t.shareInviteBrowserText(roomCode)}\n\n${t.shareGetAppLabel}: ${APP_STORE_URL}`;
     const base = isNativeApp() ? APP_URL : window.location.origin;
     if (!base) return 'no_link';
     url = `${base}/mystery/${roomCode}`;
