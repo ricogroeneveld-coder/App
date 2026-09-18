@@ -1,5 +1,14 @@
 import { isNativeApp } from './platform';
 
+// The live web deployment's origin (e.g. https://whatsmypick.example.com),
+// used to build a real join link for the native share sheet — see the
+// comment on shareRoomInvite below for why native can't derive this from
+// window.location.origin itself. Unset by default: until this is
+// configured with the app's actual production domain, native share falls
+// back to the old room-code-only behavior instead of handing out a broken
+// link. Set at build time, same pattern as VITE_SITE_BASE in links.js.
+const APP_URL = String(import.meta.env.VITE_APP_URL || '').replace(/\/+$/, '');
+
 /**
  * Share a room invite via the OS share sheet. Capacitor's WKWebView on iOS
  * supports the Web Share API natively (no extra Capacitor plugin needed),
@@ -8,15 +17,22 @@ import { isNativeApp } from './platform';
  * On the web build, the invite includes a real join link
  * (window.location.origin is a genuine https URL there). On native,
  * window.location.origin is the webview's internal origin, not a real
- * address — sharing that would hand out a broken link — so the native
- * share includes just the room code, which is enough to join from Home.
+ * address, so it falls back to VITE_APP_URL instead — the join link then
+ * points at the real web deployment, which is what lets someone who
+ * doesn't have the app (an Android friend when this share comes from the
+ * iOS app, or vice versa) just open it in their phone's browser and join
+ * from there (see MysteryGame.jsx's invite-link name gate). If neither is
+ * available, the share falls back to just the room code, which is enough
+ * to join from Home for anyone who does have the app installed.
  *
  * Returns 'shared' | 'copied' | 'cancelled' | 'unsupported' so the caller
  * can decide what (if anything) to toast.
  */
 export async function shareRoomInvite(roomCode, t) {
   const text = t.shareInviteText(roomCode);
-  const url = isNativeApp() ? undefined : `${window.location.origin}/mystery/${roomCode}`;
+  const url = isNativeApp()
+    ? (APP_URL ? `${APP_URL}/mystery/${roomCode}` : undefined)
+    : `${window.location.origin}/mystery/${roomCode}`;
 
   if (navigator.share) {
     try {

@@ -279,6 +279,17 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
             <div className="flex items-center gap-1.5 mb-1.5 px-1 shrink-0">
               <Users className="w-3.5 h-3.5 text-violet-300" />
               <span className="text-xs font-bold text-slate-300">{t.playersCount(players.length)}</span>
+              {/* Always-available invite action — not just while the lobby is
+                  empty (see the dashed-border prompt below for that case).
+                  On native this hands out a real web join link when
+                  VITE_APP_URL is configured, so friends without the app
+                  (e.g. an Android friend invited from the iOS app) can join
+                  straight from their phone's browser instead of needing the
+                  room code typed in by hand. */}
+              <button onClick={shareInvite} aria-label={t.shareInvite}
+                className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-violet-300 hover:text-violet-200 hover:bg-white/10 transition-colors">
+                <Share className="w-3.5 h-3.5" />
+              </button>
               <span className="ml-auto flex items-center gap-1.5 min-w-0">
                 <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${players.length >= 12 ? 'bg-amber-400' : 'bg-emerald-400'}`}
                   style={players.length >= 12 ? undefined : { animation: 'livePulse 2s ease-in-out infinite' }} />
