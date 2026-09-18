@@ -158,7 +158,7 @@ jobs:
             -destination 'generic/platform=iOS' \
             -archivePath "$RUNNER_TEMP/App.xcarchive" \
             CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
-            MARKETING_VERSION="1.0"
+            MARKETING_VERSION="1.0.1"
           # Verify the archived app really carries the concrete kv-store
           # entitlement before spending time on export/upload.
           APP_PATH="$RUNNER_TEMP/App.xcarchive/Products/Applications/App.app"
