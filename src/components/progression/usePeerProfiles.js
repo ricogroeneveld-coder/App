@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { fetchProfilesFor, getProfile, subscribeProfile } from '@/lib/playerProfile';
 import { getGuestIdentity } from '@/lib/guestIdentity';
+import { hasFullApp } from '@/lib/platform';
 
 // NET-3: how long to let the id-set settle before rebuilding the realtime
 // channel. In chat, senders trickle in one message at a time, so keying the
@@ -35,12 +36,18 @@ export default function usePeerProfiles(players) {
     let live = true;
     const myId = getGuestIdentity().id;
     const idSet = new Set(stableIds ? stableIds.split(',') : []);
-    setProfiles(prev => ({ ...prev, [myId]: getProfile() }));
+    // getProfile() never returns null — a web guest with no real profile
+    // still gets a local blank one back (default Rookie title, Detective
+    // emblem), which used to leak into "my own" row and mask the browser
+    // fallback that peers correctly get from the (genuinely empty) server
+    // fetch below. Only inject it for the real app, where it exists to make
+    // your own equip changes show up instantly without a round trip.
+    if (hasFullApp()) setProfiles(prev => ({ ...prev, [myId]: getProfile() }));
 
     const refetch = () => {
       if (!idSet.size) return;
       fetchProfilesFor([...idSet]).then(map => {
-        if (live) setProfiles(prev => ({ ...prev, ...map, [myId]: getProfile() }));
+        if (live) setProfiles(prev => ({ ...prev, ...map, ...(hasFullApp() ? { [myId]: getProfile() } : {}) }));
       });
     };
     refetch();

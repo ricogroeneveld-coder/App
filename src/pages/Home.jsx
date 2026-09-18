@@ -343,6 +343,14 @@ export default function Home() {
             <p className="text-center text-[18px] font-semibold text-white/[0.78] tracking-wide mt-2 translate-y-3">
               {t.tagline}
             </p>
+            {/* Web-only: this join-only build is visually distinct from the
+                native app (see hasFullApp() in platform.js), so it's worth
+                labeling for anyone who lands here from an invite link. */}
+            {!hasFullApp() && (
+              <p className="text-center text-[12px] font-semibold text-white/45 tracking-wide translate-y-3">
+                {t.webVersionLabel}
+              </p>
+            )}
           </div>
         </motion.div>
 
