@@ -23,18 +23,14 @@ export function hasBrowserJoinLink() { return isNativeApp() ? !!APP_URL : true; 
  * `audience` lets the inviter say who they're inviting, since the two need
  * different content:
  *  - 'app'     — the recipient already has (or will get) the native app, so
- *                the room code is shared, with the App Store listing as the
- *                share's `url` (so it renders as a real, tappable link —
- *                covers the "or will get" half: someone who taps it without
- *                the app yet lands on the download page instead of a dead
- *                end).
+ *                the room code is shared, with the App Store listing
+ *                appended in the message text as a fallback for "or will
+ *                get": someone who taps it without the app yet lands on the
+ *                download page instead of a dead end.
  *  - 'browser' — the recipient should join straight from their phone's
  *                browser, no app involved (an Android friend when this
  *                share comes from the iOS app, or vice versa — MysteryGame.jsx's
- *                invite-link name gate handles the landing). The join link is
- *                the share's primary `url` (real, tappable); the App Store
- *                listing is appended to the message text as a secondary link,
- *                since Web Share only carries one `url`. Needs a real,
+ *                invite-link name gate handles the landing). Needs a real,
  *                public URL for the join link itself: on the web build
  *                window.location.origin already is one; on native it isn't
  *                (the Capacitor webview's origin is internal), so this falls
@@ -48,19 +44,30 @@ export function hasBrowserJoinLink() { return isNativeApp() ? !!APP_URL : true; 
  *                No App Store link here — this path isn't the native
  *                "who are you inviting" chooser, so it stays as before.
  *
+ * 'app' and 'browser' build the ENTIRE message (every link included) as one
+ * `text` string, with `url` left unset — deliberately, not an oversight.
+ * Passing a link separately via `url` leaves its position in the final
+ * message up to whichever share target renders it (some append it after
+ * the text, past anything else already appended there), which is exactly
+ * what silently pushed 'browser's join link to the very end, past the App
+ * Store line, instead of appearing where it's meant to. Building one
+ * complete string keeps the order exactly as written, identically for the
+ * OS share sheet and the clipboard fallback below.
+ *
  * Returns 'shared' | 'copied' | 'cancelled' | 'unsupported' | 'no_link' so
  * the caller can decide what (if anything) to toast.
  */
 export async function shareRoomInvite(roomCode, t, audience) {
   let text, url;
   if (audience === 'app') {
-    text = t.shareInviteText(roomCode);
-    url = APP_STORE_URL;
+    text = `${t.shareInviteText(roomCode)}\n\n${t.shareGetAppLabel}: ${APP_STORE_URL}`;
+    url = undefined;
   } else if (audience === 'browser') {
-    text = `${t.shareInviteBrowserText(roomCode)}\n\n${t.shareGetAppLabel}: ${APP_STORE_URL}`;
     const base = isNativeApp() ? APP_URL : window.location.origin;
     if (!base) return 'no_link';
-    url = `${base}/mystery/${roomCode}`;
+    const joinUrl = `${base}/mystery/${roomCode}`;
+    text = `${t.shareInviteBrowserText(roomCode)}\n\n${joinUrl}\n\n${t.shareGetAppLabel}: ${APP_STORE_URL}`;
+    url = undefined;
   } else {
     text = t.shareInviteText(roomCode);
     url = isNativeApp()
