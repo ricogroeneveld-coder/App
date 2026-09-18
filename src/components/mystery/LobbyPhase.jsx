@@ -5,7 +5,8 @@ import { supabase } from '@/lib/supabaseClient';
 import { leaveRoom } from '@/lib/roomLifecycle';
 import { useToast } from '@/components/ui/use-toast';
 import { Copy, Check, Users, Crown, ArrowRight, ChevronRight, Sparkles, ArrowLeft, HelpCircle, X, Share, Palette, MessageCircle } from 'lucide-react';
-import { shareRoomInvite } from '@/lib/share';
+import { shareRoomInvite, hasBrowserJoinLink } from '@/lib/share';
+import { hasFullApp, isNativeApp } from '@/lib/platform';
 import { useNavigate } from 'react-router-dom';
 import { shortCategory, categoryMeta } from '@/lib/wordLists';
 import { useLang } from '@/lib/LanguageContext';
@@ -102,10 +103,18 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
       .catch(() => {});
   };
 
-  const shareInvite = async () => {
-    const result = await shareRoomInvite(roomCode, t);
+  const shareInvite = async (audience) => {
+    const result = await shareRoomInvite(roomCode, t, audience);
     if (result === 'copied') toast({ title: t.linkCopied });
+    else if (result === 'no_link') toast({ title: t.browserLinkUnavailable, variant: 'destructive' });
   };
+
+  // Native has two genuinely different invite links worth choosing between
+  // (room-code-only for someone who already has the app, vs a real browser
+  // link for someone who doesn't — see share.js). Web's own address is
+  // already a real link either way, so there's nothing to choose there.
+  const [showInviteChooser, setShowInviteChooser] = useState(false);
+  const onInvite = () => { if (isNativeApp()) setShowInviteChooser(true); else shareInvite(); };
 
   const selectCategory = (cat) => {
     setSelectedCategory(cat);
@@ -186,6 +195,38 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
                 className="flex-1 h-11 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 font-semibold">{t.cancel}</button>
               <button onClick={leaveGame}
                 className="flex-1 h-11 rounded-xl bg-rose-500 hover:bg-rose-600 border-0 font-bold text-white">{t.leave}</button>
+            </div>
+          </Dialog>
+        )}
+      </AnimatePresence>
+
+      {/* Invite chooser (native only — see onInvite) — asks who's being
+          invited so the right link goes out: a room code for someone who
+          already has the app, or a real browser link for someone who
+          doesn't. */}
+      <AnimatePresence>
+        {showInviteChooser && (
+          <Dialog onClose={() => setShowInviteChooser(false)} titleId="invite-audience-title"
+            panelClassName="glass-card bg-slate-900/95 p-5 max-w-sm">
+            <p id="invite-audience-title" className="font-extrabold text-lg mb-3">{t.inviteAudienceTitle}</p>
+            <div className="space-y-2.5">
+              <button onClick={() => { setShowInviteChooser(false); shareInvite('app'); }}
+                className="glass-panel w-full p-3 flex items-center gap-3 text-left transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5 hover:ring-white/20">
+                <span className="flex-1 min-w-0">
+                  <span className="block text-sm font-extrabold text-white leading-tight">{t.inviteAudienceApp}</span>
+                  <span className="block text-xs font-medium text-slate-400 leading-tight">{t.inviteAudienceAppDesc}</span>
+                </span>
+                <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+              </button>
+              <button onClick={() => { setShowInviteChooser(false); shareInvite('browser'); }}
+                disabled={!hasBrowserJoinLink()}
+                className="glass-panel w-full p-3 flex items-center gap-3 text-left transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5 hover:ring-white/20 disabled:opacity-40 disabled:pointer-events-none">
+                <span className="flex-1 min-w-0">
+                  <span className="block text-sm font-extrabold text-white leading-tight">{t.inviteAudienceBrowser}</span>
+                  <span className="block text-xs font-medium text-slate-400 leading-tight">{t.inviteAudienceBrowserDesc}</span>
+                </span>
+                <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+              </button>
             </div>
           </Dialog>
         )}
@@ -281,12 +322,12 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
               <span className="text-xs font-bold text-slate-300">{t.playersCount(players.length)}</span>
               {/* Always-available invite action — not just while the lobby is
                   empty (see the dashed-border prompt below for that case).
-                  On native this hands out a real web join link when
-                  VITE_APP_URL is configured, so friends without the app
-                  (e.g. an Android friend invited from the iOS app) can join
-                  straight from their phone's browser instead of needing the
-                  room code typed in by hand. */}
-              <button onClick={shareInvite} aria-label={t.shareInvite}
+                  On native, tapping it asks who's being invited (see
+                  showInviteChooser below) so a friend without the app
+                  (e.g. Android when this share comes from the iOS app, or
+                  vice versa) can get a real web join link instead of a room
+                  code they have nowhere to enter. */}
+              <button onClick={onInvite} aria-label={t.shareInvite}
                 className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-violet-300 hover:text-violet-200 hover:bg-white/10 transition-colors">
                 <Share className="w-3.5 h-3.5" />
               </button>
@@ -342,7 +383,7 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
               })}
               {players.length === 1 && (
                 <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
-                  onClick={shareInvite}
+                  onClick={onInvite}
                   className="w-full py-6 flex flex-col items-center gap-1.5 text-center rounded-2xl border border-dashed border-white/10 hover:border-violet-400/40 hover:bg-white/[0.03] transition-colors">
                   <Share className="w-4 h-4 text-violet-300" />
                   <span className="text-xs font-semibold text-slate-400 px-6 leading-relaxed">{t.inviteHint}</span>
@@ -460,7 +501,7 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
       </div>
       )}
 
-      {tab === 'profile' && (
+      {hasFullApp() && tab === 'profile' && (
         <div className="relative z-10 w-full max-w-md flex-1 min-h-0 overflow-y-auto hide-scrollbar self-stretch pt-1">
           <QuickEquip />
         </div>
@@ -488,7 +529,9 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
         onChange={setTab}
         items={[
           { id: 'lobby', label: t.tabLobby, icon: Users },
-          { id: 'profile', label: t.tabProfile, icon: Palette },
+          // Cosmetics equip screen is app-only — web is join-only, with no
+          // shop/progression to have anything to equip (see hasFullApp).
+          ...(hasFullApp() ? [{ id: 'profile', label: t.tabProfile, icon: Palette }] : []),
           { id: 'chat', label: t.tabChat, icon: MessageCircle, badge: unreadChat },
         ]}
       />

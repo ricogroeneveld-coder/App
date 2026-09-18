@@ -12,6 +12,7 @@ import { useLang } from '@/lib/LanguageContext';
 import { toDisplayWord } from '@/lib/wordLists';
 import GameBackground from '@/components/GameBackground';
 import { grantMatchRewards, getProfile } from '@/lib/playerProfile';
+import { hasFullApp } from '@/lib/platform';
 import { cosmeticById } from '@/lib/cosmetics';
 import { categoryMeta, shortCategory } from '@/lib/wordLists';
 import { hapticSuccess } from '@/lib/haptics';
@@ -326,7 +327,7 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
       </div>
       )}
 
-      {tab === 'profile' && (
+      {hasFullApp() && tab === 'profile' && (
         <div className="w-full max-w-md flex-1 min-h-0 overflow-y-auto hide-scrollbar px-4 pb-4"
           style={{ paddingTop: 'max(calc(env(safe-area-inset-top) + 3.5rem), 3.75rem)', paddingBottom: 'calc(env(safe-area-inset-bottom) + 4.75rem)' }}>
           <QuickEquip />
@@ -355,7 +356,7 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
         onChange={setTab}
         items={[
           { id: 'results', label: t.tabResults, icon: Award },
-          { id: 'profile', label: t.tabProfile, icon: Palette },
+          ...(hasFullApp() ? [{ id: 'profile', label: t.tabProfile, icon: Palette }] : []),
           { id: 'chat', label: t.tabChat, icon: MessageCircle, badge: unreadChat },
         ]}
       />

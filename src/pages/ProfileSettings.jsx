@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MysteryPlayer, MysteryRoom } from '@/api/db';
 import { supabase } from '@/lib/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
-import { ArrowLeft, Trash2, AlertTriangle, Globe, DoorOpen, Volume2, Vibrate, LogOut, LogIn, RotateCcw, Shield, LifeBuoy, FileText } from 'lucide-react';
+import { ArrowLeft, Trash2, AlertTriangle, Globe, DoorOpen, Volume2, Vibrate, LogOut, RotateCcw, Shield, LifeBuoy, FileText } from 'lucide-react';
 import { getGuestIdentity, clearGuestIdentity } from '@/lib/guestIdentity';
 import { useAuth } from '@/lib/AuthContext';
 import { useLang } from '@/lib/LanguageContext';
@@ -19,7 +19,6 @@ import BannerArt from '@/components/progression/BannerArt';
 import { cosmeticById, RARITIES } from '@/lib/cosmetics';
 import { getProfile, loadProfile, deleteProfileData } from '@/lib/playerProfile';
 import { restorePurchases } from '@/lib/payments';
-import { isNativeApp } from '@/lib/platform';
 
 // Public site pages (privacy / support / terms) — single source of truth in
 // src/lib/links.js so the in-app links and the App Store metadata URL can't
@@ -255,28 +254,12 @@ export default function ProfileSettings() {
           </div>
         </motion.div>
 
-        {/* Sign in prompt — guests only, web only. Purely optional: gameplay
-            already works fully without an account. Hidden in the native app:
-            v1 ships account-less there (see src/lib/platform.js). */}
-        {!isRegistered && !isNativeApp() && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.03 }}
-            className="glass-card p-4"
-          >
-            <div className="flex items-center gap-3 mb-2">
-              <LogIn className="w-5 h-5 text-violet-400 flex-shrink-0" />
-              <p className="font-semibold text-white">{t.signInTitle}</p>
-            </div>
-            <p className="text-slate-400 text-sm mb-3">{t.signInDesc}</p>
-            <Link to="/login">
-              <Button className="violet-solid-btn w-full h-11 border-0 bg-transparent hover:bg-transparent font-bold select-none-interactive">
-                {t.signInCta}
-              </Button>
-            </Link>
-          </motion.div>
-        )}
+        {/* Sign-in prompt: was web-only (native ships account-less — see
+            src/lib/platform.js). Web is now also join-only (hasFullApp) with
+            no progression for an account to attach to, so this entry point
+            is gone on both platforms. /login and /register still work for
+            anyone who already has an account and navigates there directly —
+            only the "create one" invitation is removed. */}
 
         {/* Language toggle */}
         <motion.div

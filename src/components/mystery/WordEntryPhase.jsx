@@ -11,6 +11,7 @@ import { Lock, Check, Clock, Pencil, ArrowLeft, Palette, MessageCircle, Timer } 
 import { WORD_LISTS, WORD_LISTS_NL, PREMIUM_WORD_LISTS, shortCategory } from '@/lib/wordLists';
 import { useLang } from '@/lib/LanguageContext';
 import { cleanText } from '@/lib/cleanText';
+import { hasFullApp } from '@/lib/platform';
 import GameBackground from '@/components/GameBackground';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import usePeerProfiles from '@/components/progression/usePeerProfiles';
@@ -487,7 +488,7 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
           this because its centered header text never sits under it, but
           QuickEquip's left-aligned section labels and chat's message list
           both start flush left. */}
-      {tab === 'profile' && (
+      {hasFullApp() && tab === 'profile' && (
         <div className="w-full max-w-md relative flex-1 min-h-0 overflow-y-auto hide-scrollbar px-4"
           style={{ paddingTop: 'max(calc(env(safe-area-inset-top) + 3.5rem), 3.75rem)', paddingBottom: 'calc(env(safe-area-inset-bottom) + 4.75rem)' }}>
           <QuickEquip />
@@ -506,7 +507,7 @@ export default function WordEntryPhase({ room, players, me, myPlayer, roomCode }
         onChange={setTab}
         items={[
           { id: 'word', label: t.tabWordEntry, icon: Pencil },
-          { id: 'profile', label: t.tabProfile, icon: Palette },
+          ...(hasFullApp() ? [{ id: 'profile', label: t.tabProfile, icon: Palette }] : []),
           { id: 'chat', label: t.tabChat, icon: MessageCircle, badge: unreadChat },
         ]}
       />

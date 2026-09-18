@@ -12,7 +12,7 @@ import { Dialog } from '@/components/ui/dialog';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import { loadProfile, getProfile, subscribeProfile, ensureDailyLogin } from '@/lib/playerProfile';
 import { ALL_COSMETICS, cosmeticById } from '@/lib/cosmetics';
-import { isIOS } from '@/lib/platform';
+import { isIOS, hasFullApp } from '@/lib/platform';
 import { Keyboard, KeyboardResize } from '@capacitor/keyboard';
 import { track } from '@/lib/analytics';
 import { TERMS_URL, PRIVACY_URL } from '@/lib/links';
@@ -56,13 +56,19 @@ export default function Home() {
         } catch { /* offline — banner just doesn't show */ }
       })();
     }
-    loadProfile().then(p => { if (!cancelled) setProfile(p); });
-    if (hasGuestName()) {
-      ensureDailyLogin().then(res => {
-        if (res && !cancelled) {
-          toast({ title: `🎁 ${t.dailyReward}: +${res.picks} Picks`, description: res.streak > 1 ? `🔥 ${res.streak} ${t.dayStreak}` : undefined });
-        }
-      });
+    // Web is join-only (hasFullApp): the profile card is hidden and
+    // ensureDailyLogin() is already a no-op there, so skip the fetch —
+    // loadProfile() would otherwise upsert a fresh player_profiles row for
+    // a guest who's never going to see any progression.
+    if (hasFullApp()) {
+      loadProfile().then(p => { if (!cancelled) setProfile(p); });
+      if (hasGuestName()) {
+        ensureDailyLogin().then(res => {
+          if (res && !cancelled) {
+            toast({ title: `🎁 ${t.dailyReward}: +${res.picks} Picks`, description: res.streak > 1 ? `🔥 ${res.streak} ${t.dayStreak}` : undefined });
+          }
+        });
+      }
     }
     const unsub = subscribeProfile(setProfile);
     return () => { cancelled = true; unsub(); };
@@ -254,8 +260,11 @@ export default function Home() {
         </Dialog>
       )}
 
-      {/* Game visibility sheet — choosing an option creates the lobby */}
-      {showCreateSheet && (
+      {/* Game visibility sheet — choosing an option creates the lobby.
+          Web is join-only (see hasFullApp): nothing can ever set
+          showCreateSheet true there since the button that does is hidden
+          below, but the guard here is belt-and-braces. */}
+      {hasFullApp() && showCreateSheet && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4"
           onClick={() => loading === null && setShowCreateSheet(false)}>
           <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}
@@ -371,6 +380,10 @@ export default function Home() {
                 <ChevronRight className="w-4 h-4 text-violet-300 shrink-0" />
               </motion.button>
             )}
+            {/* Profile card + Create Game — both app-only (progression/shop
+                and hosting don't exist on the join-only web build). */}
+            {hasFullApp() && (
+              <>
             {/* Profile card — tap opens the full profile */}
             <div onClick={() => navigate('/profile')} role="button" tabIndex={0}
               onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && navigate('/profile')}
@@ -424,6 +437,8 @@ export default function Home() {
               </span>
             </button>
             </div>
+              </>
+            )}
 
             {/* Join Game */}
             <div className="relative h-20 rounded-[28px] bg-gradient-to-b from-[#2a1150] via-[#1c0b3a] to-[#0d0620] shadow-[0_2px_3px_rgba(0,0,0,0.4),0_10px_18px_-8px_rgba(0,0,0,0.55),0_20px_30px_-16px_rgba(0,0,0,0.4),0_0_14px_-8px_rgba(56,189,248,0.4),0_0_0_1px_rgba(56,189,248,0.45),inset_0_1px_1px_rgba(255,255,255,0.2),inset_0_-8px_14px_-6px_rgba(0,0,0,0.42)] px-4 flex items-center gap-2.5 transition-transform duration-150 hover:-translate-y-0.5 overflow-hidden">

@@ -21,6 +21,15 @@ export function getPlatform() {
 export function isIOS() { return getPlatform() === 'ios'; }
 export function isAndroid() { return getPlatform() === 'android'; }
 
+// The plain web build is join-only: someone who lands there (typically from
+// a shared invite link — see share.js) can join a room and play, but can't
+// host/create a game, earn XP/Picks/progression, buy or equip cosmetics, or
+// sign in for an account. It's meant purely as a lightweight landing surface
+// for people without the native app, not a second full platform to maintain
+// feature parity on. The native apps keep the full experience. Centralized
+// here so the policy only has to change in one place.
+export function hasFullApp() { return isNativeApp(); }
+
 // Gates the ?dev= URL mechanism (test-mode unlock, profile reset, simulated
 // web purchases) behind a build-time flag instead of trusting the URL
 // alone. Any build compiled without VITE_ENABLE_DEV_TOOLS=1 — including
