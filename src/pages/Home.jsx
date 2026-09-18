@@ -261,10 +261,11 @@ export default function Home() {
       )}
 
       {/* Game visibility sheet — choosing an option creates the lobby.
-          Web is join-only (see hasFullApp): nothing can ever set
-          showCreateSheet true there since the button that does is hidden
-          below, but the guard here is belt-and-braces. */}
-      {hasFullApp() && showCreateSheet && (
+          Practice vs Bots stays available on web (it's local-only: no room
+          is hosted and it pays no rewards, so it doesn't conflict with
+          join-only web), but the two real hosting options below are
+          app-only. */}
+      {showCreateSheet && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4"
           onClick={() => loading === null && setShowCreateSheet(false)}>
           <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}
@@ -280,6 +281,8 @@ export default function Home() {
             </div>
             <p className="section-label mb-3">{t.gameVisibility}</p>
             <div className="space-y-2.5">
+              {hasFullApp() && (
+              <>
               <button onClick={() => handleCreate(true)} disabled={loading !== null}
                 className="glass-panel w-full p-3 flex items-center gap-3 text-left transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5 hover:ring-white/20 disabled:opacity-60">
                 <span className="w-11 h-11 rounded-xl bg-gradient-to-b from-[#062217] to-[#020c08] ring-1 ring-green-400/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0">
@@ -302,7 +305,10 @@ export default function Home() {
                 </span>
                 <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
               </button>
-              {/* Play vs bots — local practice match, no room is created */}
+              </>
+              )}
+              {/* Play vs bots — local practice match, no room is created.
+                  Available on both platforms (see the comment above). */}
               <button onClick={() => { setShowCreateSheet(false); navigate('/practice'); }} disabled={loading !== null}
                 className="glass-panel w-full p-3 flex items-center gap-3 text-left transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5 hover:ring-white/20 disabled:opacity-60">
                 <span className="w-11 h-11 rounded-xl bg-gradient-to-b from-[#0a2233] to-[#040d16] ring-1 ring-sky-400/35 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),inset_0_-2px_4px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0">
@@ -380,8 +386,10 @@ export default function Home() {
                 <ChevronRight className="w-4 h-4 text-violet-300 shrink-0" />
               </motion.button>
             )}
-            {/* Profile card + Create Game — both app-only (progression/shop
-                and hosting don't exist on the join-only web build). */}
+            {/* Profile card — app-only (no progression/shop on the
+                join-only web build). Create Game (below) stays reachable
+                on both: it also gates Practice vs Bots, which IS available
+                on web since it's local-only and pays no rewards. */}
             {hasFullApp() && (
               <>
             {/* Profile card — tap opens the full profile */}
@@ -418,8 +426,11 @@ export default function Home() {
                 <ChevronRight className="w-6 h-6 text-violet-300 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />
               </span>
             </div>
+              </>
+            )}
 
-            {/* Create Game */}
+            {/* Create Game — opens the sheet above; that sheet hides the
+                real hosting options on web but keeps Practice vs Bots. */}
             <div className="gold-breathe">
             <button onClick={() => setShowCreateSheet(true)} disabled={loading !== null}
               className="relative w-full h-20 rounded-[28px] bg-[linear-gradient(180deg,#fdeeb8_0%,#ffcb45_16%,#e08e05_40%,#a85800_66%,#5e2c00_100%)] shadow-[0_2px_3px_rgba(0,0,0,0.4),0_10px_18px_-8px_rgba(0,0,0,0.55),0_20px_30px_-16px_rgba(0,0,0,0.4),0_0_8px_-8px_rgba(255,180,60,0.22),0_0_0_1px_rgba(255,214,120,0.45),inset_0_1px_1px_rgba(255,255,255,0.2),inset_0_-8px_14px_-6px_rgba(110,45,0,0.42)] px-4 flex items-center gap-2.5 disabled:opacity-60 transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5 hover:brightness-[1.04] overflow-hidden">
@@ -437,8 +448,6 @@ export default function Home() {
               </span>
             </button>
             </div>
-              </>
-            )}
 
             {/* Join Game */}
             <div className="relative h-20 rounded-[28px] bg-gradient-to-b from-[#2a1150] via-[#1c0b3a] to-[#0d0620] shadow-[0_2px_3px_rgba(0,0,0,0.4),0_10px_18px_-8px_rgba(0,0,0,0.55),0_20px_30px_-16px_rgba(0,0,0,0.4),0_0_14px_-8px_rgba(56,189,248,0.4),0_0_0_1px_rgba(56,189,248,0.45),inset_0_1px_1px_rgba(255,255,255,0.2),inset_0_-8px_14px_-6px_rgba(0,0,0,0.42)] px-4 flex items-center gap-2.5 transition-transform duration-150 hover:-translate-y-0.5 overflow-hidden">
