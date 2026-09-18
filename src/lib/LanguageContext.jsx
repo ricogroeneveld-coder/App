@@ -6,6 +6,7 @@ const translations = {
   en: {
     // Home
     tagline: 'The Interactive Guessing Game',
+    webVersionLabel: '(Web Version)',
     guessLaughWin: 'Guess. Laugh. Win.',
     subtitle: "Guess what the other player(s) picked, be the fastest and win!",
     players: '2–12 players',
@@ -423,6 +424,7 @@ const translations = {
   nl: {
     // Home
     tagline: 'Het Interactieve Raadspel',
+    webVersionLabel: '(Webversie)',
     guessLaughWin: 'Raad. Lach. Win.',
     subtitle: 'Raad wat de andere speler(s) kozen, wees de snelste en win!',
     players: '2–12 spelers',
