@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MysteryRoom, MysteryPlayer } from '@/api/db';
 import { useToast } from '@/components/ui/use-toast';
-import { Settings, X, ChevronRight, Crown, Users, HelpCircle, Globe, Lock, Bot, Apple } from 'lucide-react';
+import { Settings, X, ChevronRight, Crown, Users, HelpCircle, Globe, Lock, Bot } from 'lucide-react';
 import { getGuestIdentity, setGuestName, hasGuestName, MAX_NAME_LENGTH } from '@/lib/guestIdentity';
 import { Link } from 'react-router-dom';
 import { useLang } from '@/lib/LanguageContext';
@@ -17,6 +17,7 @@ import { Keyboard, KeyboardResize } from '@capacitor/keyboard';
 import { track } from '@/lib/analytics';
 import { TERMS_URL, PRIVACY_URL, APP_STORE_URL } from '@/lib/links';
 import heroImage from '../../home-hero.webp';
+import appIconImage from '../assets/app-icon.webp';
 
 const PLAYER_COLORS = ['#6366f1','#ec4899','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ef4444','#14b8a6','#f97316','#06b6d4','#84cc16','#a855f7'];
 
@@ -460,8 +461,8 @@ export default function Home() {
               <a href={APP_STORE_URL} target="_blank" rel="noopener"
                 className="relative block h-20 rounded-[28px] bg-gradient-to-b from-[#3a3a3c] via-[#1c1c1e] to-[#000000] shadow-[0_2px_3px_rgba(0,0,0,0.4),0_10px_18px_-8px_rgba(0,0,0,0.55),0_20px_30px_-16px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.14),inset_0_1px_1px_rgba(255,255,255,0.18)] px-4 flex items-center gap-2.5 transition-all duration-150 hover:-translate-y-0.5 active:scale-[0.98] overflow-hidden">
                 <span className="pointer-events-none absolute inset-x-2 top-1 h-1/2 rounded-t-[24px] bg-gradient-to-b from-white/[0.1] to-transparent" />
-                <span className="w-12 h-12 rounded-2xl bg-gradient-to-b from-[#48484a] to-[#1c1c1e] ring-1 ring-white/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),inset_0_-2px_4px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0">
-                  <Apple className="w-6 h-6 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" fill="currentColor" />
+                <span className="w-12 h-12 rounded-2xl ring-1 ring-white/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),inset_0_-2px_4px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.5)] overflow-hidden shrink-0">
+                  <img src={appIconImage} alt="" className="w-full h-full object-cover" />
                 </span>
                 <span className="text-left flex-1 min-w-0">
                   <span className="block text-base font-extrabold tracking-tight text-white leading-tight">{t.getTheApp}</span>
