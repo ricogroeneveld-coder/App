@@ -1,5 +1,6 @@
 import React from 'react';
 import { cosmeticById } from '@/lib/cosmetics';
+import { isBrowserPlayer, BROWSER_EMBLEM } from '@/lib/browserPlayer';
 
 /**
  * Rarity frame around an avatar (or any circular content). Renders the
@@ -94,8 +95,10 @@ export function EmblemTile({ emblem, fontSize, breathe = false }) {
  * back to the classic glossy letter circle so pre-migration players still
  * look right. Medallions breathe gently at profile sizes (≥48px).
  */
-export default function PlayerAvatar({ profile, name = '?', color = '#6d28d9', size = 32, className = '' }) {
-  const emblem = profile ? cosmeticById(profile.equipped?.emblem) : null;
+export default function PlayerAvatar({ profile, userId = null, name = '?', color = '#6d28d9', size = 32, className = '' }) {
+  const emblem = profile
+    ? cosmeticById(profile.equipped?.emblem)
+    : (isBrowserPlayer(userId, profile) ? BROWSER_EMBLEM : null);
   const border = profile ? cosmeticById(profile.equipped?.border) : null;
 
   if (emblem) {

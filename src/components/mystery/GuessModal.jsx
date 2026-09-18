@@ -118,7 +118,7 @@ export default function GuessModal({ target, players, guesses, me, myPlayer, roo
                 ) : guessableOpponents.map(p => (
                   <button key={p.id} onClick={() => setSelectedTarget(p)}
                     className="glass-tile w-full flex items-center gap-2.5 px-3 py-2 hover:bg-white/10 transition text-left active:scale-[0.98]">
-                    <PlayerAvatar profile={profiles[p.user_id]} name={p.display_name} color={p.color} size={28} />
+                    <PlayerAvatar profile={profiles[p.user_id]} userId={p.user_id} name={p.display_name} color={p.color} size={28} />
                     <span className="font-medium">{p.display_name}</span>
                   </button>
                 ))}
@@ -126,7 +126,7 @@ export default function GuessModal({ target, players, guesses, me, myPlayer, roo
             ) : (
               <div className="space-y-4">
                 <div className="glass-tile flex items-center gap-2.5 px-3 py-2">
-                  <PlayerAvatar profile={profiles[selectedTarget.user_id]} name={selectedTarget.display_name} color={selectedTarget.color} size={28} />
+                  <PlayerAvatar profile={profiles[selectedTarget.user_id]} userId={selectedTarget.user_id} name={selectedTarget.display_name} color={selectedTarget.color} size={28} />
                   <div className="flex-1">
                     <p className="font-medium">{selectedTarget.display_name}</p>
                     <p className="text-xs text-slate-400">{t.categorie}: {room.category}</p>

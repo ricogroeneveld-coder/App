@@ -276,7 +276,7 @@ export default function FinishedPhase({ players, guesses, room, me, myPlayer, ro
                   ? 'bg-gradient-to-b from-[#3a2400]/70 to-[#1a0f00]/70 ring-[#ffcf7a]/50 shadow-[inset_0_1px_1px_rgba(255,220,150,0.2)]'
                   : 'bg-white/5 ring-white/5'}`}>
                 <span className={`font-bold w-7 text-center ${rank <= 3 ? 'text-xl' : 'text-sm text-slate-400'}`}>{medal}</span>
-                <PlayerAvatar profile={profiles[p.user_id]} name={p.display_name} color={p.color} size={32} />
+                <PlayerAvatar profile={profiles[p.user_id]} userId={p.user_id} name={p.display_name} color={p.color} size={32} />
                 <div className="flex-1 min-w-0">
                   <p className={`font-bold text-sm truncate leading-tight ${isTop ? 'text-amber-200' : ''}`}>{p.display_name}</p>
                   <p className="text-[11px] text-slate-400 truncate">{t.secret}: <span className="text-slate-200 font-medium">{toDisplayWord(p.secret_word, lang) || '—'}</span></p>

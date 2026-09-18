@@ -942,7 +942,7 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
                     </>
                   )}
                   <span className="relative text-xs text-slate-400 w-4 text-center font-mono">{i+1}</span>
-                  <PlayerAvatar profile={profiles[p.user_id]} name={p.display_name} color={p.color} size={28} className="relative" />
+                  <PlayerAvatar profile={profiles[p.user_id]} userId={p.user_id} name={p.display_name} color={p.color} size={28} className="relative" />
                   <div className="relative flex-1 min-w-0">
                     <p className={`font-medium text-sm truncate ${(profiles[p.user_id] && cosmeticById(profiles[p.user_id].equipped?.nameColor)?.cls) || ''}`}>{p.display_name}{isMe && <span className="ml-1 text-[10px] text-violet-400">({t.you.toLowerCase()})</span>}</p>
                     <p className="text-xs text-slate-400">

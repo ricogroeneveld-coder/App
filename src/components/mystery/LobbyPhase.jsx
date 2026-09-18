@@ -7,6 +7,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Copy, Check, Users, Crown, ArrowRight, ChevronRight, Sparkles, ArrowLeft, HelpCircle, X, Share, Palette, MessageCircle } from 'lucide-react';
 import { shareRoomInvite, hasBrowserJoinLink } from '@/lib/share';
 import { hasFullApp, isNativeApp } from '@/lib/platform';
+import { isBrowserPlayer, BROWSER_TITLE } from '@/lib/browserPlayer';
 import { useNavigate } from 'react-router-dom';
 import { shortCategory, categoryMeta } from '@/lib/wordLists';
 import { useLang } from '@/lib/LanguageContext';
@@ -342,7 +343,7 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
                 const pProfile = profiles[p.user_id];
                 const pBanner = pProfile ? cosmeticById(pProfile.equipped?.banner) : null;
                 const pNameCls = pProfile ? cosmeticById(pProfile.equipped?.nameColor)?.cls : null;
-                const pTitle = pProfile ? cosmeticById(pProfile.equipped?.title) : null;
+                const pTitle = pProfile ? cosmeticById(pProfile.equipped?.title) : (isBrowserPlayer(p.user_id, pProfile) ? BROWSER_TITLE : null);
                 return (
                   <motion.div key={p.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
                     onClick={() => setCardPlayer(p)} role="button" tabIndex={0}
@@ -357,7 +358,7 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
                     {/* flex: an inline span reserves baseline space below the avatar,
                         pushing it visibly above the row's true center */}
                     <span className="relative shrink-0 flex" style={{ filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.5))' }}>
-                      <PlayerAvatar profile={pProfile} name={p.display_name} color={p.color} size={40} />
+                      <PlayerAvatar profile={pProfile} userId={p.user_id} name={p.display_name} color={p.color} size={40} />
                     </span>
                     <span className="relative flex-1 min-w-0 flex flex-col justify-center">
                       <span className={`font-bold text-sm truncate leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)] ${pNameCls || 'text-white'}`}>{p.display_name}</span>
