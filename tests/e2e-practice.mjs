@@ -88,8 +88,8 @@ async function main() {
   console.log('4. Word entry: lock in Chair, bots follow, start');
   await page.click('button:has-text("Chair")');
   await domClick('Lock In');
-  await page.waitForSelector('button:has-text("ready — Start!")', { timeout: 20000 });
-  await domClick('ready — Start!');
+  await page.waitForSelector('button:has-text("ready, Start!")', { timeout: 20000 });
+  await domClick('ready, Start!');
 
   console.log('5. Playing: ask the first question');
   await page.waitForSelector('text=Your turn to ask!', { timeout: 15000 });
