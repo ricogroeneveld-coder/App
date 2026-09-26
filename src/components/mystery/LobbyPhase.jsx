@@ -392,7 +392,8 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
                   onClick={onInvite}
                   className="w-full py-6 flex flex-col items-center gap-1.5 text-center rounded-2xl border border-dashed border-white/10 hover:border-violet-400/40 hover:bg-white/[0.03] transition-colors">
                   <Share className="w-4 h-4 text-violet-300" />
-                  <span className="text-xs font-semibold text-slate-400 px-6 leading-relaxed">{t.inviteHint}</span>
+                  <span className="text-xs font-bold text-slate-300 px-6 leading-relaxed">{t.inviteHint}</span>
+                  <span className="text-xs font-medium text-slate-500 px-6 leading-relaxed">{t.inviteHintSub}</span>
                 </motion.button>
               )}
             </div>
