@@ -586,11 +586,12 @@
   }
 }
 /* ───────────────────────── iPhone Duo inner screen ─────────────────────────
-   Everything below is scoped under html.duo-wide, which useDuoWideLayout()
-   (App.jsx) only sets in the native iOS app, on an iPhone, with a window at
-   least 600px wide, i.e. the iPhone Duo's unfolded inner screen. Regular
-   iPhones, iPad and the web build never get the class, so none of this
-   applies to them. */
+   Everything below is scoped under html.duo-wide / html.duo-side-bar, which
+   useDuoWideClass() (src/lib/duoLayout.js) only sets in the native iOS app,
+   on an iPhone: duo-wide with a window at least 600px wide (the Duo's
+   unfolded inner screen), duo-side-bar when the status bar sits in a strip
+   on the right edge (both Duo screens). Regular iPhones, iPad and the web
+   build never get either class, so none of this applies to them. */
 
 /* Content columns use the extra width (they're ~28-32rem on phones). */
 .duo-wide .max-w-md { max-width: 36rem; }
@@ -603,36 +604,39 @@
   align-items: safe center;
 }
 
-/* Home, landscape: logo on the left, cards on the right. The phone-height
-   tweaks (.hero-shift / .cards-shift) only make sense for the stacked
-   portrait layout, so they're neutralised here. */
-@media (orientation: landscape) {
-  .duo-wide .home-main {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    align-items: center;
-    column-gap: 3rem;
-    max-width: 62rem;
-    margin-top: 0;
-    padding: 0 1rem;
-  }
-  .duo-wide .home-main > :first-child { margin-bottom: 0; }
-  .duo-wide .home-main .hero-shift,
-  .duo-wide .home-main .cards-shift { transform: none; }
-
-  /* Help + Settings stacked in the bottom-right corner: help on top,
-     settings below it. !important beats the inline `top` the buttons use
-     on phones. 2.75rem = the 44px .header-btn, plus a 0.75rem gap. */
-  .duo-wide .home-help-btn,
-  .duo-wide .home-settings-btn {
-    top: auto !important;
-    left: auto;
-    right: 1rem;
-  }
-  .duo-wide .home-settings-btn {
-    bottom: max(env(safe-area-inset-bottom), 0.75rem);
-  }
-  .duo-wide .home-help-btn {
-    bottom: calc(max(env(safe-area-inset-bottom), 0.75rem) + 2.75rem + 0.75rem);
-  }
+/* Home: same stacked layout as on phones (logo, tagline, cards), sized to
+   fit the inner screen's lower height: the logo scales with the window
+   height (it's 1200x578, so width = height x 2.07), between 220px and its
+   phone size of 400px. The phone-height tweaks (.hero-shift /
+   .cards-shift) are neutralised so the spacing stays even. */
+.duo-wide .home-main .hero-float {
+  width: clamp(220px, calc((100dvh - 470px) * 2.07), 400px);
+  max-width: 100%;
 }
+.duo-wide .home-main .hero-shift,
+.duo-wide .home-main .cards-shift { transform: none; }
+
+/* Home, iPhone Duo (both screens): the status bar sits in a strip on the
+   right edge. Help (?) and Settings stack vertically in that strip, right
+   under the status bar, the way iOS 27.1 lays out toolbar buttons there.
+   html.duo-side-bar is only set when the right safe area is >= 20px, which
+   a regular iPhone in portrait never has (see useDuoSideBar).
+   - The Home screen box extends into the strip (negative margin) so the
+     buttons can sit there; its padding keeps the content itself clear.
+   - right: centres the 44px buttons in the strip.
+   - top: just below the status bar. These are estimates measured from
+     device screenshots (status bar ends ~135pt down on the outer screen,
+     ~85pt on the inner screen); !important beats the buttons' inline top. */
+.duo-side-bar .home-screen {
+  margin-right: calc(-1 * env(safe-area-inset-right));
+  padding-right: calc(1rem + env(safe-area-inset-right));
+}
+.duo-side-bar .home-help-btn,
+.duo-side-bar .home-settings-btn {
+  left: auto;
+  right: calc((env(safe-area-inset-right) - 2.75rem) / 2);
+}
+.duo-side-bar { --duo-status-clear: 9rem; }
+.duo-side-bar.duo-wide { --duo-status-clear: 6rem; }
+.duo-side-bar .home-help-btn { top: var(--duo-status-clear) !important; }
+.duo-side-bar .home-settings-btn { top: calc(var(--duo-status-clear) + 2.75rem + 0.75rem) !important; }
