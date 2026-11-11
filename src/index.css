@@ -650,32 +650,31 @@
   align-items: safe center;
 }
 .duo-wide .home-main .hero-float {
-  width: clamp(200px, calc((100dvh - 480px) * 2.07), 400px);
+  width: clamp(200px, calc((100dvh - 520px) * 2.07), 400px);
   max-width: 100%;
 }
 .duo-wide .home-main .hero-shift,
 .duo-wide .home-main .cards-shift { transform: none; }
 
 /* Home, both Duo screens: Help (?) and Settings stack vertically in the
-   right-hand status-bar strip, just below the status bar, the way iOS 27.1
-   lays out toolbar buttons there.
+   bottom of the right-hand status-bar strip, Help above Settings. Not at the
+   top: the system status block there grows downwards (music, timers,
+   calls), so a fixed spot under it would get covered.
    - The Home screen box extends into the strip (negative margin) so the
      buttons can sit there; its padding keeps the content itself clear.
-   - right: centres the 44px buttons in the strip.
-   - top: below the status bar (time + signal ring). Measured from device
-     screenshots: the ring ends ~145pt down on the outer screen and ~95pt on
-     the inner screen; these values leave a ~15pt gap. !important beats the
-     buttons' inline phone `top`. */
+   - right: centres the 44px buttons on the system status block (time /
+     signal / battery). That block sits ~6pt left of the strip's middle on
+     both screens (measured from device screenshots), so the button centre
+     is inset/2 + 6px from the edge: right = inset/2 + 6px - 22px. */
 .duo-side-bar .home-screen {
   margin-right: calc(-1 * env(safe-area-inset-right));
   padding-right: calc(1rem + env(safe-area-inset-right));
 }
 .duo-side-bar .home-help-btn,
 .duo-side-bar .home-settings-btn {
+  top: auto !important;
   left: auto;
-  right: calc((env(safe-area-inset-right) - 2.75rem) / 2);
+  right: calc(env(safe-area-inset-right) / 2 - 1rem);
 }
-.duo-side-bar { --duo-status-clear: 10rem; }
-.duo-side-bar.duo-wide { --duo-status-clear: 7rem; }
-.duo-side-bar .home-help-btn { top: var(--duo-status-clear) !important; }
-.duo-side-bar .home-settings-btn { top: calc(var(--duo-status-clear) + 2.75rem + 0.75rem) !important; }
+.duo-side-bar .home-settings-btn { bottom: max(env(safe-area-inset-bottom), 1rem); }
+.duo-side-bar .home-help-btn { bottom: calc(max(env(safe-area-inset-bottom), 1rem) + 2.75rem + 0.75rem); }

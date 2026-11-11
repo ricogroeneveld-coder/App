@@ -13,29 +13,47 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     // Orientation rule (iPhone Duo support):
     // - iPad: exactly what Info.plist's ~ipad key already says (unchanged).
-    // - Every regular iPhone, and the iPhone Duo's outer screen: portrait
-    //   only, exactly as before. Info.plist now lists landscape for iPhone
-    //   only so the Duo's inner screen can use it; this method narrows it
-    //   back to portrait everywhere else.
-    // - The iPhone Duo's inner screen (Apple: regular width AND regular
-    //   height size class), or any phone screen at least 600pt on its short
-    //   side (no regular iPhone comes close, max is ~440pt): portrait and
-    //   landscape, so the app gets the full inner display instead of a
-    //   phone-sized window.
+    // - Every regular iPhone: portrait only, exactly as before. Info.plist
+    //   lists landscape for iPhone only so the Duo can use it; this method
+    //   narrows it back to portrait on every other iPhone.
+    // - iPhone Duo: portrait and landscape, on both screens. It can't be
+    //   decided per screen: once iOS shows a portrait-only app scaled in a
+    //   phone-sized window on the inner screen (e.g. opened on the outer
+    //   screen, then unfolded), it also reports a phone-sized screen to the
+    //   app, so the app can never "see" the inner display to fix it. The
+    //   app therefore has to already allow landscape BEFORE the unfold.
     static func allowedOrientations(for window: UIWindow?) -> UIInterfaceOrientationMask {
         guard UIDevice.current.userInterfaceIdiom == .phone else {
             return [.portrait, .portraitUpsideDown]
         }
-        // The window can be nil (e.g. mid-transition); fall back to the
-        // app's scene so the answer never defaults to "portrait" by accident
-        // while the app is on the Duo's inner screen.
+        if isDuoDevice { return [.portrait, .landscapeLeft, .landscapeRight] }
+        // Not recognised yet: a large screen right now (app launched on the
+        // unfolded inner display) also identifies the Duo.
         let scene = window?.windowScene
             ?? UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
-        guard let screen = scene?.screen else { return .portrait }
-        let traits = screen.traitCollection
-        let regularBothWays = traits.horizontalSizeClass == .regular && traits.verticalSizeClass == .regular
-        let shortSide = min(screen.bounds.width, screen.bounds.height)
-        return (regularBothWays || shortSide >= 600) ? [.portrait, .landscapeLeft, .landscapeRight] : .portrait
+        if let screen = scene?.screen {
+            let traits = screen.traitCollection
+            let regularBothWays = traits.horizontalSizeClass == .regular && traits.verticalSizeClass == .regular
+            let shortSide = min(screen.bounds.width, screen.bounds.height)
+            if regularBothWays || shortSide >= 600 {
+                rememberDuoDevice()
+                return [.portrait, .landscapeLeft, .landscapeRight]
+            }
+        }
+        return .portrait
+    }
+
+    // "This phone is an iPhone Duo", remembered across launches. Set the
+    // first time the app sees either Duo-only signal:
+    // - a large (regular x regular / >= 600pt) screen, see above, or
+    // - a right-hand safe area while upright: the Duo's outer screen keeps
+    //   its status bar in a strip on the right (MainViewController). No
+    //   regular iPhone has a side safe area in portrait.
+    private static let duoDeviceKey = "wmp_isDuoDevice"
+    static var isDuoDevice: Bool { UserDefaults.standard.bool(forKey: duoDeviceKey) }
+    static func rememberDuoDevice() {
+        guard !isDuoDevice else { return }
+        UserDefaults.standard.set(true, forKey: duoDeviceKey)
     }
 
     func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
