@@ -55,13 +55,17 @@ export function Dialog({
 
     const panel = panelRef.current;
     const focusables = getFocusable(panel);
-    if (focusables.length) focusables[0].focus();
+    // focusVisible: false — focus still moves into the dialog (screen
+    // readers, keyboard), but opening it by tap doesn't paint a focus ring
+    // around the first button (it showed as a purple square around the round
+    // back button). Keyboard users get the ring as soon as they press Tab.
+    if (focusables.length) focusables[0].focus({ focusVisible: false });
     else if (panel) panel.focus();
 
     return () => {
       document.body.style.overflow = prevOverflow;
       const el = previouslyFocused.current;
-      if (el && typeof el.focus === "function") el.focus();
+      if (el && typeof el.focus === "function") el.focus({ focusVisible: false });
     };
   }, []);
 
