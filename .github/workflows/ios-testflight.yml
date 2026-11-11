@@ -45,14 +45,18 @@ on:
 
 jobs:
   build-and-upload:
-    runs-on: macos-latest
+    # macos-latest can lag a major macOS/Xcode release behind; the iPhone
+    # Duo needs Xcode 27.1+, so use the newer macos-26 image.
+    runs-on: macos-26
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
       - uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable
+          # 27.1+ so builds fill the iPhone Duo screens (no black bars).
+          # Fails fast and lists the installed versions if none match.
+          xcode-version: '^27.1'
 
       # iPhone Duo: apps built with an SDK older than iOS 27.1 (Xcode 27.1)
       # run letterboxed (black bars) on the unfolded inner screen. The web
