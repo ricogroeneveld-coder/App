@@ -25,8 +25,24 @@ export function useDuoWide(extra = '') {
     const mq = window.matchMedia(query);
     const update = () => setOn(mq.matches);
     update();
+    // The media-query 'change' event alone isn't reliable when the whole
+    // window moves between the Duo's screens, so also re-check on every
+    // resize/orientation change (rAF: measure after the new size settles).
+    let frame = 0;
+    const onResize = () => {
+      update();
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(update);
+    };
     mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+    return () => {
+      cancelAnimationFrame(frame);
+      mq.removeEventListener('change', update);
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
+    };
   }, [query]);
   return on;
 }

@@ -619,4 +619,20 @@
   .duo-wide .home-main > :first-child { margin-bottom: 0; }
   .duo-wide .home-main .hero-shift,
   .duo-wide .home-main .cards-shift { transform: none; }
+
+  /* Help + Settings stacked in the bottom-right corner: help on top,
+     settings below it. !important beats the inline `top` the buttons use
+     on phones. 2.75rem = the 44px .header-btn, plus a 0.75rem gap. */
+  .duo-wide .home-help-btn,
+  .duo-wide .home-settings-btn {
+    top: auto !important;
+    left: auto;
+    right: 1rem;
+  }
+  .duo-wide .home-settings-btn {
+    bottom: max(env(safe-area-inset-bottom), 0.75rem);
+  }
+  .duo-wide .home-help-btn {
+    bottom: calc(max(env(safe-area-inset-bottom), 0.75rem) + 2.75rem + 0.75rem);
+  }
 }
