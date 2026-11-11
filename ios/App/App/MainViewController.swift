@@ -15,26 +15,50 @@ class MainViewController: CAPBridgeViewController {
         return AppDelegate.allowedOrientations(for: view.window)
     }
 
-    // Folding/unfolding the iPhone Duo moves the app between screens; ask
-    // iOS to re-read the allowed orientations so it snaps back to portrait
-    // on the outer screen. The screen's size/traits may not be updated yet
-    // when the first signal arrives, so this re-checks on the trait change,
-    // on the next run-loop pass, and again once the resize has finished.
-    // On regular iPhones the answer is always "portrait", so it's a no-op.
+    // Folding/unfolding the iPhone Duo moves the app between screens. iOS
+    // can ask for the allowed orientations while the screen still reports
+    // its old size; if the answer was "portrait" on the inner screen, iOS
+    // shows the app in a phone-sized window, and from then on nothing about
+    // the app's own window changes, so no trait/size callback fires again.
+    // To recover from that, a light watchdog re-computes the answer for the
+    // CURRENT screen twice a second and asks iOS to re-read it only when it
+    // actually changed. Regular iPhones always answer "portrait", so it never
+    // fires there; on iPad the watchdog isn't started at all.
+    private var orientationWatchdog: Timer?
+    private var lastOrientationMask: UIInterfaceOrientationMask?
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        guard UIDevice.current.userInterfaceIdiom == .phone, orientationWatchdog == nil else { return }
+        let timer = Timer(timeInterval: 0.5, repeats: true) { [weak self] _ in
+            self?.refreshOrientationSupportIfNeeded()
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        orientationWatchdog = timer
+    }
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        orientationWatchdog?.invalidate()
+        orientationWatchdog = nil
+    }
+
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
-        refreshOrientationSupport()
-        DispatchQueue.main.async { [weak self] in self?.refreshOrientationSupport() }
+        refreshOrientationSupportIfNeeded(force: true)
     }
 
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
         super.viewWillTransition(to: size, with: coordinator)
         coordinator.animate(alongsideTransition: nil) { [weak self] _ in
-            self?.refreshOrientationSupport()
+            self?.refreshOrientationSupportIfNeeded(force: true)
         }
     }
 
-    private func refreshOrientationSupport() {
+    private func refreshOrientationSupportIfNeeded(force: Bool = false) {
+        let mask = AppDelegate.allowedOrientations(for: view.window)
+        guard force || mask != lastOrientationMask else { return }
+        lastOrientationMask = mask
         if #available(iOS 16.0, *) {
             setNeedsUpdateOfSupportedInterfaceOrientations()
         }

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { MysteryRoom, MysteryPlayer } from '@/api/db';
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/components/ui/use-toast';
-import { ChevronLeft, RefreshCw, LogIn, Globe, Loader2 } from 'lucide-react';
+import { ArrowLeft, RefreshCw, LogIn, Globe, Loader2 } from 'lucide-react';
 import { getGuestIdentity } from '@/lib/guestIdentity';
 import { categoryMeta, shortCategory } from '@/lib/wordLists';
 import { track } from '@/lib/analytics';
@@ -189,7 +189,7 @@ export default function BrowseLobbies() {
       <div className="relative z-10 w-full max-w-md mx-auto px-4 shrink-0">
         <div className="flex items-center gap-3 pt-2 pb-4">
           <Link to="/" className="header-btn shrink-0" aria-label={t.backLabel}>
-            <ChevronLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5" />
           </Link>
           <div className="min-w-0">
             <h1 className="text-lg font-extrabold tracking-tight text-white leading-tight">{t.openLobbies}</h1>

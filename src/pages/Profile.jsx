@@ -266,7 +266,7 @@ function CollectionPanel({ col, profile, onTap, justUnlocked, onClose, t }) {
           <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-12"
             style={{ background: 'linear-gradient(180deg, transparent, #10141f)' }} />
           <button onClick={onClose} aria-label="Close"
-            className="absolute right-2 top-2 p-2.5 rounded-xl bg-black/25 backdrop-blur-sm hover:bg-black/40 text-white/80 transition">
+            className="header-btn absolute right-2 top-2">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <span className="absolute left-4 bottom-2 flex items-center gap-2">

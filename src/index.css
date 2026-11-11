@@ -585,48 +585,81 @@
     @apply text-[11px] font-extrabold uppercase tracking-[0.14em] text-slate-300;
   }
 }
-/* ───────────────────────── iPhone Duo inner screen ─────────────────────────
+/* ─────────────────────────────── iPhone Duo ───────────────────────────────
    Everything below is scoped under html.duo-wide / html.duo-side-bar, which
    useDuoWideClass() (src/lib/duoLayout.js) only sets in the native iOS app,
-   on an iPhone: duo-wide with a window at least 600px wide (the Duo's
-   unfolded inner screen), duo-side-bar when the status bar sits in a strip
-   on the right edge (both Duo screens). Regular iPhones, iPad and the web
-   build never get either class, so none of this applies to them. */
+   on an iPhone:
+   - duo-wide: window at least 600px wide (the Duo's unfolded inner screen);
+   - duo-side-bar: the status bar sits in a strip on the right edge (both
+     Duo screens), i.e. a right safe area >= 20px.
+   Regular iPhones, iPad and the web build never get either class, so none
+   of this applies to them. The class hooks it targets (home-*, page-corner-*,
+   duo-col-bar, room-tab-bar, toast-viewport) carry no styles of their own. */
 
-/* Content columns use the extra width (they're ~28-32rem on phones). */
-.duo-wide .max-w-md { max-width: 36rem; }
-.duo-wide .max-w-lg { max-width: 40rem; }
+/* One content column for every screen on the inner display, so cards,
+   headers, back buttons and tab bars all share the same left/right edges. */
+.duo-wide { --duo-col: 40rem; }
+.duo-wide .max-w-md,
+.duo-wide .max-w-lg { max-width: var(--duo-col); }
+/* Columns that carry their own 1rem side padding get that padding on top,
+   so their cards still land exactly on the shared column edges (on phones
+   both kinds already line up at 1rem from the screen edge). */
+.duo-wide .max-w-md.px-4,
+.duo-wide .max-w-lg.px-4 { max-width: calc(var(--duo-col) + 2rem); }
 
-/* Home: the screen may scroll instead of clipping if the window is short,
-   and stays centred when it does fit ("safe" keeps the top reachable). */
-.duo-wide .home-screen {
-  overflow-y: auto;
-  align-items: safe center;
+/* Corner buttons (back / help on Lobby, Word Entry, Category) line up with
+   the column edges instead of the screen edges. */
+.duo-wide .page-corner-left { left: max(1rem, calc((100% - var(--duo-col)) / 2)); }
+.duo-wide .page-corner-right { right: max(1rem, calc((100% - var(--duo-col)) / 2)); }
+
+/* Full-width header bars (Playing, Settings) keep their full-width
+   background but lay their contents out on the column. */
+.duo-wide .duo-col-bar {
+  padding-left: max(1rem, calc((100% - var(--duo-col)) / 2));
+  padding-right: max(1rem, calc((100% - var(--duo-col)) / 2));
+}
+
+/* Bottom tab bar: full-width background, tabs spaced across the column
+   (and never under the right-hand status-bar strip). */
+.duo-wide .room-tab-bar {
+  padding-left: max(env(safe-area-inset-left), calc((100% - var(--duo-col)) / 2)) !important;
+  padding-right: max(env(safe-area-inset-right), calc((100% - var(--duo-col)) / 2)) !important;
+}
+
+/* Toasts never slide under the status-bar strip. */
+.duo-side-bar .toast-viewport {
+  left: auto;
+  right: env(safe-area-inset-right);
+  width: calc(100% - env(safe-area-inset-right));
 }
 
 /* Home: same stacked layout as on phones (logo, tagline, cards), sized to
    fit the inner screen's lower height: the logo scales with the window
-   height (it's 1200x578, so width = height x 2.07), between 220px and its
-   phone size of 400px. The phone-height tweaks (.hero-shift /
-   .cards-shift) are neutralised so the spacing stays even. */
+   height (it's 1200x578, so width = height x 2.07), between 200px and its
+   phone size of 400px. The phone-height tweaks (.hero-shift / .cards-shift)
+   are neutralised so the spacing stays even, and the screen may scroll
+   rather than clip if a window is ever too short. */
+.duo-wide .home-screen {
+  overflow-y: auto;
+  align-items: safe center;
+}
 .duo-wide .home-main .hero-float {
-  width: clamp(220px, calc((100dvh - 470px) * 2.07), 400px);
+  width: clamp(200px, calc((100dvh - 480px) * 2.07), 400px);
   max-width: 100%;
 }
 .duo-wide .home-main .hero-shift,
 .duo-wide .home-main .cards-shift { transform: none; }
 
-/* Home, iPhone Duo (both screens): the status bar sits in a strip on the
-   right edge. Help (?) and Settings stack vertically in that strip, right
-   under the status bar, the way iOS 27.1 lays out toolbar buttons there.
-   html.duo-side-bar is only set when the right safe area is >= 20px, which
-   a regular iPhone in portrait never has (see useDuoSideBar).
+/* Home, both Duo screens: Help (?) and Settings stack vertically in the
+   right-hand status-bar strip, just below the status bar, the way iOS 27.1
+   lays out toolbar buttons there.
    - The Home screen box extends into the strip (negative margin) so the
      buttons can sit there; its padding keeps the content itself clear.
    - right: centres the 44px buttons in the strip.
-   - top: just below the status bar. These are estimates measured from
-     device screenshots (status bar ends ~135pt down on the outer screen,
-     ~85pt on the inner screen); !important beats the buttons' inline top. */
+   - top: below the status bar (time + signal ring). Measured from device
+     screenshots: the ring ends ~145pt down on the outer screen and ~95pt on
+     the inner screen; these values leave a ~15pt gap. !important beats the
+     buttons' inline phone `top`. */
 .duo-side-bar .home-screen {
   margin-right: calc(-1 * env(safe-area-inset-right));
   padding-right: calc(1rem + env(safe-area-inset-right));
@@ -636,7 +669,7 @@
   left: auto;
   right: calc((env(safe-area-inset-right) - 2.75rem) / 2);
 }
-.duo-side-bar { --duo-status-clear: 9rem; }
-.duo-side-bar.duo-wide { --duo-status-clear: 6rem; }
+.duo-side-bar { --duo-status-clear: 10rem; }
+.duo-side-bar.duo-wide { --duo-status-clear: 7rem; }
 .duo-side-bar .home-help-btn { top: var(--duo-status-clear) !important; }
 .duo-side-bar .home-settings-btn { top: calc(var(--duo-status-clear) + 2.75rem + 0.75rem) !important; }
