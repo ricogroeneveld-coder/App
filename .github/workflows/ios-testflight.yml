@@ -45,9 +45,10 @@ on:
 
 jobs:
   build-and-upload:
-    # macos-latest can lag a major macOS/Xcode release behind; the iPhone
-    # Duo needs Xcode 27.1+, so use the newer macos-26 image.
-    runs-on: macos-26
+    # The iPhone Duo needs Xcode 27.1+ (older SDKs letterbox the app). The
+    # macos-latest / macos-26 images stop at Xcode 26.x; GitHub ships
+    # Xcode 27 on its own runner image (label: xcode-27, macOS 27, arm64).
+    runs-on: xcode-27
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
