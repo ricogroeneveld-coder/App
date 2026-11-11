@@ -9,21 +9,15 @@ class MainViewController: CAPBridgeViewController {
     }
 
     // Same rule as AppDelegate.allowedOrientations: portrait on every
-    // regular iPhone (unchanged), portrait + landscape only on the iPhone
-    // Duo's inner screen.
+    // regular iPhone (unchanged), portrait + landscape on the iPhone Duo.
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
         return AppDelegate.allowedOrientations(for: view.window)
     }
 
-    // Folding/unfolding the iPhone Duo moves the app between screens. iOS
-    // can ask for the allowed orientations while the screen still reports
-    // its old size; if the answer was "portrait" on the inner screen, iOS
-    // shows the app in a phone-sized window, and from then on nothing about
-    // the app's own window changes, so no trait/size callback fires again.
-    // To recover from that, a light watchdog re-computes the answer for the
-    // CURRENT screen twice a second and asks iOS to re-read it only when it
-    // actually changed. Regular iPhones always answer "portrait", so it never
-    // fires there; on iPad the watchdog isn't started at all.
+    // Safety net: a light watchdog re-computes the allowed orientations twice
+    // a second and asks iOS to re-read them only when the answer changed
+    // (e.g. right after the Duo was recognised). Regular iPhones always
+    // answer "portrait", so it never fires there; on iPad it isn't started.
     private var orientationWatchdog: Timer?
     private var lastOrientationMask: UIInterfaceOrientationMask?
 
@@ -41,6 +35,20 @@ class MainViewController: CAPBridgeViewController {
         super.viewDidDisappear(animated)
         orientationWatchdog?.invalidate()
         orientationWatchdog = nil
+    }
+
+    // Recognise the iPhone Duo on its outer screen (status bar in a strip on
+    // the right while upright) so landscape is already allowed before the
+    // first unfold. See AppDelegate.allowedOrientations.
+    override func viewSafeAreaInsetsDidChange() {
+        super.viewSafeAreaInsetsDidChange()
+        guard UIDevice.current.userInterfaceIdiom == .phone, !AppDelegate.isDuoDevice else { return }
+        let upright = view.bounds.height > view.bounds.width
+        let insets = view.safeAreaInsets
+        if upright && max(insets.left, insets.right) >= 20 {
+            AppDelegate.rememberDuoDevice()
+            refreshOrientationSupportIfNeeded(force: true)
+        }
     }
 
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
