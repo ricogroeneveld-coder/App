@@ -25,17 +25,78 @@ export function useDuoWide(extra = '') {
     const mq = window.matchMedia(query);
     const update = () => setOn(mq.matches);
     update();
+    // The media-query 'change' event alone isn't reliable when the whole
+    // window moves between the Duo's screens, so also re-check on every
+    // resize/orientation change (rAF: measure after the new size settles).
+    let frame = 0;
+    const onResize = () => {
+      update();
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(update);
+    };
     mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+    return () => {
+      cancelAnimationFrame(frame);
+      mq.removeEventListener('change', update);
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
+    };
   }, [query]);
   return on;
 }
 
-/** Mirrors useDuoWide() onto <html class="duo-wide"> for the CSS in index.css. */
-export function useDuoWideClass() {
-  const on = useDuoWide();
+// Width of the right-hand safe area (where the iPhone Duo puts its status
+// bar on both screens). A regular iPhone in portrait always reports 0 here.
+function rightSafeArea() {
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none;padding-right:env(safe-area-inset-right)';
+  document.body.appendChild(probe);
+  const px = parseFloat(getComputedStyle(probe).paddingRight) || 0;
+  probe.remove();
+  return px;
+}
+
+/**
+ * True when the status bar sits in a strip on the right edge (iPhone Duo,
+ * outer and inner screen). Same gate as useDuoWide (native iOS app, iPhone),
+ * plus a right safe area of at least 20px, which a portrait-locked regular
+ * iPhone never has, so it's always false there.
+ */
+export function useDuoSideBar() {
+  const [on, setOn] = useState(false);
   useEffect(() => {
-    document.documentElement.classList.toggle('duo-wide', on);
-    return () => document.documentElement.classList.remove('duo-wide');
-  }, [on]);
+    if (!canBeDuo()) return undefined;
+    let frame = 0;
+    const update = () => setOn(rightSafeArea() >= 20);
+    const onResize = () => {
+      update();
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
+    };
+  }, []);
+  return on;
+}
+
+/**
+ * Mirrors useDuoWide() / useDuoSideBar() onto <html class="duo-wide
+ * duo-side-bar"> for the CSS in index.css.
+ */
+export function useDuoWideClass() {
+  const wide = useDuoWide();
+  const sideBar = useDuoSideBar();
+  useEffect(() => {
+    document.documentElement.classList.toggle('duo-wide', wide);
+    document.documentElement.classList.toggle('duo-side-bar', sideBar);
+    return () => document.documentElement.classList.remove('duo-wide', 'duo-side-bar');
+  }, [wide, sideBar]);
 }

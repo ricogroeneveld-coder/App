@@ -219,14 +219,14 @@ export default function Home() {
       <GameBackground spotlight />
 
       {/* How to play button */}
-      <div className="absolute left-4 z-20" style={{ top: 'max(env(safe-area-inset-top), 0.75rem)' }}>
+      <div className="home-help-btn absolute left-4 z-20" style={{ top: 'max(env(safe-area-inset-top), 0.75rem)' }}>
         <button onClick={() => setShowHowToPlay(true)} className="header-btn" aria-label={t.howToPlayShort}>
           <HelpCircle className="w-5 h-5" />
         </button>
       </div>
 
       {/* Profile settings link */}
-      <div className="absolute right-4 z-20" style={{ top: 'max(env(safe-area-inset-top), 0.75rem)' }}>
+      <div className="home-settings-btn absolute right-4 z-20" style={{ top: 'max(env(safe-area-inset-top), 0.75rem)' }}>
         <Link to="/profile-settings" className="header-btn" aria-label={t.settings}>
           <Settings className="w-5 h-5" />
         </Link>
