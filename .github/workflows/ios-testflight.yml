@@ -72,20 +72,6 @@ jobs:
             echo "::warning::Xcode $ver is older than 27.1 - this build will show black bars on the unfolded iPhone Duo."
           fi
 
-      # iPhone Duo: apps built with an SDK older than iOS 27.1 (Xcode 27.1)
-      # run letterboxed (black bars) on the unfolded inner screen. The web
-      # layout already fills any screen, so the SDK is the only thing that
-      # decides whether the Duo shows the app edge to edge.
-      - name: Check Xcode is new enough for iPhone Duo full-screen
-        run: |
-          xcodebuild -version
-          ver=$(xcodebuild -version | awk '/^Xcode/{print $2}')
-          major=${ver%%.*}; rest=${ver#*.}; minor=${rest%%.*}
-          [ "$rest" = "$ver" ] && minor=0
-          if [ "$major" -lt 27 ] || { [ "$major" -eq 27 ] && [ "$minor" -lt 1 ]; }; then
-            echo "::warning::Xcode $ver is older than 27.1 - this build will show black bars on the unfolded iPhone Duo."
-          fi
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
