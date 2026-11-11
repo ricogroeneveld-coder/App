@@ -45,14 +45,19 @@ on:
 
 jobs:
   build-and-upload:
-    runs-on: macos-latest
+    # The iPhone Duo needs Xcode 27.1+ (older SDKs letterbox the app). The
+    # macos-latest / macos-26 images stop at Xcode 26.x; GitHub ships
+    # Xcode 27 on its own runner image (label: xcode-27, macOS 27, arm64).
+    runs-on: xcode-27
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
       - uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable
+          # 27.1+ so builds fill the iPhone Duo screens (no black bars).
+          # Fails fast and lists the installed versions if none match.
+          xcode-version: '^27.1'
 
       # iPhone Duo: apps built with an SDK older than iOS 27.1 (Xcode 27.1)
       # run letterboxed (black bars) on the unfolded inner screen. The web
@@ -178,7 +183,7 @@ jobs:
             -destination 'generic/platform=iOS' \
             -archivePath "$RUNNER_TEMP/App.xcarchive" \
             CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
-            MARKETING_VERSION="1.0.1"
+            MARKETING_VERSION="1.0.2"
           # Verify the archived app really carries the concrete kv-store
           # entitlement before spending time on export/upload.
           APP_PATH="$RUNNER_TEMP/App.xcarchive/Products/Applications/App.app"
