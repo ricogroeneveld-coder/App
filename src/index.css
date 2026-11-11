@@ -116,6 +116,13 @@
   #root {
     height: 100%;
     overflow: hidden;
+    /* Side safe areas. Zero on normal phones held upright, but on the
+       iPhone Duo's front (cover) screen the status bar and Dynamic Island
+       sit on the right edge, so content and header buttons must stay clear
+       of it. The star backgrounds are position: fixed, so they still run
+       edge to edge underneath. */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
 
   /* See --toast-bottom-offset above */
