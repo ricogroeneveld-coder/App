@@ -26,6 +26,7 @@ import BannerArt from '@/components/progression/BannerArt';
 import usePeerProfiles from '@/components/progression/usePeerProfiles';
 import { cosmeticById, RARITIES } from '@/lib/cosmetics';
 import { Dialog } from '@/components/ui/dialog';
+import ScrollArea from '@/components/ui/scroll-area';
 
 export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
   const { toast } = useToast();
@@ -261,7 +262,8 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
       {/* How to play modal — accessible Dialog (focus trap, Escape, scroll lock) */}
       {showHowToPlay && (
         <Dialog onClose={() => setShowHowToPlay(false)} placement="bottom" titleId="lobby-howto-title"
-          panelClassName="glass-card bg-slate-900/95 p-6 max-h-[85vh] overflow-y-auto">
+          panelClassName="glass-card bg-slate-900/95 max-h-[85vh] flex flex-col">
+          <ScrollArea className="p-6">
             <div className="flex items-center justify-between mb-5">
               <h2 id="lobby-howto-title" className="text-lg font-bold text-white">{t.howToPlay}</h2>
               <button onClick={() => setShowHowToPlay(false)} className="w-11 h-11 -m-1 rounded-xl hover:bg-white/10 text-slate-400 flex items-center justify-center" aria-label={t.gotIt}>
@@ -283,6 +285,7 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
               className="violet-solid-btn mt-6 w-full h-11 text-sm">
               {t.gotIt}
             </button>
+          </ScrollArea>
         </Dialog>
       )}
 

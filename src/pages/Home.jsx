@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import { useLang } from '@/lib/LanguageContext';
 import GameBackground from '@/components/GameBackground';
 import { Dialog } from '@/components/ui/dialog';
+import ScrollArea from '@/components/ui/scroll-area';
 import PlayerAvatar from '@/components/progression/PlayerAvatar';
 import { loadProfile, getProfile, subscribeProfile, ensureDailyLogin } from '@/lib/playerProfile';
 import { ALL_COSMETICS, cosmeticById } from '@/lib/cosmetics';
@@ -235,7 +236,8 @@ export default function Home() {
       {/* How to play modal — accessible Dialog (focus trap, Escape, scroll lock) */}
       {showHowToPlay && (
         <Dialog onClose={closeHowToPlay} placement="bottom" titleId="howto-title"
-          panelClassName="glass-card bg-slate-900/95 p-6 max-h-[85vh] overflow-y-auto">
+          panelClassName="glass-card bg-slate-900/95 max-h-[85vh] flex flex-col">
+          <ScrollArea className="p-6">
             <div className="flex items-center justify-between mb-5">
               <h2 id="howto-title" className="text-lg font-bold text-white">{t.howToPlay}</h2>
               <button onClick={closeHowToPlay} className="w-11 h-11 -m-1 rounded-xl hover:bg-white/10 text-slate-400 flex items-center justify-center" aria-label={t.gotIt}>
@@ -257,6 +259,7 @@ export default function Home() {
               className="violet-solid-btn mt-6 w-full h-11 text-sm">
               {t.gotIt}
             </button>
+          </ScrollArea>
         </Dialog>
       )}
 
