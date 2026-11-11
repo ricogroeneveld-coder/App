@@ -17,6 +17,7 @@ class MainViewController: CAPBridgeViewController {
 
     // Folding/unfolding the iPhone Duo moves the app between screens; ask
     // iOS to re-read the allowed orientations so it snaps back to portrait
+<<<<<<< HEAD
     // on the outer screen. The screen's size/traits may not be updated yet
     // when the first signal arrives, so this re-checks on the trait change,
     // on the next run-loop pass, and again once the resize has finished.
@@ -35,6 +36,11 @@ class MainViewController: CAPBridgeViewController {
     }
 
     private func refreshOrientationSupport() {
+=======
+    // on the outer screen. No-op on devices whose screen never changes.
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+>>>>>>> origin/main
         if #available(iOS 16.0, *) {
             setNeedsUpdateOfSupportedInterfaceOrientations()
         }
