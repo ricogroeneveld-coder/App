@@ -10,6 +10,7 @@ import { devUnlockAll, devResetProfile, ensureAuth, grantBetaCosmetics } from '@
 import { configurePurchases } from '@/lib/payments';
 import { restoreIdentityFromCloud, startCloudBackup, watchForLateBackup, isTestFlightBuild } from '@/lib/cloudBackup';
 import { isNativeApp, isDevToolsEnabled, isAndroid } from '@/lib/platform';
+import { useDuoWideClass } from '@/lib/duoLayout';
 import { syncServerTime } from '@/lib/serverTime';
 import { initAnalytics } from '@/lib/analytics';
 import { registerPush } from '@/lib/push';
@@ -120,6 +121,7 @@ function useAndroidBackButton() {
 
 function App() {
   useForcedDarkTheme();
+  useDuoWideClass();
   useDevParam();
   useAndroidBackButton();
   useEffect(() => { configurePurchases(); }, []);

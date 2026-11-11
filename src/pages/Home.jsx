@@ -210,7 +210,7 @@ export default function Home() {
 
   return (
     <div
-      className="h-dvh text-white flex items-center justify-center p-4 overflow-hidden relative"
+      className="home-screen h-dvh text-white flex items-center justify-center p-4 overflow-hidden relative"
       style={{
         paddingTop: 'max(env(safe-area-inset-top), 0.5rem)',
         paddingBottom: 'max(env(safe-area-inset-bottom), 0.5rem)',
@@ -320,7 +320,7 @@ export default function Home() {
         </div>
       )}
 
-      <div className="relative z-10 w-full max-w-md -mt-4">
+      <div className="home-main relative z-10 w-full max-w-md -mt-4">
         <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} className="text-center mb-5">
           <div className="hero-shift">
             <motion.div initial={{ scale:0 }} animate={{ scale:1 }} transition={{ type:'spring', duration:0.8 }}
