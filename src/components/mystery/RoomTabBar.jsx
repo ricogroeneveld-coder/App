@@ -18,7 +18,7 @@ export default function RoomTabBar({ items, active, onChange }) {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-30 flex bg-[#0a0616]/95 backdrop-blur-md border-t border-white/10 shadow-[0_-4px_16px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)]"
+      className="room-tab-bar fixed bottom-0 left-0 right-0 z-30 flex bg-[#0a0616]/95 backdrop-blur-md border-t border-white/10 shadow-[0_-4px_16px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)]"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 16px)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}
     >
       {items.map(({ id, label, icon: Icon, badge }) => (

@@ -15,7 +15,7 @@ import EmojiRain from '@/components/mystery/EmojiRain';
 import RoomTabBar from '@/components/mystery/RoomTabBar';
 import useUnreadChat from '@/components/mystery/useUnreadChat';
 import { Dialog } from '@/components/ui/dialog';
-import { BookOpen, MessageCircleQuestion, Trophy, Mic, Users, MessageCircle, Zap, Timer, Lightbulb, CheckCircle2, LogOut, Sparkles, X } from 'lucide-react';
+import { BookOpen, MessageCircleQuestion, Trophy, Mic, Users, MessageCircle, Zap, Timer, Lightbulb, CheckCircle2, ArrowLeft, Sparkles, X } from 'lucide-react';
 import { useLang } from '@/lib/LanguageContext';
 import { toDisplayWord, shortCategory } from '@/lib/wordLists';
 import GameBackground from '@/components/GameBackground';
@@ -690,13 +690,13 @@ export default function PlayingPhase({ room, players, questions, guesses, me, my
         const catFlex = showMyWord ? 'flex-[4]' : 'flex-1';
         const wordFlex = showMyWord ? 'flex-[5] min-w-[92px]' : 'shrink-0';
         return (
-      <div className="px-3 py-2.5 flex items-center gap-2 border-b border-white/5 bg-black/20 backdrop-blur-sm">
+      <div className="duo-col-bar px-3 py-2.5 flex items-center gap-2 border-b border-white/5 bg-black/20 backdrop-blur-sm">
         <button
           onClick={() => setShowLeaveConfirm(true)}
-          className="shrink-0 w-11 h-11 rounded-xl bg-gradient-to-b from-white/[0.07] to-black/20 ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-rose-500/15 hover:ring-rose-400/30 text-slate-400 hover:text-rose-400 transition flex items-center justify-center active:scale-[0.98]"
+          className="header-btn shrink-0"
           title={t.leave} aria-label={t.leave}
         >
-          <LogOut className="w-4 h-4" />
+          <ArrowLeft className="w-5 h-5" />
         </button>
 
         <div className={`${catFlex} min-w-0 self-stretch flex flex-col justify-center px-3 py-1.5 rounded-xl bg-gradient-to-b from-white/[0.06] to-black/[0.12] ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]`}>

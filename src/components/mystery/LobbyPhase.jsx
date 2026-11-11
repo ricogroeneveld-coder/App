@@ -177,7 +177,7 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
       <EmojiRain emote={rain.emote} trigger={rain.trigger} />
 
       {/* Back button — identical to Home's header buttons */}
-      <div className="absolute left-4 z-20" style={{ top: 'max(env(safe-area-inset-top), 0.75rem)' }}>
+      <div className="page-corner-left absolute left-4 z-20" style={{ top: 'max(env(safe-area-inset-top), 0.75rem)' }}>
         <button onClick={() => setShowLeaveConfirm(true)} className="header-btn" aria-label={t.backLabel}>
           <ArrowLeft className="w-5 h-5" />
         </button>
@@ -234,7 +234,7 @@ export default function LobbyPhase({ room, players, me, myPlayer, roomCode }) {
       </AnimatePresence>
 
       {/* How to play button — identical to Home's header buttons */}
-      <div className="absolute right-4 z-20" style={{ top: 'max(env(safe-area-inset-top), 0.75rem)' }}>
+      <div className="page-corner-right absolute right-4 z-20" style={{ top: 'max(env(safe-area-inset-top), 0.75rem)' }}>
         <button onClick={() => setShowHowToPlay(true)} className="header-btn" aria-label={t.howToPlayShort}>
           <HelpCircle className="w-5 h-5" />
         </button>

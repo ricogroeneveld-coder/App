@@ -26,7 +26,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         guard UIDevice.current.userInterfaceIdiom == .phone else {
             return [.portrait, .portraitUpsideDown]
         }
-        guard let screen = window?.windowScene?.screen else { return .portrait }
+        // The window can be nil (e.g. mid-transition); fall back to the
+        // app's scene so the answer never defaults to "portrait" by accident
+        // while the app is on the Duo's inner screen.
+        let scene = window?.windowScene
+            ?? UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
+        guard let screen = scene?.screen else { return .portrait }
         let traits = screen.traitCollection
         let regularBothWays = traits.horizontalSizeClass == .regular && traits.verticalSizeClass == .regular
         let shortSide = min(screen.bounds.width, screen.bounds.height)

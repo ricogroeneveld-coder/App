@@ -200,7 +200,7 @@ export default function ProfileSettings() {
     >
       <GameBackground />
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 pt-2 pb-4">
+      <div className="duo-col-bar flex items-center gap-3 px-4 pt-2 pb-4">
         <button
           onClick={() => navigate('/')}
           className="header-btn"
